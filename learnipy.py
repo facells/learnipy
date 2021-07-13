@@ -66,7 +66,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
  -x.ts=5     token sequences. turn text into sequence word index feature matrix. columns are padded sequences of words. 5=integer, number of features 
  -x.w2v      extract word2vec dictionary and save it. also visualize a 2d word2vec space
  -x.d2v=5    turn text into doc2vec dense feature matrix. 5=integer, number of features
- -x.bert     turn text into multi-language bert 768-length vectors
+ -x.bert     turn text into multi-language bert 768-length vectors. uses max 1000 instances to prevent OutOfMemory
  -x.d=d.lex  turn text into vectors from custom dictionary dimensions. d.lex is an external lexical resource, comma separated
  ===unsupervised learning===
  -u.km=2     processed feature analysis with kmeans centroid clustering. add a new colum to dataset. results in analysis.txt. params: 2=num clusters
@@ -110,9 +110,12 @@ import re;
 import os;
 import math;
 import joblib;
+import shutil;
+import tensorflow_hub as TH;
 
 NP.random.seed(1); TF.random.set_seed(2);
 TF.compat.v1.logging.set_verbosity(TF.compat.v1.logging.ERROR);
+
 
 print('---START PROCESS---');
 
@@ -182,7 +185,7 @@ if '.h5' in f and '-d.pred' in o: #import deep learning saved model
   t_=x_['text']; x_=x_.drop(columns=['text']); 
 
 
-if '.csv' in f: #import .csv training set or all-in-one set
+if '.csv' in f: #import .csv training set or (if there is a test set) create training+test set
  print(f"processing {f} with {o}"); 
  filename=f.replace('.csv', ''); datatype='csv';
  x_=PD.read_csv(f, sep=',', encoding='utf8'); traininst=len(x_.index); dshape=[1];
@@ -201,6 +204,8 @@ if '.csv' in f: #import .csv training set or all-in-one set
   y_=x_['class']; x_=x_.drop(columns=['class']); task='s'; print('target found, suppose supervised task');
  else:
   print('no class given. only unsupervised tasks enabled. for supervised tasks name "class" the target column in your data'); task='u';
+
+ 
 
 if '.zip' in f: #extract data from .zip, loading in memory
  filename=f.replace('.zip', ''); datatype='zip';
@@ -236,7 +241,7 @@ if '.zip' in f: #extract data from .zip, loading in memory
 if not '.zip' in f and not '.csv' in f and not '.zip' in f2 and not '.csv' in f2:
  print('please input a .csv or .zip dataset'); sys.exit();
 
-#---manage missin gvalues
+#---manage missing values
 if 'x_' in locals() and not '-u.apriori' in o:
  if x_.isnull().values.any():
   x_ = x_.fillna(0); print('filling missing values with 0 by default'); #fill all missing values in x_ with 0
@@ -254,9 +259,9 @@ if 't_' in locals():
 
 #---define target class type
 if task=='s': 
- if y_.dtype.kind in 'biufc' and not '-d.c=l' in o:
+ if y_.dtype.kind in 'biufc' and not '-d.t=c' in o:
   #y_=(y_-y_.min())/(y_.max()-y_.min()); 
-  y_=y_.astype('float'); target='r'; print('read target as number, turned to float. to read target as a label use -d.c=l instead');
+  y_=y_.astype('float'); target='r'; print('read target as number, turned to float. to read target as a label use -d.t=c instead');
   if '-d.cnorm' in o:
    y_=(y_-y_.min())/(y_.max()-y_.min()); print('apply target numbers 0-1 normalization');
  else:
@@ -384,33 +389,30 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
   t_=PD.DataFrame(wmodel.docvecs.vectors_docs); #turn to doc2vec vectors
   print('sync dense doc2vec matrix:\n',t_) if '-d.data' in o else print(f'extracting {size} doc2vec features from text');
 
-#*TO REMOVE*
-# if '-x.bert ' in o: #roBERTa
-#  os.system('pip install transformers '); fx=1;
-#  print('extracting 760 xlm-roBERTa features from text');
-#  import torch; import transformers as PB; 
-#  #size=t_.str.len().min(); t_=t_.str.slice(0, 50); print(t_);
-#  m, t, w=(PB.XLMRobertaModel, PB.XLMRobertaTokenizerFast, 'xlm-roberta-base'); tokenizer = t.from_pretrained(w); wmodel=m.from_pretrained(w); 
-#  tokenized = t_.apply((lambda x: tokenizer.encode(x, add_special_tokens=True, truncation=True))); max_len=0; padded = NP.array([i[0:5] for i in tokenized.values]); del(tokenizer);
-#  attention_mask = NP.where(padded != 0, 1, 0);   input_ids = torch.tensor(padded); del(padded); attention_mask=torch.tensor(attention_mask); last_hidden_states = wmodel(input_ids, attention_mask=attention_mask); 
-#  t_=PD.DataFrame(last_hidden_states[0][:,0,:].detach().numpy()); #get features from hidden states
- 
+
  if '-x.bert ' in o: #bert uncased multi language
   os.system('pip install tensorflow-text'); fx=1;
-  import shutil
-  import tensorflow_hub as TH
-  import tensorflow_text as text
-  text_input = TF.keras.layers.Input(shape=(), dtype=TF.string)
+  import tensorflow_text as text;
+  t_=t_.sample(n=1000, random_state=1); 
+  if not y_.empty:
+   y_=y_.sample(n=1000, random_state=1); 
+  if not x_.empty:
+   x_=x_.sample(n=1000, random_state=1);
+  text_input = TF.keras.layers.Input(shape=(), dtype=TF.string); 
   preprocessor = TH.KerasLayer("https://tfhub.dev/tensorflow/bert_multi_cased_preprocess/3")
   encoder_inputs = preprocessor(text_input)
   encoder = TH.KerasLayer("https://tfhub.dev/tensorflow/bert_multi_cased_L-12_H-768_A-12/4", trainable=True)
-  outputs = encoder(encoder_inputs);
+  outputs = encoder(encoder_inputs); 
   del(preprocessor); del(encoder);
   pooled_output = outputs["pooled_output"]      # [batch_size, 768].
   sequence_output = outputs["sequence_output"]  # [batch_size, seq_length, 768].
-  embedding_model = TF.keras.Model(text_input, pooled_output)
-  sentences = TF.constant(t_); bert=embedding_model(sentences); t_=PD.DataFrame(bert.numpy()); 
+  embedding_model = TF.keras.Model(text_input, pooled_output); 
+  sentences = TF.constant(t_); 
+  bert=embedding_model(sentences); 
+  t_=PD.DataFrame(bert.numpy()); 
   print('sync dense bert matrix:\n',t_) if '-d.data' in o else print(f'extracting 768 features with bert_multi_cased_L-12_H-768_A-12');
+
+
 
  if '-x.d=' in o: #user defined lexical resources
   fx=1;
@@ -654,9 +656,9 @@ if 'model' in locals():
  if '-d.save' in o and not '-s.nn' in o: #save machine learning models
   opt=re.sub(r'-d.save|-e\..+|-d.viz| ','', o); 
   if target=='c':
-   opt='-d.c=l'+opt;
+   opt='-d.t=c'+opt;
   else:
-   opt='-d.c=0'+opt;
+   opt='-d.t=r'+opt;
   joblib.dump(model, f"{filename}{opt}.h4");print(f"model saved as {filename}{opt}.h4");
   #af= open(f"{filename}-format4model.csv", 'w'); af.write(x_test.to_csv()); af.close();  
 
@@ -778,9 +780,9 @@ if '-s.nn' in o:
  if '-d.save' in o and '-s.nn' in o: #save deep learning models
   opt=re.sub(r'-d.save|-e\..+|-d.viz| ','', o); 
   if target=='c':
-   opt='-d.c=l'+opt;
+   opt='-d.t=c'+opt;
   if target=='r':
-   opt=f"-d.c=0"+opt;
+   opt=f"-d.t=r"+opt;
   model.save(f"{filename}{opt}.h5"); print(f"model saved as {filename}{opt}.h5");
 
 
