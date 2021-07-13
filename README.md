@@ -12,6 +12,9 @@ tested in: Google colab
 License: MIT (Commercial use,  Modification, Distribution, Private use are permitted, Liability is yours, No software warranty)
 
 
+### 1) AIM 
+
+we want to make machine learning accesible and easy to use for everyone. We want a system that is self-contained (one file), portable 100% written in Python.
 
 ### 2) USAGE 
 
