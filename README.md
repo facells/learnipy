@@ -1,4 +1,4 @@
-# learnipy
+# LEARNIPY
 making machine learning easy for everyone
 
 written with ♥ by Fabio Celli, 
@@ -13,7 +13,7 @@ License: MIT (Commercial use,  Modification, Distribution, Private use are permi
 
 
 
-###USAGE 
+### USAGE 
 
  1. to train a model: load code and data (.csv or .zip) in colab and type
 
@@ -27,7 +27,7 @@ License: MIT (Commercial use,  Modification, Distribution, Private use are permi
 
 
 
-###DATA FORMATTING
+### DATA FORMATTING
 
  data.csv must be a , separated file, 
 
@@ -43,9 +43,9 @@ License: MIT (Commercial use,  Modification, Distribution, Private use are permi
 
 
 
-###OPTIONS
+### OPTIONS
 
-* data management
+##### data management
 
  * -d.c=l      manually define type of target class. params: l=label, 0=number
 
@@ -63,7 +63,7 @@ License: MIT (Commercial use,  Modification, Distribution, Private use are permi
 
  * -d.pred     use model to make predictions on new data
 
-* preprocessing===
+##### preprocessing
 
  * -p.rand     randomize instances in the training set
 
@@ -73,13 +73,13 @@ License: MIT (Commercial use,  Modification, Distribution, Private use are permi
 
  * -p.tc       clean text from non alphanum char and multiple spaces
 
-* feature reduction
+##### feature reduction
 
  * -r.svd=5    singular value decomposition. turn sparse label binarized matrix to dense and sync. param: 5=number of features
 
  * -r.lsa=5    latent semantic analysis. turn sparse word/char matrix to dense and sync. param: 5=number of features
 
-* text feature extraction
+##### text feature extraction
 
  * -x.ng=23cf  ngrams. turn text to word|char ngrams freq|tfidf matrix and apply lda. params: 2=min, 3=max, c=chars|w=words, f=freq|t=tfidf
 
@@ -95,7 +95,7 @@ License: MIT (Commercial use,  Modification, Distribution, Private use are permi
 
  * -x.d=d.lex  turn text into vectors from custom dictionary dimensions. d.lex is an external lexical resource, comma separated
 
-* unsupervised learning===
+##### unsupervised learning
 
  * -u.km=2     processed feature analysis with kmeans centroid clustering. add a new colum to dataset. results in analysis.txt. params: 2=num clusters
 
@@ -107,7 +107,7 @@ License: MIT (Commercial use,  Modification, Distribution, Private use are permi
 
  * -u.corr     processed feature analysis with pearson correlations. prints results in analysis.txt
 
-* supervised learning===
+##### supervised learning
 
  * -s.base     majority baseline for classification and regression
 
@@ -137,6 +137,6 @@ License: MIT (Commercial use,  Modification, Distribution, Private use are permi
 
  * -s.nn=f     deep learning. params: f=feedfwd|i=imbalance|r=rnn|l=lstm|b=bilstm|g=gru|c=cnn. 
 
-* evaluation===
+##### evaluation
 
  * -e.tts=0.2  train-test split. params 0.2=20% test split. param not valid if test set is provided.
