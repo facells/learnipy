@@ -1,22 +1,18 @@
-
 documentation='''
 learnipy 
-version 0.1, 2021
+version 0.2, 2021
 making machine learning and deep learning accessible to everyone
-written with ♥ by Fabio Celli, fabio.celli.phd@gmail.com
+written with ♥ by Fabio Celli
+email: fabio.celli.phd@gmail.com
+twitter: @facells
 tested in Google colab
-
 
 ===LICENSE===
 Copyright (c) 2012-2021 Fabio Celli.
 MIT license. 
-Permissions:
- Commercial use,  Modification, Distribution, Private use
-Limitations:
- Your liability, No warranty
-Conditions:
- Report the license and copyright notice with code.
-
+Permissions: Commercial use,  Modification, Distribution, Private use
+Limitations: Your liability, No warranty
+Conditions: Report the following license and copyright notice with code.
 "Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
 'Software'), to deal in the Software without restriction, including
@@ -24,10 +20,8 @@ without limitation the rights to use, copy, modify, merge, publish,
 distribute, sublicense, and/or sell copies of the Software, and to
 permit persons to whom the Software is furnished to do so, subject to
 the following conditions:
-
 The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.
-
 THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
 EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -35,14 +29,12 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
-
 ===USAGE=== 
  1. to train a model: load code and data (.csv or .zip) in colab and type
  %run learnipy.py 'options' traindata [testdata]
  
  2. to make predictions on new data: load model (.h5) and data (.csv or .zip) in colab and type
  %run learnipy.py '-d.pred' model.h5 [testdata]
-
 ===DATA FORMATTING===
  data.csv must be a , separated file, 
  the target column must be named 'class'
@@ -50,7 +42,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
  
  data.zip must contain .png .jpg files.
  the files names must be , separated. example: imgID,class,.jpg
-
 ===OPTIONS===
  ===data management===
  -d.c=l      manually define type of target class. params: l=label, 0=number
@@ -102,7 +93,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
  -e.tts=0.2  train-test split. params 0.2=20% test split. param not valid if test set is provided.
  '''
 
-#TO DO:  
+#TO DO: add drop features by index, gen markov chains, gen gan
 
 
 import warnings; warnings.filterwarnings('ignore'); 
@@ -258,6 +249,8 @@ if 'y_' in locals():
  if y_.isnull().values.any():
   y_ = y_.fillna(0); print('WARNING: there are missing values in the class, filled with 0. check if this compromise the results'); #fill all missing values in y_ with 0
 
+if 't_' in locals():
+ t_=t_.astype(str);
 
 #---define target class type
 if task=='s': 
@@ -580,6 +573,9 @@ if '-e.tts' in o:
  r_=re.findall(r'-e.tts=(.+?) ',o); mi=float(r_[0]); 
  if 'x2_' in locals():
   mi=tts;
+else:
+  mi=0.3; print('using 70% train 30% test percentage split by default');
+if 'mi' in locals(): #if split percentage is defined, then split train and test sets
  x_train, x_test, y_train, y_test = SK.model_selection.train_test_split(x_, y_, test_size=mi, shuffle=False, stratify=None, random_state=1) # prepare train test eval 
  xtrain_inst=len(x_train.index); feat=len(x_train.columns); print(f'training set shape: {xtrain_inst} instances, {feat} features');
  xtest_inst=len(x_test.index); feat=len(x_test.columns); print(f'test set shape: {xtest_inst} instances, {feat} features');
@@ -788,19 +784,19 @@ if '-s.nn' in o:
   model.save(f"{filename}{opt}.h5"); print(f"model saved as {filename}{opt}.h5");
 
 
-
 if not 'y_pred' in locals():
  print('no supervised model trained. process stopped'); sys.exit();
 
+
 #---evaluation
+
 #if '-cv=' in o: #eval with cross validation (metrics: 'accuracy' 'balanced_accuracy')
 # if target=='c':
 #  scores = SK.model_selection.cross_val_score(model, x_, y_, scoring='balanced_accuracy', cv=cv, n_jobs=-1); print(f'eval with {folds}-fold cross-validation BAL ACC= %.3f (+ - %.2f)' % (NP.mean(scores), NP.std(scores))) 
 # if target=='r': 
 #  scores = SK.model_selection.cross_val_score(model, x_, y_, scoring='r2', cv=cv, n_jobs=-1); print('eval with {folds}-fold cross-validation R2= %.3f (+ - %.2f)' % (NP.mean(scores), NP.std(scores))) 
 
-
-if '-e.tts=' in o:
+if '-s.' in o: #if the task is supervised run evaluation
  x_test=x_test2; #restore x_test in its dataframe form
  if target=='c': 
   #scores=model.fit(x_train, y_train);  y_pred = model.predict_classes(x_test); print(scores); #print(y_test); print(y_pred);
@@ -837,7 +833,4 @@ if '-d.viz' in o:
   MP.scatter(ys_, ps_, alpha=0.8); MP.xlabel('target ground truth');  MP.ylabel('target predictions'); #MP.show(); MP.clf();
   MP.scatter(ys_, ys_, alpha=0.2); #MP.legend(handles=['ys_', 'ps_'], title='title', bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='xx-small');
   MP.title('target-predictions fit'); MP.savefig(fname='target-pred-fit-space.png'); MP.show(); MP.clf();
-
-
-
 
