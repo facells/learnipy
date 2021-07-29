@@ -113,7 +113,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.0: developed the main features
 * v0.1: added -u.corr, -u.arm, -x.w2v, -x.d2v, -s.sgd, -s.xgb, .zip input, -s.nn=c
 * v0.2: added -x.bert, -x.tm, -x.ts, improved -s.nn, removed -e.cv (cross validation)
-* v0.3: improved -x.bert, -x.d and -d.viz, added -d.c, -d.s, -d.m, -d.r, -d.d, changed -d.gen to -g.d
+* v0.3: improved -x.bert, -x.d and -d.viz, added timestamp -d.c, -d.s, -d.m, -d.r, -d.d, changed -d.gen to -g.d
 
 ### 6) TO DO LIST
 * -g.mc (markov chains generated text)
