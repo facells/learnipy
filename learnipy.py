@@ -199,9 +199,9 @@ if '-d.c=' in o:#get name of class column
  if re.search(r'-d.c=[0-9]', o):
   r_=re.findall(r'-d.c=(.+?) ',o); tgtcol=int(r_[0]); print(f"'{tgtcol}' is the target class column"); 
 else:#otherwise apply default name
- if '.csv' in f:
+ if '.csv' in f or '.csv' in f2:
   tgtcol='class'; print('searching "class" as target class column'); 
- if '.zip' in f:
+ if '.zip' in f or '.zip' in f2:
   tgtcol=1; print('searching "1" as target class column');
 
 if '-d.d=' in o:
@@ -234,6 +234,7 @@ if 'f2' in locals(): #import csv test set
 
 
 if '.h4' in f and '-d.pred' in o: #import machine learning saved model
+ task='s';
  loadmodel = joblib.load(f);
  o=f.replace('-',' -'); x_=x2_; #use model filename as o and test set as the main dataset to go into the pipeline with the same settings as the model trained
  if 'tgtcol' in locals() and tgtcol in x_.columns:
@@ -242,6 +243,7 @@ if '.h4' in f and '-d.pred' in o: #import machine learning saved model
   t_=x_[txtcol]; x_=x_.drop(columns=[txtcol]); 
 
 if '.h5' in f and '-d.pred' in o: #import deep learning saved model
+ task='s';
  loadmodel = TF.keras.models.load_model(f);
  o=f.replace('-',' -'); x_=x2_; #use model filename as o and test set as the main dataset to go into the pipeline with the same settings as the model trained
  if 'tgtcol' in locals() and tgtcol in x_.columns:
