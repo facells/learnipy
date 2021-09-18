@@ -1,0 +1,7 @@
+date,outlook,temp,hum,wind,class,text
+10/09/2002,rainy,22.5,80,,,"match played. winner is player A"
+10/12/2002,sunny,20.1,70,TRUE,,"match played. winner is player F"
+10/19/2002,,19.7,90,FALSE,,"match played. winner is player F"
+10/23/2002,overcast,19.6,75,TRUE,,"match played. winner is player G"
+10/24/2002,rainy,16.7,91,TRUE,,"match not played. too rainy and windy"
+10/28/2002,overcast,19.4,,TRUE,,"match played. winner is player G"

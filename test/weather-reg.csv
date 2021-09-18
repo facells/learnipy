@@ -1,0 +1,16 @@
+date,outlook,class,hum,wind,play,text
+08/12/2001,sunny,31.2,85,FALSE,no,'match not played too hot and humid'
+08/14/2001,sunny,29.1,88,TRUE,no,"match not played too windy humid and hot"
+08/17/2001,overcast,26.5,86,FALSE,yes,"match played. winner is player A"
+09/18/2001,rainy,19.1,96,,yes,"match played under the rain. winner is player C"
+09/22/2001,rainy,19.5,86,FALSE,yes,"match played under the rain. winner is player F"
+09/24/2001,rainy,19.4,71,TRUE,no,"match not played. too windy"
+09/30/2001,overcast,21.7,69,TRUE,yes,"match played. winner is player G"
+10/01/2001,sunny,25.7,82,FALSE,no,"match not played. player I injuried"
+10/04/2001,,26.3,73,TRUE,yes,"match played. winner is player L"
+10/09/2001,rainy,22.5,82,FALSE,yes,"match played. winner is player A"
+10/12/2001,sunny,22.1,70,TRUE,yes,"match played. winner is player F"
+10/19/2001,overcast,19.7,,FALSE,yes,"match played. winner is player F"
+10/23/2001,overcast,19.6,75,TRUE,yes,"match played. winner is player G"
+10/24/2001,rainy,16.7,91,TRUE,no,"match not played. too rainy and windy"
+10/28/2001,overcast,19.4,78,TRUE,yes,"match played. winner is player G"
