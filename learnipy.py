@@ -31,28 +31,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * we want to make machine learning accesible and easy to use for everyone. 
 * We want a system that is self-contained (one file), portable, 100% written in Python.
 
-### 2) USAGE 
-* to train a model: %run learnipy.py 'options' traindata [testdata], for example
-
- >%run learnipy.py '-d.t=c -x.tm=700 -d.viz -s.nn=f' traindata.csv
-
-* 'options' is a string containing the operations, defined at paragraph 4.
-* yourdata.csv can be a .csv for tabular and text data or .zip for pictures.
-* [testdata] is optional, if given is used as a test set, if not the training set is split
-* to make predictions on new data: %run learnipy.py '-d.pred' model testdata, for example
-
- >%run learnipy.py '-d.pred' model.h5 testdata.csv
-
-* models can have .h5 (deep learning) or .h4 (machine learning) extension
-* see more code examples at paragraph 7
-
-### 3) DATA FORMATTING
+### 2) DATA FORMATTING
 * data.csv must be a comma-separated file (,)
 * the target column can be named 'class' in the .csv file or defined with -d.c= option
 * the text column can be named 'text' in the .csv file or defined with -d.s= option
-* data.zip must contain .png .jpg files. the files names must be comma-separated. example: imgID,class,.jpg
+* data.zip must contain .png or .jpg files. the files names must be comma-separated. example: imgID,class,.jpg
 
-### 4) OPTIONS
+### 3) DOCUMENTATION
 #### data management
 * -d.t=c|r    *define type of task. c=classification, r=regression*
 * -d.x=n,m,o  *define the columns to exclude. n,m,o=names of columns to exclude*
@@ -111,12 +96,27 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 #### evaluation
 * -e.tts=0.2  *train-test split. 0.2=20% test split. ignored if test set is provided*
 
+### 4) USAGE 
+* to train a model: %run learnipy.py 'options' traindata [testdata], for example
+
+ >%run learnipy.py '-d.t=c -x.tm=700 -d.viz -s.nn=f' traindata.csv
+
+* 'options' is a string containing the operations, defined at paragraph 4.
+* yourdata.csv can be a .csv for tabular and text data or .zip for pictures.
+* [testdata] is optional, if given is used as a test set, if not the training set is split
+* to make predictions on new data: %run learnipy.py '-d.pred' model testdata, for example
+
+ >%run learnipy.py '-d.pred' model.h5 testdata.csv
+
+* models can have .h5 (deep learning) or .h4 (machine learning) extension
+* try it on https://colab.research.google.com/drive/1DfDp2VFaTTMz_B6uLrOdWKQkrer32S9M?usp=sharing
+
 ### 5) CHANGELOG
 * v0.0: developed the main features
 * v0.1: added -u.corr, -u.arm, -x.w2v, -x.d2v, -s.sgd, -s.xgb, .zip input, -s.nn=c
 * v0.2: added -x.bert, -x.tm, -x.ts, improved -s.nn, removed -e.cv (cross validation), fixed bug on text reading
 * v0.3: improved -x.bert, -x.d and -d.viz, added -d.c, -d.s, -d.m, -d.r, -d.x, changed -d.gen to -g.d
-* v0.4: added wiki links, -d.export, -g.mct, -u.som, -d.md, included -s.psvm in -s.svm, moved -u.w2v, p.cn, changed p.fc, p.ri
+* v0.4: added -d.export -g.mct, -u.som, -d.md, included -s.psvm in -s.svm, added wiki links, moved -u.w2v
 
 ### 6) TO DO LIST
 * git clone + code examples
@@ -269,7 +269,7 @@ if '.h5' in f and '-d.pred' in o: #import deep learning saved model
 
 #---read data
 if '.csv' in f: #import .csv training set or (if there is a test set) create training+test set
- o=f.replace('-',' -'); print(f"processing {f} with {o}"); 
+ o=o.replace('-',' -'); print(f"processing {f} with {o}"); 
  filename=f.replace('.csv', ''); datatype='csv';
  x_=PD.read_csv(f, sep=',', encoding='utf8'); traininst=len(x_.index); dshape=[1];
  x_=x_.reset_index(drop=True); #start row index from 0
