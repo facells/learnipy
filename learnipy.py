@@ -1123,6 +1123,6 @@ if '-d.viz' in o:
    wc.generate(" ".join(v))
    MP.imshow(wc, interpolation='bilinear');
    MP.axis('off');
-   MP.savefig('bert_wordcloud_%s.png' % k); MP.show(); MP.clf();
+   MP.savefig('wordcloud_%s.png' % k); MP.show(); MP.clf();
 
 timestamp=DT.datetime.now(); print(timestamp);
