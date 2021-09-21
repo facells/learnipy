@@ -1,5 +1,5 @@
 # LEARNIPY
-* version 0.3
+* version 0.4
 * making machine learning easy for everyone
 * written with ♥ by Fabio Celli, 
 * email: fabio.celli.phd@gmail.com
@@ -7,7 +7,6 @@
 * tested in Google colab
 * License: MIT (Commercial use,  Modification, Distribution, Private use are permitted, Liability is yours, No software warranty)
 * Conditions: Report the following license and copyright notice with code.
-
 
 "Copyright (c) 2021 Fabio Celli.
 Permission is hereby granted, free of charge, to any person obtaining
@@ -44,6 +43,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
  >%run learnipy.py '-d.pred' model.h5 testdata.csv
 
 * models can have .h5 (deep learning) or .h4 (machine learning) extension
+* see more code examples at paragraph 7
 
 ### 3) DATA FORMATTING
 * data.csv must be a comma-separated file (,)
@@ -54,23 +54,24 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 ### 4) OPTIONS
 #### data management
 * -d.t=c|r    *define type of task. c=classification, r=regression*
-* -d.d=n,m,o  *define the columns to drop. n,m,o=names of columns to drop*
+* -d.x=n,m,o  *define the columns to exclude. n,m,o=names of columns to exclude*
 * -d.s=n      *define the string column treated as text. n=name of text column
 * -d.c=n      *define the column of the target class. n=name (for .csv) or index (for .zip) of class column*
-* -d.r=0      *do not run feature reduction (cannot be used with -d.save)*
-* -d.m=0|1    *manage missing values. 0=remove rows with missing values in the target class, 1=replace missing values with mean*
+* -d.r=0      *do not use feature reduction, keep original features (not applicable with -d.save)*
+* -d.m=1      *fill class missing values. 1=replace all missing values in class with mean/mode (otherwise are deleted by default)*
 * -d.viz      *print pca-projected 2d data scatterplot and other visualizations*
+* -d.md       *model details. prints info on algorithm parameters and data modeling*
 * -d.fdst     *print info on feature distribution*
 * -d.data     *show preview of processed data*
-* -d.cnorm    *normalize numeric class*
 * -d.save     *save model as .h4 (machine learning) or .h5 (deep learning) file*
 * -d.pred     *use model to make predictions on new data*
 * -d.export=f *export processed data in csv. f=filename.csv*
 #### data generation
 * -g.d=132    *generate dataset, create gen.csv. 1=num instances x1000, 3=num features x10, 2=num informative features x10*
 #### preprocessing
-* -p.rand     *randomize instances in the training set*
-* -p.norm     *feature normalization, range 0,1 (applied by default with some nn, sgd and nb)*
+* -p.ri       *randomize instances in the training set*
+* -p.cn       *class normalize. turn numeric class to range 0-1*
+* -p.fn       *feature normalize, turn features to range 0-1 (applied by default with some nn, sgd and nb)*
 * -p.tl       *text to lowercase*
 * -p.tc       *clean text from non alphanum char and multiple spaces*
 #### feature reduction
@@ -81,15 +82,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -x.tm=5     *token matrix. turn text into word frequency matrix. 5=number of features*
 * -x.ts=5     *token sequences. columns are padded sequences of words. 5=number of features* 
 * -x.cm=5     *char matrix. turn text into character frequency matrix. 5=number of features*
-* -x.w2v      *extract a word2vec dictionary and save it. also visualize a pca-2d word2vec space*
 * -x.d2v=5    *turn text into doc2vec word-context dense feature matrix. 5=number of features*
 * -x.bert     *turn text into a dense matrix with multi-language bert transformer model*
-* -x.d=d.py   *turn text into vectors from custom dictionary dimensions. d.py is an external python dictionary*
+* -x.d=f|x    *extract features from custom dictionary mapping. f=file.dic, x=select from http://personality.altervista.org/learnipy/ *
 #### unsupervised learning
-* -u.km=2     *feature analysis with kmeans centroid clustering. add a new colum to dataset. results in analysis.txt. 2=num clusters*
-* -u.optics   *feature analysis with optics density clustering. add a new colum to dataset. results in analysis.txt*
-* -u.msh      *feature analysis with mshift density clustering. add a new colum to dataset. results in analysis.txt*
-* -u.arm      *feature association rule mining with apriori. prints results in analysis.txt*
+* -u.km=2     *kmeans, centroid clustering. add a new colum to dataset. results in analysis.txt. 2=num clusters*
+* -u.optics   *optics, density clustering. add a new colum to dataset. results in analysis.txt*
+* -u.msh      *mshift, density clustering. add a new colum to dataset. results in analysis.txt*
+* -u.som      *self organising map, neural network clustering. add a new colum to dataset. results in analysis.txt*
+* -u.w2v[=15] *word2vec dictionary from text, pca-2d word2vec space. 1=words to filter x10, 5=words to visualize x10*
+* -u.arl      *association rule learning with apriori. prints results in analysis.txt*
 * -u.corr     *feature analysis with pearson correlations. prints results in analysis.txt*
 #### supervised learning
 * -s.base     *majority baseline for classification and regression*
@@ -100,8 +102,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -s.knn      *k nearest neighbors classification and regression*
 * -s.dt       *decision trees and regression trees*
 * -s.mlp      *multi layer perceptron*
-* -s.psvm=3   *svm with poly kernel. 3=dimensions of polynomial kernel*
-* -s.svm      *svm with radial basis function*
+* -s.svm[=p3] *svm (rbf kernel by default). p=polynomial kernel|r=rbf kernel (default), 3=kernel degrees*
 * -s.rf       *ensemble learning, random forest*
 * -s.ada      *ensemble learning, adaboost based on samme.r algorithm*
 * -s.xgb      *ensemble learning, xgboost*
@@ -112,9 +113,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 ### 5) CHANGELOG
 * v0.0: developed the main features
 * v0.1: added -u.corr, -u.arm, -x.w2v, -x.d2v, -s.sgd, -s.xgb, .zip input, -s.nn=c
-* v0.2: added -x.bert, -x.tm, -x.ts, improved -s.nn, removed -e.cv (cross validation)
-* v0.3: improved -x.bert, -x.d and -d.viz, added timestamp -d.c, -d.s, -d.m, -d.r, -d.d, changed -d.gen to -g.d
+* v0.2: added -x.bert, -x.tm, -x.ts, improved -s.nn, removed -e.cv (cross validation), fixed bug on text reading
+* v0.3: improved -x.bert, -x.d and -d.viz, added -d.c, -d.s, -d.m, -d.r, -d.x, changed -d.gen to -g.d
+* v0.4: added -d.export -g.mct, -u.som, -d.md, included -s.psvm in -s.svm, added wiki links, moved -u.w2v
 
 ### 6) TO DO LIST
-* -g.mc (markov chains generated text)
+* links to sklearn and tensorflow documentation for algorithms
 * -g.gan (gan generated data)
+* -u.ad  (anomaly detection outlier detection)
+* -u.nd  (novelty detection)
+* -s.tsf (timeseries forecasting)
+
