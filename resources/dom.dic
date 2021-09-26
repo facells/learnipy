@@ -1,0 +1,376 @@
+0noun,1verb,2adj,3adverb,4polysemy,5anatomy,6sensation,7sports,8biology,9psyfeature,10chemistry,11color,12economy,13metrology,14quality,15fashion,16food,17freetime,18sociology,19medicine,20philo&law,21psychology,22military,23pedagogy,24person,25physics,26sexuality,27politics,28religion,29time,30emo&mood,31trait,32cognitive,33physical,34situation,35behavior,36attitude
+ 
+ color,0,11 
+ activeness,0,4,8,9,36 
+ activity,0,4,8,9,36 
+ adept,0,24,31 
+ admiration,0,4,27,30 
+ adversary,0,24,31 
+ affront,0,21,35 
+ agnosticism,0,4,20,28,36 
+ agony,0,4,19,30 
+ ailment,0,19,30,30 
+ amusement,0,4,17,30 
+ basketball,0,7,33 
+ anger,0,4,21,30 
+ angriness,0,6,30 
+ approving,0,27,35 
+ awareness,0,4,21,32 
+ backwardness,0,21,31 
+ bafflement,0,21,32 
+ befuddlement,0,21,32 
+ belligerency,0,4,20,22,36,35,30 
+ beloved,0,24,31 
+ bemusement,0,21,32 
+ bewilderment,0,21,32 
+ bitter,0,4,16,34 
+ bitterness,0,4,16,34 
+ black bile,0,5,6,30 
+ bliss,0,21,30 
+ blissfulness,0,21,30 
+ brat,0,24,30 
+ carnality,0,9,26,30 
+ chilliness,0,25,6,34 
+ clemency,0,4,12,30 
+ clinical depression,0,19,30,33 
+ cloud nine,0,21,30 
+ cold,0,4,19,6 
+ cold sweat,0,6,9  
+ coldness,0,4,25,31,32,36 
+ comfort,0,4,12,34 
+ concupiscence,0,9,26,32,30 
+ craze,0,4,19,32,30,35 
+ dearest,0,24,31 
+ delirium,0,4,19,32 
+ demoralization,0,4,19,9,30 
+ dependence,0,4,6,33,32 
+ dependency,0,4,6,33,32 
+ depressive disorder,0,19,30,33 
+ desire,0,4,6,35 
+ despondence,0,19,9,30 
+ despondency,0,19,9,30 
+ discomfort,0,4,19,9,35,30 
+ disconsolateness,0,19,9,30 
+ discourtesy,0,4,21,35 
+ disenchantment,0,23,32,30 
+ disesteem,0,18,30 
+ disgrace,0,18,30 
+ disillusion,0,23,32,30 
+ disillusionment,0,23,32,30 
+ disorientation,0,4,21,32 
+ dizziness,0,19,6 
+ dotage,0,29,32 
+ doze,0,6,35 
+ drowse,0,6,35 
+ drowsiness,0,19,36,32 
+ dubiety,0,21,30,36,32 
+ dullard,0,4,24,31 
+ dysphoria,0,19,9,30 
+ ease,0,4,17,6,35 
+ ebullience,0,8,9,36,31 
+ entertainment,0,17,30 
+ enthusiasm,0,4,21,30 
+ football,0,7,33 
+ exuberance,0,4,8,9,36,31 
+ fad,0,15,30 
+ febricity,0,19,33 
+ feverishness,0,19,33 
+ flabbiness,0,10,34 
+ flaccidity,0,10,34 
+ flavour,0,4,16,30,6 
+ frenzy,0,19,32,30,35 
+ giddiness,0,4,19,6 
+ grogginess,0,4,21,32 
+ heartsickness,0,19,9,30 
+ heat energy,0,25,34 
+ helplessness,0,4,19,9,6 
+ high temperature,0,25,6 
+ holy terror,0,24,30 
+ honey,0,4,24,31 
+ hostility,0,4,20,22,36,35,30 
+ hotshot,0,24,31 
+ hungriness,0,6,33 
+ hurting,0,19,6 
+ hypersomnia,0,19,33 
+ ignominy,0,18,30 
+ ill,0,4,19,30,30 
+ illness,0,19,33 
+ inactiveness,0,4,8,9,36 
+ inanition,0,4,19,33 
+ incertitude,0,21,30,36,32 
+ incredulity,0,21,32 
+ inebriation,0,19,32,33 
+ inebriety,0,19,32,33 
+ iniquity,0,4,18,35 
+ insomnia,0,19,33 
+ insult,0,4,21,35 
+ intoxication,0,19,32,33 
+ jitters,0,21,30,32,33 
+ lasciviousness,0,9,26,30 
+ laziness,0,4,8,9,31,36 
+ koran,0,28,33 
+ pray,1,28,36,35 
+ prayer,0,28,32 
+ bible,0,28,33 
+ islam,0,28,36 
+ lecherousness,0,9,26,32,6 
+ lechery,0,6,26,36,31 
+ limpness,0,10,34 
+ little terror,0,24,30 
+ lividity,0,4,11  
+ lividness,0,11  
+ loved one,0,24,31 
+ low temperature,0,25,31,32,36 
+ lucidity,0,4,19,21,32 
+ lust,0,4,8,9,32,30,6 
+ lustfulness,0,9,26,32,6 
+ luxuria,0,8,9,32,30,6 
+ malady,0,4,19,33 
+ maven,0,24,31 
+ melancholy,0,4,5,6,30 
+ mental quickness,0,21,31 
+ mental rejection,0,21,32 
+ mental retardation,0,21,31 
+ mental strain,0,21,34 
+ mercifulness,0,4,12,30 
+ merriment,0,4,17,35 
+ misgiving,0,4,21,30 
+ mystification,0,21,32 
+ nervous breakdown,0,19,32,33 
+ nervous strain,0,21,34 
+ nuisance,0,4,24,6 
+ numbness,0,19,33,32,6 
+ obfuscation,0,21,32 
+ offense,0,4,22,35 
+ offensive,0,22,35 
+ offensive activity,0,21,35 
+ opponent,0,4,24,31 
+ painful sensation,0,19,6 
+ pallidness,0,11  
+ pallor,0,11  
+ panic,0,4,21,30 
+ perplexity,0,21,32 
+ physical attraction,0,9,26,32,30 
+ playfulness,0,4,17,35 
+ pleasure,0,4,6,26,30,6 
+ preparedness,0,22,31,36 
+ prickling,0,19,6 
+ pride,0,4,8,9,30 
+ promise,0,4,8,9,30 
+ prurience,0,9,26,30 
+ pruriency,0,9,26,30 
+ puzzlement,0,21,32 
+ pyrexia,0,19,33 
+ qualm,0,4,19,30 
+ queasiness,0,19,30 
+ quick-wittedness,0,21,31 
+ radiance,0,4,19,6,9,30,33 
+ rage,0,4,15,30 
+ recreation,0,17,35 
+ relish,0,4,16,30,6 
+ reproach,0,4,18,30 
+ repture,0,21,30 
+ ball,0,4,7,33 
+ savor,0,16,30,6 
+ savour,0,16,30,6 
+ scepticism,0,20,28,36 
+ scourge,0,4,24,30 
+ screaming meemies,0,21,30,32,33 
+ second childhood,0,29,32 
+ self-assurance,0,21,32,30 
+ self-confidence,0,21,32,30 
+ semiconsciousness,0,21,32 
+ sensation,0,4,6  
+ sensory faculty,0,6  
+ sentiency,0,6  
+ seventh heaven,0,21,30 
+ sex,0,6,26,35 
+ sexy,0,6,26,35 
+ sexual desire,0,9,26,32,30 
+ sexual harassment,0,26,35 
+ sexual,0,9,26,6,32 
+ sickness,0,4,19,30 
+ skepticism,0,4,20,28,36 
+ sleepiness,0,19,36,32 
+ sleeplessness,0,19,33 
+ sloth,0,4,8,9,31,36 
+ slowness,0,4,21,31 
+ somatic sensation,0,19,6 
+ somnolence,0,19,36,32 
+ soreness,0,4,19,9,35,30 
+ squeamishness,0,19,30 
+ stupefaction,0,4,21,32 
+ stupor,0,4,21,32 
+ subnormality,0,4,21,31 
+ suffering,0,4,19,9  
+ tenderness,0,4,19,9,35,30 
+ tenseness,0,4,21,30,30 
+ terror,0,4,24,30 
+ threat,0,4,24,30 
+ tingle,0,4,19,6 
+ tingling,0,19,6 
+ tipsiness,0,19,32,33 
+ tiredness,0,19,32,36 
+ uncertainty,0,4,21,30,36,32 
+ unfairness,0,4,18,35 
+ unselfconsciousness,0,21,36 
+ vacillation,0,21,35,32 
+ vertigo,0,19,6 
+ vigor,0,4,8,9,35 
+ vigour,0,4,8,9,35 
+ vim,0,4,8,9,35 
+ virtuoso,0,24,31 
+ wakefulness,0,4,19,33 
+ walking on air,0,21,30 
+ wanness,0,11  
+ weariness,0,19,32,36 
+ whiz,0,24,31 
+ whizz,0,24,31 
+ windlessness,0,34 
+ wiz,0,24,31 
+ wonder,0,4,21,32 
+ wrath,0,4,8,9,30 
+ amuse,1,4,17,30 
+ be intimate,1,26,30 
+ bed,1,4,26,30 
+ befuddle,1,4,19,32 
+ charge up,1,9,21,30 
+ conk,1,4,19,32,30,33 
+ decompress,1,4,21,30 
+ divert,1,4,17,18,17,30 
+ do it,1,26,30 
+ eff,1,26,30 
+ faint,1,19,32,30,33 
+ feel,1,26,6 
+ fuck,1,26,30 
+ get it on,1,26,30 
+ get laid,1,26,30 
+ have a go at it,1,26,30 
+ have intercourse,1,26,30 
+ have it away,1,26,30 
+ have it off,1,26,30 
+ have sex,1,26,30 
+ hump,1,4,26,30 
+ jazz,1,4,26,30 
+ lie with,1,26,30 
+ limber up,1,4,7,32,30 
+ love,1,4,26,30 
+ lull,1,4,9,21,30 
+ make love,1,26,30 
+ quiet,1,4,9,21,30 
+ shock,1,4,22,30 
+ sicken,1,4,22,30 
+ sleep with,1,26,30 
+ slow down,1,4,21,30 
+ swoon,1,19,32,30,33 
+ traumatize,1,22,30 
+ trust,1,4,12,12,36 
+ warm up,1,4,7,32,30 
+ afebrile,2,19,33 
+ agonal,2,19,9,30 
+ appetitive,2,20,9,21,6 
+ aversive,2,9,21,30 
+ brainsick,2,19,35,30,31 
+ breathtaking,2,6,30  
+ comfortable,2,4,12,30 
+ competing,2,12,36,31 
+ cursed,2,4,28,33,32,30 
+ cynical,2,24,36,31 
+ damned,2,4,28,33,32,30 
+ dangerous,2,4,12,31,36,30 
+ demented,2,19,35,30,31 
+ disturbed,2,4,19,35,30,31 
+ doubting,2,24,36,32 
+ febrile,2,19,33 
+ green-eyed,2,24,30 
+ haptic,2,19,6 
+ hibernating,2,8,33,32 
+ higher-ranking,2,18,31 
+ honorable,2,4,18,30 
+ incertain,2,9,21,32,30 
+ jealous,2,4,24,30 
+ junior-grade,2,18,31 
+ law-abiding,2,4,20,34 
+ leery,2,24,31,32,30 
+ low,2,4,30 
+ lower-ranking,2,18,31 
+ mistrustful,2,24,31,32,30 
+ neurotic,2,4,19,30 
+ no-hit,2,7,31 
+ nonthermal,2,25,34 
+ observant,2,4,20,34 
+ overjealous,2,24,30 
+ psychoneurotic,2,19,30 
+ pyrogenic,2,25,6 
+ qualified,2,4,20,31 
+ ranking,2,4,18,31 
+ raving,2,19,31 
+ raving mad,2,19,31 
+ reputable,2,18,30 
+ rival,2,12,36,31 
+ skeptical,2,4,24,36,32 
+ sore,2,4,19,34,33 
+ stupid,2,4,9,21,31 
+ subaltern,2,18,31 
+ subordinate,2,4,18,31 
+ thermic,2,25,34 
+ torpid,2,4,8,33,32 
+ triple-crown,2,4,7,31 
+ trusted,2,24,36,31 
+ unexciting,2,4,6,6 
+ unfertile,2,6,31 
+ unhinged,2,19,35,30,31 
+ unintelligent,2,9,21,31 
+ unredeemed,2,28,33,32,30 
+ unsaved,2,28,33,32,30 
+ untrusting,2,24,31,32,30 
+ warm,2,30 
+ wary,2,4,24,31,32,30 
+ well-fixed,2,12,30 
+ well-heeled,2,12,30 
+ well-situated,2,12,30 
+ well-to-do,2,12,30 
+ advertently,3,22,9,32 
+ certainly,3,9,14,32,30 
+ comfortably,3,4,12,30 
+ crazily,3,19,35,30,31 
+ dementedly,3,19,35,30,31 
+ distrustfully,3,24,31,32,30 
+ drowsily,3,22,32 
+ ebulliently,3,19,30 
+ emotionally,3,4,9,21 
+ enormously,3,13,14,34,30 
+ expansively,3,4,19,30 
+ exuberantly,3,4,19,30 
+ fiercely,3,4,13,14,31,36,35,30 
+ for certain,3,9,14,32,30 
+ for sure,3,9,14,32,30 
+ gravely,3,4,12,13,14,30 
+ grievously,3,12,31,36,30 
+ heedfully,3,22,9,32 
+ hugely,3,13,14,34,30 
+ luxuriously,3,4,12,36,30 
+ marvellously,3,13,14,34,30 
+ marvelously,3,13,14,34,30 
+ mindfully,3,22,9,32 
+ mistrustfully,3,24,31,32,30 
+ poorly,3,13,14,30 
+ respectably,3,4,18,30 
+ seriously,3,4,12,13,14,30 
+ somnolently,3,22,32 
+ staggeringly,3,13,14,34,30 
+ superbly,3,13,14,34,30 
+ sure,3,9,14,32,30 
+ sure as shooting,3,9,14,32,30 
+ sure enough,3,4,9,14,32,30 
+ surely,3,9,14,32,30 
+ terrifically,3,13,14,34,30 
+ toppingly,3,13,14,34,30 
+ tremendously,3,13,14,34,30 
+ vehemently,3,13,14,31,36,35,30 
+ wonderfully,3,13,14,34,30 
+ wondrous,3,13,14,34,30 
+ wondrously,3,13,14,34,30 
+ wondrous,3,13,14,34,30 
+ wondrously,3,13,14,34,30 
+ 
