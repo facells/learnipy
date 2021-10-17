@@ -1,6 +1,6 @@
 documentation='''
 # LEARNIPY
-* version 0.4
+* version 0.5
 * making machine learning easy for everyone
 * written with ♥ by Fabio Celli, 
 * email: fabio.celli.phd@gmail.com
@@ -37,7 +37,22 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * the text column can be named 'text' in the .csv file or defined with -d.s= option
 * data.zip must contain .png or .jpg files. the files names must be comma-separated. example: imgID,class,.jpg
 
-### 3) DOCUMENTATION
+### 4) USAGE 
+* to train a model: %run learnipy.py 'options' traindata [testdata], for example
+
+ >%run learnipy.py '-d.t=c -x.tm=700 -d.viz -s.nn=f' traindata.csv
+
+* 'options' is a string containing the operations, defined at paragraph 4.
+* yourdata.csv can be a .csv for tabular and text data or .zip for pictures.
+* [testdata] is optional, if given is used as a test set, if not the training set is split
+* to make predictions on new data: %run learnipy.py '-d.pred' model testdata, for example
+
+ >%run learnipy.py '-d.pred' model.h5 testdata.csv
+
+* models can have .h5 (deep learning) or .h4 (machine learning) extension
+* try it on https://colab.research.google.com/drive/1DfDp2VFaTTMz_B6uLrOdWKQkrer32S9M?usp=sharing
+
+### 4) DOCUMENTATION
 #### data management
 * -d.t=c|r    *define type of task. c=classification, r=regression*
 * -d.x=n,m,o  *define the columns to exclude. n,m,o=names of columns to exclude*
@@ -55,30 +70,37 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 #### data generation
 * -g.d=132    *generate dataset, create gen.csv. 1=num instances x1000, 3=num features x10, 2=num informative features x10*
 #### preprocessing
-* -p.ri       *randomize instances in the training set*
+* -p.ir       *instance position randomization, applies to the training set*
 * -p.cn       *class normalize. turn numeric class to range 0-1*
 * -p.fn       *feature normalize, turn features to range 0-1 (applied by default with some nn, sgd and nb)*
 * -p.tl       *text to lowercase*
-* -p.tc       *clean text from non alphanum char and multiple spaces*
+* -p.tc       *text cleaning. removes non alphanum char and multiple spaces*
+* -p.trs      *text regex stopwords. removes words from length 1 to length 3*
+* -p.tsw=a,b  *text stopwords. removes stopwords, a,b=stopwords list, no spaces allowed.*
 #### feature reduction
 * -r.svd=5    *singular value decomposition. turn sparse label matrix to dense and sync. 5=number of features*
 * -r.lsa=5    *latent semantic analysis. turn sparse word/char matrix to dense and sync. 5=number of features*
-#### text feature extraction
+#### feature extraction
 * -x.ng=23cf  *ngrams. turn text to word|char ngrams freq|tfidf matrix and apply lsa. 2=min, 3=max, c=chars|w=words, f=freq|t=tfidf*
 * -x.tm=5     *token matrix. turn text into word frequency matrix. 5=number of features*
 * -x.ts=5     *token sequences. columns are padded sequences of words. 5=number of features* 
 * -x.cm=5     *char matrix. turn text into character frequency matrix. 5=number of features*
 * -x.d2v=5    *turn text into doc2vec word-context dense feature matrix. 5=number of features*
 * -x.bert     *turn text into a dense matrix with multi-language bert transformer model*
-* -x.d=f|x    *extract features from custom dictionary mapping. f=file.dic, x=select from http://personality.altervista.org/learnipy/ *
+* -x.d=e      *extract features from custom dictionary. e=dictionary. check https://github.com/facells/learnipy/tree/main/resources
 #### unsupervised learning
 * -u.km=2     *kmeans, centroid clustering. add a new colum to dataset. results in analysis.txt. 2=num clusters*
 * -u.optics   *optics, density clustering. add a new colum to dataset. results in analysis.txt*
 * -u.msh      *mshift, density clustering. add a new colum to dataset. results in analysis.txt*
+* -u.ap       *affinity propagation exemplar clustering. add a new colum to dataset. results in analysis.txt*
 * -u.som      *self organising map, neural network clustering. add a new colum to dataset. results in analysis.txt*
 * -u.w2v[=15] *word2vec dictionary from text, pca-2d word2vec space. 1=words to filter x10, 5=words to visualize x10*
 * -u.arl      *association rule learning with apriori. prints results in analysis.txt*
 * -u.corr     *feature analysis with pearson correlations. prints results in analysis.txt*
+#### outlier detection
+* -o.if       *isolation forest. find and remove outliers using trees split*
+* -o.mcd      *minimum covariance determinant with ellipsis envelope. find and remove outliers using gaussian distribution*
+* -o.lof      *local outlier factor. find and remove outliers using nearest neighbors*
 #### supervised learning
 * -s.base     *majority baseline for classification and regression*
 * -s.nb       *probabilistic models. complement naive bayes for classification, bayes ridge for regression*
@@ -92,39 +114,24 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -s.rf       *ensemble learning, random forest*
 * -s.ada      *ensemble learning, adaboost based on samme.r algorithm*
 * -s.xgb      *ensemble learning, xgboost*
-* -s.nn=f[51] *deep learning. f=feedfwd|i=imbalance|r=rnn|l=lstm|b=bilstm|g=gru|c=cnn. 5=2x units, 1=num layers*
+* -s.nn=f[51] *deep learning. f=feedfwd|i=imbalance|r=rnn|l=lstm|b=bilstm|g=gru|c=cnn. 5= x10 units, 1=num layers*
 #### evaluation
 * -e.tts=0.2  *train-test split. 0.2=20% test split. ignored if test set is provided*
 
-### 4) USAGE 
-* to train a model: %run learnipy.py 'options' traindata [testdata], for example
-
- >%run learnipy.py '-d.t=c -x.tm=700 -d.viz -s.nn=f' traindata.csv
-
-* 'options' is a string containing the operations, defined at paragraph 4.
-* yourdata.csv can be a .csv for tabular and text data or .zip for pictures.
-* [testdata] is optional, if given is used as a test set, if not the training set is split
-* to make predictions on new data: %run learnipy.py '-d.pred' model testdata, for example
-
- >%run learnipy.py '-d.pred' model.h5 testdata.csv
-
-* models can have .h5 (deep learning) or .h4 (machine learning) extension
-* try it on https://colab.research.google.com/drive/1DfDp2VFaTTMz_B6uLrOdWKQkrer32S9M?usp=sharing
-
 ### 5) CHANGELOG
 * v0.0: developed the main features
-* v0.1: added -u.corr, -u.arm, -x.w2v, -x.d2v, -s.sgd, -s.xgb, .zip input, -s.nn=c
+* v0.1: added -u.corr, -u.arl, -x.w2v, -x.d2v, -s.sgd, -s.xgb, .zip input, -s.nn=c
 * v0.2: added -x.bert, -x.tm, -x.ts, improved -s.nn, removed -e.cv (cross validation), fixed bug on text reading
 * v0.3: improved -x.bert, -x.d and -d.viz, added -d.c, -d.s, -d.m, -d.r, -d.x, changed -d.gen to -g.d
 * v0.4: added -d.export -g.mct, -u.som, -d.md, included -s.psvm in -s.svm, added wiki links, moved -u.w2v
+* v0.5: added -p.trs, -p.tsw, -o.if, -o.mcd, -o.lof, -u.ap, fixed bug on .zip reading, improved -u.corr
 
 ### 6) TO DO LIST
-* git clone + code examples
 * links to sklearn and tensorflow documentation for algorithms
+* improve -g.mct (markov chains generated text)
+* -x.gpt (gpt hidden states features from text)
 * -g.gan (gan generated data)
-* -u.ad  (anomaly detection outlier detection)
-* -u.nd  (novelty detection)
-* -s.tsf (timeseries forecasting)
+* -t.    (timeseries forecasting)
 
 
 '''
@@ -293,7 +300,7 @@ if '.csv' in f: #import .csv training set or (if there is a test set) create tra
 
 
 if '.zip' in f: #extract data from .zip, loading in memory
- o=f.replace('-',' -');
+ o=o.replace('-',' -'); print(f"processing {f} with {o}"); 
  filename=f.replace('.zip', ''); datatype='zip';
  zip=ZF.ZipFile(f, 'r'); i_=zip.namelist(); 
  if ',' in i_[0]: #extract supervised data from files in zip
@@ -302,7 +309,7 @@ if '.zip' in f: #extract data from .zip, loading in memory
   for i in i_:
    l_=i.split(','); label=l_[tgtcol]; d=zip.open(i); #print(d);
    if '.jpg' in i or '.png' in i:
-    d_=imread(d); d_=resize(d_, (size,size,1),anti_aliasing=True); dshape=(size,size); d_=d_.flatten(); x_.append(d_); y_.append(label); #read, resize and flatten images
+    d_=imread(d); d_=resize(d_, (size,size,3),anti_aliasing=True); dshape=(size,size); d_=d_.flatten(); x_.append(d_); y_.append(label); #read, resize and flatten images
 #ADD other file formats extraction
   print(dshape); x_=NP.array(x_).astype('float')/255.0;  y_=NP.array(y_).astype('float');
   x_=PD.DataFrame(x_); y_=PD.Series(y_); traininst=len(x_.index);
@@ -335,24 +342,52 @@ if '-d.x=' in o:
 if '-d.viz' in o:
  print('all scatterplots are 2D-PCA spaces\ntheory: https://en.wikipedia.org/wiki/Principal_component_analysis');
 
-#---association rule learning
-if '-u.arl' in o:
- x_=x_.to_numpy(); x_=x_.flatten(); x_=NP.array(x_, dtype=NP.str)
+#---unsupervised learning on unprocessed data
+
+if '-u.arl' in o: #association rule mining
+ xn_=x_.to_numpy(); xn_=xn_.flatten(); xn_=NP.array(xn_, dtype=NP.str)
  print('apply association rule learning (market basket analysis).\ntheory: https://en.wikipedia.org/wiki/Association_rule_learning \ndocs: https://github.com/rasbt/mlxtend');
- x_=NP.char.split(x_,sep=' '); 
+ xn_=NP.char.split(xn_,sep=' '); 
  from mlxtend.preprocessing import TransactionEncoder;
  import mlxtend;
  from mlxtend.frequent_patterns import apriori, association_rules;
  te = TransactionEncoder()
- te_ary = te.fit(x_).transform(x_)
+ te_ary = te.fit(xn_).transform(xn_)
  df = PD.DataFrame(te_ary, columns=te.columns_); 
  frequent_itemsets = apriori(df, min_support=0.01, use_colnames=True); #print(frequent_itemsets)
  #frequent_itemsets = fpmax(df, min_support=0.01, use_colnames=True)
  results=association_rules(frequent_itemsets, metric="confidence", min_threshold=0.1);
  af= open('analysis.txt', 'a'); af.write(results.to_string()+"\n\n"); af.close(); 
  print(results);
- print('results printed in analysis.txt file'); timestamp=DT.datetime.now(); print(f"time:{timestamp}");
+ print('results printed in analysis.txt file'); timestamp=DT.datetime.now(); 
+ print(f"-u.arl stops other tasks\ntime:{timestamp}");
  sys.exit();
+
+if '-u.corr' in o: #correlation analysis 
+ x_=PD.concat([x_, y_], axis=1)
+ x_=PD.get_dummies(x_); #x_=x_.reset_index(drop=True); #get one-hot values and restart row index from 0
+ print("correlation matrix on one-hot values:\n"+x_.corr().to_string()+"\n");
+ af= open('analysis.txt', 'a'); af.write("correlation matrix on one-hot values:\n\n"+x_.corr().to_string()+"\n\n"); af.close();
+ print('theory: https://en.wikipedia.org/wiki/Pearson_correlation_coefficient');
+ timestamp=DT.datetime.now(); print(f"-u.corr stops other tasks\ntime:{timestamp}"); 
+ sys.exit();
+
+if '-u.w2v' in o and 't_' in locals(): #word2vec
+ if '-u.w2v=' in o:
+  r_=re.findall(r'-u.w2v=(.+?) ',o); fw=int(r_[0][0]); nw=int(r_[0][1]); fw=fw*10; nw=nw*10;
+ else:
+  nw=20;
+ print(f'apply word2vec, extract dictionary of most freq. words from rank {fw} to {nw}\ntheory: https://en.wikipedia.org/wiki/Word2vec');
+ t_=t_.str.split(pat=" "); wmodel=W2V.models.Word2Vec(t_, min_count=2); words=list(wmodel.wv.vocab);  
+ wmodel.wv.save_word2vec_format('w2v.txt', binary=False); wmodel.save('w2v.bin'); #save word2vec dictionary
+ X = wmodel[wmodel.wv.index2entity[fw:nw]]; 
+ pca=SK.decomposition.PCA(n_components=2); result=pca.fit_transform(X); MP.scatter(result[:, 0], result[:, 1]); 
+ words_=list(wmodel.wv.index2entity[fw:nw]); #print(words_); # fit a 2d PCA model to the w2v vectors
+ [MP.annotate(word, xy=(result[i, 0], result[i, 1])) for i, word in enumerate(words_)]; 
+ MP.title('w2v 2d space'); MP.savefig(fname='w2v-space'); MP.show(); MP.clf(); #visualize w2v-space and save it
+ print('extracted word2vec dictionary from text. save w2v.txt, w2v.bin and w2v-space.png');
+ timestamp=DT.datetime.now(); print(f"-u.w2v stops other tasks\ntime:{timestamp}"); sys.exit();
+
 
 #---automatically detect target class type
 if task=='s': 
@@ -382,9 +417,8 @@ if 't_' in locals():
  t_=t_.astype(str);
 
 
-
 #---data preprocessing 
-if '-p.ri' in o:
+if '-p.ir' in o:
  x_=SK.utils.shuffle(x_, random_state=1); print('apply instance position randomization'); #
 
 #if '-p.stnd' in o: *TO REMOVE*
@@ -395,6 +429,19 @@ if '-p.tl' in o:
 
 if '-p.tc' in o:
  t_=t_.str.replace("\W", ' ', regex=True); t_=t_.str.replace(" {2,30}", ' ', regex=True); print('cleaning string from nonword characters and multiple spaces');
+
+if '-p.trs' in o:
+ stopw=r'\b.{1,3}\b';
+ t_ = t_.str.replace(stopw, ' ')
+ t_ = t_.str.replace(r'\s+', ' ')
+ print(f'apply regex 1 to 3 lenght word removal');
+
+if '-p.tsw=' in o:
+ r_=re.findall(r'-p.tsw=(.+?) ',o); swlist=r_[0];
+ swlist = swlist.replace(',',' | '); print(swlist); #get list of stopwords
+ t_ = t_.str.replace(swlist, ' ')
+ #t_ = t_.str.replace(r'\s+', ' ')
+ print(f'remove stopwords: {swlist}');
 
 ncols=len(x_._get_numeric_data().columns); cols=len(x_.columns); #count of label and numeric columns in dataset
 
@@ -412,10 +459,12 @@ else:
 
 #---feature extraction
 fx=0; #define flag for feature extraction
+
+#one-hot
 if not x_.empty and not 'zip' in datatype and cols >= ncols: #if data not empty, .csv and with label columns then extract features from labels, apply SVD
  x_=PD.get_dummies(x_); x_=x_.reset_index(drop=True); #get one-hot values and restart row index from 0
  print('async sparse one-hot matrix from labels:\n',x_) if '-d.data' in o else print('apply one-hot binarization of labels by default, obtain sparse async matrix'); #print(x_.describe()); 
-
+#SVD feature reduction
  if not '-d.r=0' in o: #check whether to run feature reduction or leave data as it is
   if len(x_.columns) >=2:
    svd=SK.decomposition.TruncatedSVD(svdim, random_state=1); x_=PD.DataFrame(svd.fit_transform(x_)); 
@@ -423,6 +472,7 @@ if not x_.empty and not 'zip' in datatype and cols >= ncols: #if data not empty,
    print('theory: https://en.wikipedia.org/wiki/Singular_value_decomposition');
   else:
    x_=PD.DataFrame(); print('tabular data dropped because too small');
+
 
 
 if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
@@ -518,54 +568,43 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
   print('sync dense bert matrix:\n',t_) if '-d.data' in o else print(f'extracted 768 features');
   print('theory: https://en.wikipedia.org/wiki/BERT_(language_model)');
 
- #GPT2
  '''
- os.system('pip install transformers')
-  
- 
- from transformers import OpenAIGPTTokenizer, OpenAIGPTModel
- import torch
- tokenizer = OpenAIGPTTokenizer.from_pretrained('openai-gpt')
- model = OpenAIGPTModel.from_pretrained('openai-gpt')
- inputs = tokenizer("Hello, my dog is cute", return_tensors="pt", output_attentions=True)
- outputs = model(**inputs); print(outputs);
- last_hidden_states = outputs.last_hidden_state; #features
- 
- from transformers import OpenAIGPTTokenizer, OpenAIGPTForSequenceClassification
- import torch
- tokenizer = OpenAIGPTTokenizer.from_pretrained('openai-gpt')
- model = OpenAIGPTForSequenceClassification.from_pretrained('openai-gpt')
- inputs = tokenizer("Hello, my dog is cute", return_tensors="pt")
- labels = torch.tensor([1]).unsqueeze(0)  # Batch size 1
- outputs = model(**inputs, labels=labels); print(outputs)
- loss = outputs.loss
- logits = outputs.logits
- 
- from transformers import OpenAIGPTTokenizer, TFOpenAIGPTModel
- import tensorflow as tf
- tokenizer = OpenAIGPTTokenizer.from_pretrained('openai-gpt')
- model = TFOpenAIGPTModel.from_pretrained('openai-gpt')
- inputs = tokenizer("Hello, my dog is cute", return_tensors="tf")
- outputs = model(inputs); print(outputs);
- last_hidden_states = outputs.last_hidden_state
+ #GPT2
+ if '-x.gpt' in o:
+  os.system('pip install transformers');
+  fx=1; orig_t_ = t_; #apply extraction, keep a copy of t_
+  from transformers import OpenAIGPTTokenizer, OpenAIGPTModel
+  import torch
+  tokenizer = OpenAIGPTTokenizer.from_pretrained('openai-gpt')
+  model = OpenAIGPTModel.from_pretrained('openai-gpt');
+  t2_=[];
+  for sent in tqdm(t_):
+   sent=str(sent)[:500];
+   inputs = tokenizer(str(sent), return_tensors="pt")
+   outputs = model(**inputs); #print(outputs);
+   last_hidden_states = outputs.last_hidden_state; t2_.append(last_hidden_states); #features
+   del(inputs); del(outputs); del(last_hidden_states);
+  t_=PD.DataFrame(t2_); del(t2_); print(t_);
  '''
 
  if '-x.d=' in o: #user defined lexical resources
   fx=1; 
+  orig_t_ = t_; #keep text for wordcloud
   r_=re.findall(r'-x.d=(.+?) ', o); l=r_[0]; print('extracting features from dictionary');
   if l=='p':
    print('using psy.dic'); 
-   l_=urllib.request.urlopen('http://personality.altervista.org/learnipy/psy.dic').read().decode('utf-8').splitlines();
+   l_=urllib.request.urlopen('https://raw.githubusercontent.com/facells/learnipy/main/resources/psy.dic').read().decode('utf-8').splitlines();
   elif l=='e':
    print('using emo.dic'); 
-   l_=urllib.request.urlopen('http://personality.altervista.org/learnipy/emo.dic').read().decode('utf-8').splitlines(); 
+   l_=urllib.request.urlopen('https://raw.githubusercontent.com/facells/learnipy/main/resources/emo.dic').read().decode('utf-8').splitlines(); 
   elif l=='d':
    print('using dom.dic'); 
-   l_=urllib.request.urlopen('http://personality.altervista.org/learnipy/dom.dic').read().decode('utf-8').splitlines(); 
+   l_=urllib.request.urlopen('https://raw.githubusercontent.com/facells/learnipy/main/resources/dom.dic').read().decode('utf-8').splitlines(); 
   else:
    print('using custom dictionary'); 
    l_=open(l, encoding="utf8").read().splitlines();
   h=l_.pop(0); h_=h.split(','); t2_=[]; hf=len(h_); #print(dir());
+  print(f"dimensions: {h}");
   for t in tqdm(t_):
    t=' '+t+' '; c=t.count(' '); i_=[0 for i_ in range(hf)];
    for i in l_:
@@ -602,14 +641,9 @@ if target=='c':
  ynp_=y_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nclass=len(classes); print(f"num classes= {nclass}")
 
 
-#---processed features unsupervised learning: analysis and clustering
+#---processed features unsupervised learning: clustering
 xc_=PD.concat([y_, x_], axis=1); xcc=xc_.corr(); xcc=PD.Series(xcc.iloc[0]); xcc=xcc.iloc[1:]; 
 complexity=1-(xcc.abs().max()); print(f"corr. complexity= {complexity:.3f}"); #compute complexity
-if '-u.corr' in o: #correlation analysis 
- print("correlation matrix:\n\n"+xc_.corr().to_string()+"\n\n");
- af= open('analysis.txt', 'a'); af.write("correlation matrix:\n\n"+xc_.corr().to_string()+"\n\n"); af.close();
- print('theory: https://en.wikipedia.org/wiki/Pearson_correlation_coefficient');
- timestamp=DT.datetime.now(); print(f"time:{timestamp}"); sys.exit();
 
 if '-u.km=' in o: #kmeans clustering
  r_=re.findall(r'-u.km=(.+?) ',o); nk=int(r_[0]);
@@ -661,21 +695,25 @@ if '-u.som' in o: #self organising map clustering (contributor: Fabio Celli)
   MP.colorbar(); MP.title('2D PCA data space som clusters'); 
   MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
 
-if '-u.w2v' in o and 't_' in locals(): #word2vec
- if '-u.w2v=' in o:
-  r_=re.findall(r'-u.w2v=(.+?) ',o); fw=int(r_[0][0]); nw=int(r_[0][1]); fw=fw*10; nw=nw*10;
- else:
-  nw=20;
- print(f'apply word2vec, extract {nw} most freq. words\ntheory: https://en.wikipedia.org/wiki/Word2vec');
- t_=t_.str.split(pat=" "); wmodel=W2V.models.Word2Vec(t_, min_count=2); words=list(wmodel.wv.vocab);  
- wmodel.wv.save_word2vec_format('w2v.txt', binary=False); wmodel.save('w2v.bin'); #save word2vec dictionary
- X = wmodel[wmodel.wv.index2entity[fw:nw]]; 
- pca=SK.decomposition.PCA(n_components=2); result=pca.fit_transform(X); MP.scatter(result[:, 0], result[:, 1]); 
- words_=list(wmodel.wv.index2entity[fw:nw]); #print(words_); # fit a 2d PCA model to the w2v vectors
- [MP.annotate(word, xy=(result[i, 0], result[i, 1])) for i, word in enumerate(words_)]; 
- MP.title('w2v 2d space'); MP.savefig(fname='w2v-space'); MP.show(); MP.clf(); #visualize w2v-space and save it
- print('extracted word2vec dictionary from text. save w2v.txt, w2v.bin and w2v-space.png');
- timestamp=DT.datetime.now(); print(f"time:{timestamp}"); sys.exit();
+if '-u.ap' in o: #affinity propagation clustering
+ clust = SK.cluster.AffinityPropagation(damping=0.5).fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['affinity']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('affinity').mean(); print('applied affinity propagation clustering. added 1 feature');
+ print('theory: https://en.wikipedia.org/wiki/Affinity_propagation');
+ af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); print(f"num clusters= {nk}");
+ if '-d.viz' in o:
+  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
+  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space affinity propagation clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
+
+
+#if '-u.gxm' in o: #gaussian models expectation maximisation
+# r_=re.findall(r'-u.gxm=(.+?) ',o); nk=int(r_[0]);
+# clust = SK.mixture.GaussianMixture(n_components=nk).fit(x_); l_=PD.DataFrame(clust.predict); l_.columns=['expectmax']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('expectmax').mean(); print('applied expectation maximisation clustering. added 1 feature');
+# print('theory: https://en.wikipedia.org/wiki/Expectation-maximization_algorithm');
+# af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); print(f"num clusters= {nk}");
+# if '-d.viz' in o:
+#  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
+#  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space expectation maximisation clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
+
+
 
 #---exporting
 if '-d.export' in o:
@@ -784,7 +822,54 @@ if 'mi' in locals(): #if split percentage is defined, then split train and test 
  x_train, x_test, y_train, y_test = SK.model_selection.train_test_split(x_, y_, test_size=mi, shuffle=True, random_state=1) # prepare train test eval 
  xtrain_inst=len(x_train.index); feat=len(x_train.columns); print(f'training set shape: {xtrain_inst} instances, {feat} features');
  xtest_inst=len(x_test.index); feat=len(x_test.columns); print(f'test set shape: {xtest_inst} instances, {feat} features');
- x_test2=x_test; #create a copy of x_test for evaluationin case of shape change
+ x_test2=x_test; #create a copy of x_test for evaluation in case of shape change
+
+#---outlier detection
+if '-o.' in o:
+ print(f"dataset before outlier detection: training set {x_train.shape}")
+ if target=='c':
+  model=SK.dummy.DummyClassifier(strategy='prior'); model.fit(x_train, y_train); y_pred=model.predict(x_test);
+  acc=SK.metrics.f1_score(y_test, y_pred); 
+  print(f"baseline before outlier detection: F1= {acc:.3f}"); 
+ if target=='r':
+  model=SK.dummy.DummyRegressor(strategy='mean'); model.fit(x_train, y_train); y_pred=model.predict(x_test);
+  r2=SK.metrics.r2_score(y_test, y_pred);
+  print(f"baseline before outlier detection: R2= {r2:.3f}");
+
+ #apply algorithms
+ if '-o.if' in o:
+  print('apply isolation forest\ntheory: https://en.wikipedia.org/wiki/Isolation_forest')
+  iso = SK.ensemble.IsolationForest(contamination=0.1)
+  yhat = iso.fit_predict(x_train)
+  mask = yhat != -1;
+  x_train, y_train = x_train[mask], y_train[mask]; # select all rows that are not outliers
+  print(f"dataset after outlier detection: training set {x_train.shape}")
+ 
+ if '-o.mcd' in o:
+  print('apply minimum covariance determinant\ntheory: https://en.wikipedia.org/wiki/Covariance_matrix#Covariance_matrix_as_a_parameter_of_a_distribution')
+  ee = SK.covariance.EllipticEnvelope(contamination=0.01)
+  yhat = ee.fit_predict(x_train) 
+  mask = yhat != -1; 
+  x_train, y_train = x_train[mask], y_train[mask]; # select all rows that are not outliers
+  print(f"dataset after outlier detection: training set {x_train.shape}")
+
+ if '-o.lof' in o:
+  print('apply local outlier factor\ntheory: https://en.wikipedia.org/wiki/Local_outlier_factor')
+  lof = SK.neighbors.LocalOutlierFactor()
+  yhat = lof.fit_predict(x_train)
+  mask = yhat != -1; 
+  x_train, y_train = x_train[mask], y_train[mask]; # select all rows that are not outliers
+  print(f"dataset after outlier detection: training set {x_train.shape}")
+
+ #evaluate
+ if target=='c':
+  model=SK.dummy.DummyClassifier(strategy='prior'); model.fit(x_train, y_train); y_pred=model.predict(x_test);
+  acc=SK.metrics.f1_score(y_test, y_pred); 
+  print(f"baseline after outlier detection: F1= {acc:.3f}"); 
+ if target=='r':
+  model=SK.dummy.DummyRegressor(strategy='mean'); model.fit(x_train, y_train); y_pred=model.predict(x_test);
+  r2=SK.metrics.r2_score(y_test, y_pred);
+  print(f"baseline after outlier detection: R2= {r2:.3f}");
 
 
 
@@ -795,7 +880,6 @@ if '-s.base' in o and target=='c':
 if '-s.base' in o and target=='r':
  model=SK.dummy.DummyRegressor(strategy='mean'); print('compute mean baseline');
  model.fit(x_train, y_train); y_pred=model.predict(x_test);  #'mean', 'median',
-
 
 if '-s.nb' in o and target=='c':
  model=SK.naive_bayes.ComplementNB();model.fit(x_train, y_train); y_pred=model.predict(x_test); 
@@ -1027,8 +1111,19 @@ if '-s.nn' in o:
   model.save(f"{filename}{opt}.h5"); print(f"model saved as {filename}{opt}.h5");
 
 
+#---time series forecasting
+if '-t.ml' in o:
+ x_train= x_train.set_index('time'); y_train= y_train.set_index('time');  #set date as the instance index
+ x_test= x_test.set_index('time'); y_test= y_test.set_index('time');  #set date as the instance index
+ ewma = pd.DataFrame.ewm
+ yn_= ewma( y_, com=2 )
+ model=SK.linear_model.BayesianRidge();model.fit(x_train, y_train); y_pred=model.predict(x_test); y_pred=y_pred.flatten(); 
+ print('apply bayesian ridge regression (on normalized space)\ntheory: https://en.wikipedia.org/wiki/Bayesian_linear_regression');
+
+
 if not 'y_pred' in locals():
  print('no supervised model trained. nothing else to do.'); sys.exit();
+
 
 #---model details
 if '-d.md' in o and not '-s.base' in o:
@@ -1126,3 +1221,5 @@ if '-d.viz' in o:
    MP.savefig('wordcloud_%s.png' % k); MP.show(); MP.clf();
 
 timestamp=DT.datetime.now(); print(timestamp);
+
+
