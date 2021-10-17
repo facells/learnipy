@@ -1,5 +1,5 @@
 # LEARNIPY
-* version 0.4
+* version 0.5
 * making machine learning easy for everyone
 * written with ♥ by Fabio Celli, 
 * email: fabio.celli.phd@gmail.com
@@ -36,7 +36,22 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * the text column can be named 'text' in the .csv file or defined with -d.s= option
 * data.zip must contain .png or .jpg files. the files names must be comma-separated. example: imgID,class,.jpg
 
-### 3) DOCUMENTATION
+### 4) USAGE 
+* to train a model: %run learnipy.py 'options' traindata [testdata], for example
+
+ >%run learnipy.py '-d.t=c -x.tm=700 -d.viz -s.nn=f' traindata.csv
+
+* 'options' is a string containing the operations, defined at paragraph 4.
+* yourdata.csv can be a .csv for tabular and text data or .zip for pictures.
+* [testdata] is optional, if given is used as a test set, if not the training set is split
+* to make predictions on new data: %run learnipy.py '-d.pred' model testdata, for example
+
+ >%run learnipy.py '-d.pred' model.h5 testdata.csv
+
+* models can have .h5 (deep learning) or .h4 (machine learning) extension
+* try it on https://colab.research.google.com/drive/1DfDp2VFaTTMz_B6uLrOdWKQkrer32S9M?usp=sharing
+
+### 4) DOCUMENTATION
 #### data management
 * -d.t=c|r    *define type of task. c=classification, r=regression*
 * -d.x=n,m,o  *define the columns to exclude. n,m,o=names of columns to exclude*
@@ -54,30 +69,37 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 #### data generation
 * -g.d=132    *generate dataset, create gen.csv. 1=num instances x1000, 3=num features x10, 2=num informative features x10*
 #### preprocessing
-* -p.ri       *randomize instances in the training set*
+* -p.ir       *instance position randomization, applies to the training set*
 * -p.cn       *class normalize. turn numeric class to range 0-1*
 * -p.fn       *feature normalize, turn features to range 0-1 (applied by default with some nn, sgd and nb)*
 * -p.tl       *text to lowercase*
-* -p.tc       *clean text from non alphanum char and multiple spaces*
+* -p.tc       *text cleaning. removes non alphanum char and multiple spaces*
+* -p.trs      *text regex stopwords. removes words from length 1 to length 3*
+* -p.tsw=a,b  *text stopwords. removes stopwords, a,b=stopwords list, no spaces allowed.*
 #### feature reduction
 * -r.svd=5    *singular value decomposition. turn sparse label matrix to dense and sync. 5=number of features*
 * -r.lsa=5    *latent semantic analysis. turn sparse word/char matrix to dense and sync. 5=number of features*
-#### text feature extraction
+#### feature extraction
 * -x.ng=23cf  *ngrams. turn text to word|char ngrams freq|tfidf matrix and apply lsa. 2=min, 3=max, c=chars|w=words, f=freq|t=tfidf*
 * -x.tm=5     *token matrix. turn text into word frequency matrix. 5=number of features*
 * -x.ts=5     *token sequences. columns are padded sequences of words. 5=number of features* 
 * -x.cm=5     *char matrix. turn text into character frequency matrix. 5=number of features*
 * -x.d2v=5    *turn text into doc2vec word-context dense feature matrix. 5=number of features*
 * -x.bert     *turn text into a dense matrix with multi-language bert transformer model*
-* -x.d=f|x    *extract features from custom dictionary mapping. f=file.dic, x=select from http://personality.altervista.org/learnipy/ *
+* -x.d=e      *extract features from custom dictionary. e=dictionary. check https://github.com/facells/learnipy/tree/main/resources
 #### unsupervised learning
 * -u.km=2     *kmeans, centroid clustering. add a new colum to dataset. results in analysis.txt. 2=num clusters*
 * -u.optics   *optics, density clustering. add a new colum to dataset. results in analysis.txt*
 * -u.msh      *mshift, density clustering. add a new colum to dataset. results in analysis.txt*
+* -u.ap       *affinity propagation exemplar clustering. add a new colum to dataset. results in analysis.txt*
 * -u.som      *self organising map, neural network clustering. add a new colum to dataset. results in analysis.txt*
 * -u.w2v[=15] *word2vec dictionary from text, pca-2d word2vec space. 1=words to filter x10, 5=words to visualize x10*
 * -u.arl      *association rule learning with apriori. prints results in analysis.txt*
 * -u.corr     *feature analysis with pearson correlations. prints results in analysis.txt*
+#### outlier detection
+* -o.if       *isolation forest. find and remove outliers using trees split*
+* -o.mcd      *minimum covariance determinant with ellipsis envelope. find and remove outliers using gaussian distribution*
+* -o.lof      *local outlier factor. find and remove outliers using nearest neighbors*
 #### supervised learning
 * -s.base     *majority baseline for classification and regression*
 * -s.nb       *probabilistic models. complement naive bayes for classification, bayes ridge for regression*
@@ -91,36 +113,21 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -s.rf       *ensemble learning, random forest*
 * -s.ada      *ensemble learning, adaboost based on samme.r algorithm*
 * -s.xgb      *ensemble learning, xgboost*
-* -s.nn=f[51] *deep learning. f=feedfwd|i=imbalance|r=rnn|l=lstm|b=bilstm|g=gru|c=cnn. 5=2x units, 1=num layers*
+* -s.nn=f[51] *deep learning. f=feedfwd|i=imbalance|r=rnn|l=lstm|b=bilstm|g=gru|c=cnn. 5= x10 units, 1=num layers*
 #### evaluation
 * -e.tts=0.2  *train-test split. 0.2=20% test split. ignored if test set is provided*
 
-### 4) USAGE 
-* to train a model: %run learnipy.py 'options' traindata [testdata], for example
-
- >%run learnipy.py '-d.t=c -x.tm=700 -d.viz -s.nn=f' traindata.csv
-
-* 'options' is a string containing the operations, defined at paragraph 4.
-* yourdata.csv can be a .csv for tabular and text data or .zip for pictures.
-* [testdata] is optional, if given is used as a test set, if not the training set is split
-* to make predictions on new data: %run learnipy.py '-d.pred' model testdata, for example
-
- >%run learnipy.py '-d.pred' model.h5 testdata.csv
-
-* models can have .h5 (deep learning) or .h4 (machine learning) extension
-* try it on https://colab.research.google.com/drive/1DfDp2VFaTTMz_B6uLrOdWKQkrer32S9M?usp=sharing
-
 ### 5) CHANGELOG
 * v0.0: developed the main features
-* v0.1: added -u.corr, -u.arm, -x.w2v, -x.d2v, -s.sgd, -s.xgb, .zip input, -s.nn=c
+* v0.1: added -u.corr, -u.arl, -x.w2v, -x.d2v, -s.sgd, -s.xgb, .zip input, -s.nn=c
 * v0.2: added -x.bert, -x.tm, -x.ts, improved -s.nn, removed -e.cv (cross validation), fixed bug on text reading
 * v0.3: improved -x.bert, -x.d and -d.viz, added -d.c, -d.s, -d.m, -d.r, -d.x, changed -d.gen to -g.d
 * v0.4: added -d.export -g.mct, -u.som, -d.md, included -s.psvm in -s.svm, added wiki links, moved -u.w2v
+* v0.5: added -p.trs, -p.tsw, -o.if, -o.mcd, -o.lof, -u.ap, fixed bug on .zip reading, improved -u.corr
 
 ### 6) TO DO LIST
-* git clone + code examples
 * links to sklearn and tensorflow documentation for algorithms
+* improve -g.mct (markov chains generated text)
+* -x.gpt (gpt hidden states features from text)
 * -g.gan (gan generated data)
-* -u.ad  (anomaly detection outlier detection)
-* -u.nd  (novelty detection)
-* -s.tsf (timeseries forecasting)
+* -t.    (timeseries forecasting)
