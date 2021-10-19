@@ -1161,7 +1161,7 @@ if '-d.md' in o and not '-s.base' in o:
 #  scores = SK.model_selection.cross_val_score(model, x_, y_, scoring='r2', cv=cv, n_jobs=-1); print('eval with {folds}-fold cross-validation R2= %.3f (+ - %.2f)' % (NP.mean(scores), NP.std(scores))) 
 
 
-if '-s.' in o: #if the task is supervised run evaluation
+if '-s.' in o or '-o.' in o: #if the task is supervised run evaluation
  x_test=x_test2; #restore x_test in its dataframe form
  if target=='c': 
   #scores=model.fit(x_train, y_train);  y_pred = model.predict_classes(x_test); print(scores); #print(y_test); print(y_pred);
@@ -1221,5 +1221,4 @@ if '-d.viz' in o:
    MP.savefig('wordcloud_%s.png' % k); MP.show(); MP.clf();
 
 timestamp=DT.datetime.now(); print(timestamp);
-
 
