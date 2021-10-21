@@ -98,9 +98,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -u.arl      *association rule learning with apriori. prints results in analysis.txt*
 * -u.corr     *feature analysis with pearson correlations. prints results in analysis.txt*
 #### outlier detection
-* -o.if       *isolation forest. find and remove outliers using trees split*
+* -o.if       *isolation forest. find and remove outliers using random forest regions*
 * -o.mcd      *minimum covariance determinant with ellipsis envelope. find and remove outliers using gaussian distribution*
-* -o.lof      *local outlier factor. find and remove outliers using nearest neighbors*
+* -o.lof      *local outlier factor. find and remove outliers using optics less dense regions*
 #### supervised learning
 * -s.base     *majority baseline for classification and regression*
 * -s.nb       *probabilistic models. complement naive bayes for classification, bayes ridge for regression*
@@ -1076,11 +1076,10 @@ if '-s.nn' in o:
    model.add(TF.keras.layers.Dropout(0.3));
    model.add(TF.keras.layers.Dense(nclass, activation=outactiv));
   if len(dshape)==2:
-   x_train=x_train.reshape((xtrain_inst,dshape[0],dshape[1],1));
-   x_test=x_test.reshape((xtest_inst,dshape[0],dshape[1],1));
+   x_train=x_train.reshape((xtrain_inst,dshape[0],dshape[1],3));
+   x_test=x_test.reshape((xtest_inst,dshape[0],dshape[1],3));
    model = TF.keras.Sequential();
-   [model.add(TF.keras.layers.Conv2D(nu, kernel_size=(3, 3), activation=activ, input_shape=(dshape[0],dshape[1],1))) for n in range(0,nl)]
-  # [model.add(TF.keras.layers.Conv2D(nu, kernel_size=(3, 3), activation=activ)) 
+   [model.add(TF.keras.layers.Conv2D(nu, kernel_size=(3, 3), activation=activ, input_shape=(dshape[0],dshape[1],3))) for n in range(0,nl)]
    model.add(TF.keras.layers.MaxPooling2D(pool_size=(2, 2)));
    model.add(TF.keras.layers.Conv2D(nu*2, kernel_size=(3, 3), activation=activ));
    model.add(TF.keras.layers.MaxPooling2D(pool_size=(2, 2)));
@@ -1089,9 +1088,11 @@ if '-s.nn' in o:
 
  
  model.compile(optimizer=opt,  loss=los,  metrics=[metric]);
-
+ 
  print('creating models on training set. max 100 epochs, stop after 5 epochs with no improvement');
- earlystop = TF.keras.callbacks.EarlyStopping(patience=5, monitor=metric); model.fit(x_train, y_train, epochs=100, callbacks=[earlystop], verbose=1);# 
+ earlystop = TF.keras.callbacks.EarlyStopping(patience=5, monitor=metric); 
+ model.fit(x_train, y_train, epochs=100, callbacks=[earlystop], verbose=1);# 
+
  print('evaluating model on test set'); model.evaluate(x_test,  y_test, verbose=2); 
  if target=='c':
   y_pred=model.predict(x_test); y_pred = y_pred.argmax(axis=-1); y_test=PD.Series(y_test);   #make class predictions from functional model and count classes from test for conf matrix
@@ -1161,7 +1162,7 @@ if '-d.md' in o and not '-s.base' in o:
 #  scores = SK.model_selection.cross_val_score(model, x_, y_, scoring='r2', cv=cv, n_jobs=-1); print('eval with {folds}-fold cross-validation R2= %.3f (+ - %.2f)' % (NP.mean(scores), NP.std(scores))) 
 
 
-if '-s.' in o or '-o.' in o: #if the task is supervised run evaluation
+if '-s.' in o: #if the task is supervised run evaluation
  x_test=x_test2; #restore x_test in its dataframe form
  if target=='c': 
   #scores=model.fit(x_train, y_train);  y_pred = model.predict_classes(x_test); print(scores); #print(y_test); print(y_pred);
