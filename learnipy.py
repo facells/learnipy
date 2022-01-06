@@ -650,6 +650,7 @@ if '-u.km=' in o: #kmeans clustering
  clust = SK.cluster.KMeans(n_clusters=nk, random_state=0).fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['kmeans']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('kmeans').mean(); print('applied kmeans clustering. added 1 feature'); 
  print('theory: https://en.wikipedia.org/wiki/K-means_clustering');
  af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close();  print(f"num clusters= {nk}");
+ print(g_.to_string()+"\n\n");
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space kmeans clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
@@ -657,7 +658,8 @@ if '-u.km=' in o: #kmeans clustering
 if '-u.optics' in o: #optics clustering
  clust = SK.cluster.OPTICS(min_cluster_size=None).fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['optics']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('optics').mean(); print('applied optics clustering. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/OPTICS_algorithm');
- af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); print(f"num clusters= {nk}");
+ af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n");  af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); print(f"num clusters= {nk}");
+ print(g_.to_string()+"\n\n");
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space optics clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
@@ -666,6 +668,7 @@ if '-u.msh' in o: #meanshift clustering
  clust = SK.cluster.MeanShift().fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['mshift']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('mshift').mean(); print('applied mshift clustering. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/Mean_shift');
  af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); print(f"num clusters= {nk}");
+ print(g_.to_string()+"\n\n");
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space meanshift clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
@@ -688,6 +691,7 @@ if '-u.som' in o: #self organising map clustering (contributor: Fabio Celli)
  af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
  ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); 
  nk=len(classes); print(f"num clusters= {nk}");
+ print(g_.to_string()+"\n\n");
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); 
   MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(col_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
@@ -699,6 +703,7 @@ if '-u.ap' in o: #affinity propagation clustering
  clust = SK.cluster.AffinityPropagation(damping=0.5).fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['affinity']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('affinity').mean(); print('applied affinity propagation clustering. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/Affinity_propagation');
  af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); print(f"num clusters= {nk}");
+ print(g_.to_string()+"\n\n");
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space affinity propagation clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
