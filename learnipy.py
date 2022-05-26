@@ -1,7 +1,7 @@
 documentation='''
 # LEARNIPY
-* version 0.5
-* making machine learning easy for everyone
+* version 0.6
+* making machine learning easier
 * written with ♥ by Fabio Celli, 
 * email: fabio.celli.phd@gmail.com
 * twitter: @facells
@@ -59,6 +59,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -d.s=n      *define the string column treated as text. n=name of text column
 * -d.c=n      *define the column of the target class. n=name (for .csv) or index (for .zip) of class column*
 * -d.r=0      *do not use feature reduction, keep original features (not applicable with -d.save)*
+* -d.z=30     *define custom resize of pictures. 30=size 30x30*
 * -d.m=1      *fill class missing values. 1=replace all missing values in class with mean/mode (otherwise are deleted by default)*
 * -d.viz      *print pca-projected 2d data scatterplot and other visualizations*
 * -d.md       *model details. prints info on algorithm parameters and data modeling*
@@ -85,8 +86,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -x.tm=5     *token matrix. turn text into word frequency matrix. 5=number of features*
 * -x.ts=5     *token sequences. columns are padded sequences of words. 5=number of features* 
 * -x.cm=5     *char matrix. turn text into character frequency matrix. 5=number of features*
-* -x.d2v=5    *turn text into doc2vec word-context dense feature matrix. 5=number of features*
-* -x.bert     *turn text into a dense matrix with multi-language bert transformer model*
+* -x.d2v=5    *(deprecated. will be removed) turn text into doc2vec word-context dense feature matrix. 5=number of features*
+* -x.bert     *extract 768 features from text to a dense matrix with multi-language bert transformer model*
+* -x.mobert   *extract 512 features from text to a dense matrix with multi-language mobile bert transformer model*
 * -x.d=e      *extract features from custom dictionary. e=dictionary. check https://github.com/facells/learnipy/tree/main/resources
 #### unsupervised learning
 * -u.km=2     *kmeans, centroid clustering. add a new colum to dataset. results in analysis.txt. 2=num clusters*
@@ -115,6 +117,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -s.ada      *ensemble learning, adaboost based on samme.r algorithm*
 * -s.xgb      *ensemble learning, xgboost*
 * -s.nn=f[51] *deep learning. f=feedfwd|i=imbalance|r=rnn|l=lstm|b=bilstm|g=gru|c=cnn. 5= x10 units, 1=num layers*
+#### time series forecasting
+* -t.arma     *auto regression moving average*
+* -t.arima    *auto regression integrated moving average*
+* -t.sarima   *seasonal auto regression integrated moving average*
+* -t.hwes     *Holt-Winters exponential smoothing*
 #### evaluation
 * -e.tts=0.2  *train-test split. 0.2=20% test split. ignored if test set is provided*
 
@@ -125,14 +132,18 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.3: improved -x.bert, -x.d and -d.viz, added -d.c, -d.s, -d.m, -d.r, -d.x, changed -d.gen to -g.d
 * v0.4: added -d.export -g.mct, -u.som, -d.md, included -s.psvm in -s.svm, added wiki links, moved -u.w2v
 * v0.5: added -p.trs, -p.tsw, -o.if, -o.mcd, -o.lof, -u.ap, fixed bug on .zip reading, improved -u.corr
+* v0.6: improved anomaly detection evaluation, added -t., -x.mobert
 
 ### 6) TO DO LIST
 * links to sklearn and tensorflow documentation for algorithms
-* improve -g.mct (markov chains generated text)
-* -x.gpt (gpt hidden states features from text)
-* -g.gan (gan generated data)
-* -t.    (timeseries forecasting)
-
+* -g.mct (markov chains generated text)
+* -g.gpt (gpt generated from text)
+* improve -u.corr  (correlation ranking)
+* remove -x.d2v because it is not replicable
+* -x.gap global average pooling image feature extraction
+* table to image extraction
+* improve test set input
+* -u.gxm expectation maximisation
 
 '''
 
@@ -146,7 +157,7 @@ import numpy as NP;
 import tensorflow as TF;
 import zipfile as ZF;
 import sklearn as SK; from sklearn import *; from skimage.io import imread; from skimage.transform import resize;
-import matplotlib.pyplot as MP; MP.rcParams["figure.figsize"]=(4,3);
+import matplotlib.pyplot as MP; MP.rcParams["figure.figsize"]=(5,4);
 import gensim as W2V; from gensim.models.doc2vec import Doc2Vec, TaggedDocument;
 import nltk; from nltk.tokenize import word_tokenize; nltk.download('punkt', quiet=True);
 import sys; 
@@ -158,11 +169,13 @@ import shutil;
 import tensorflow_hub as TH;
 from tqdm import tqdm;
 import urllib.request; 
+import statsmodels.api as SM
 
 NP.random.seed(1); TF.random.set_seed(2);
 TF.compat.v1.logging.set_verbosity(TF.compat.v1.logging.ERROR);
+MP.clf();
 
-
+print("\n\n");
 print('---START PROCESS---');
 timestamp=DT.datetime.now(); print(f"time:{timestamp}");
 
@@ -175,13 +188,13 @@ if '-h' in o:
 
 #---files reading
 try:
- f=sys.argv[2];
+ f=sys.argv[2]; #take dataset or model
 except:
  print('no file loaded'); sys.exit();
 
 
 try:
- f2=sys.argv[3];
+ f2=sys.argv[3]; #take testset or newdataset
 except:
  print('using training set');
 
@@ -205,38 +218,30 @@ if '-g.mct' in o: #markov chains to generate text with next word probability
  #print(text_model.make_short_sentence(280));
 
 
-#---data and model import
 datatype='';
-if 'f2' in locals(): #import csv test set
- if '.csv' in f2:
-  testname=f2.replace('.csv', ''); datatype='csv'; 
-  x2_=PD.read_csv(f2, sep=',', encoding='utf8'); 
-  testinst=len(x2_.index); print('using training and test sets');
- if '.zip' in f2:
-  testname=f2.replace('.zip', ''); datatype='zip';
-  zip=ZF.ZipFile(f2, 'r'); i_=zip.namelist(); print('using training and test sets');
-  if ',' in i_[0]: #extract supervised data from files in zip
-   x2_=[]; y2_=[];
-   for i in i_:
-    l_=i.split(','); label=l_[tgtcol]; d=zip.open(i); #print(d);
-    if '.jpg' in i or '.png' in i:
-     d_=imread(d); d_=resize(d_, (size,size,1),anti_aliasing=True); dshape=(size,size); d_=d_.flatten(); x_.append(d_); y_.append(label); #read, resize and flatten images
- #ADD other file formats extraction
-   x2_=NP.array(x2_).astype('float')/255.0;  y2_=NP.array(y2_).astype('int');
-   x2_=PD.DataFrame(x2_); y2_=PD.Series(y2_); testinst=len(x2_.index); print(testinst);
-
 
 
 #---initialize default settings
-if '-d.z=' in o:#get name of string column
+if 'f2' in locals() and '.csv' in f2: #import csv test set
+ datatype='csv'; 
+
+if 'f2' in locals() and '.zip' in f2:
+ datatype='zip';
+
+if '-d.z=' in o:#get custom size of picture
  r_=re.findall(r'-d.z=(.+?) ',o); size=int(r_[0]); print(f"using pics size {size}x{size}");  
-else:#otherwise apply default name
+else:#otherwise apply default size 28x28
  size=28; print(f"using default size for pics {size}x{size}"); 
+
+if '-d.ts=' in o:#get name of timestamp column
+ r_=re.findall(r'-d.ts=(.+?) ',o); tscol=(r_[0]); print(f"using '{tscol}' as timestamp column");
+else:#otherwise apply default name
+ tscol='date'; print('extract "date" as timestamp column'); 
 
 if '-d.s=' in o:#get name of string column
  r_=re.findall(r'-d.s=(.+?) ',o); txtcol=(r_[0]); print(f"using '{txtcol}' as string column");
 else:#otherwise apply default name
- txtcol='text'; print('searching "text" as string column'); 
+ txtcol='text'; print('extract "text" as string column'); 
 
 if '-d.c=' in o:#get name of class column
  if re.search(r'-d.c=[a-zA-Z]', o):
@@ -245,34 +250,72 @@ if '-d.c=' in o:#get name of class column
   r_=re.findall(r'-d.c=(.+?) ',o); tgtcol=int(r_[0]); print(f"'{tgtcol}' is the target class column"); 
 else:#otherwise apply default name
  if '.csv' in f or datatype=='csv':
-  tgtcol='class'; print('searching "class" as target class column'); 
+  tgtcol='class'; print('extract "class" as target class'); 
  if '.zip' in f or datatype=='zip':
-  tgtcol=1; print('searching "1" as target class column');
+  tgtcol=1; print('extract ,label, from file name as target class');
 
-if '-d.x=' in o:
- r_=re.findall(r'-d.x=(.+?) ',o); drop=r_[0].split(','); #get name of column to drop
+if '-d.x=' in o:#get name of column to drop
+ r_=re.findall(r'-d.x=(.+?) ',o); drop=r_[0].split(','); 
 
-if '-d.t=c' in o:
+if '-d.t=c' in o: #auto define classification or regression
  target='c'; print('task: classification')
 if '-d.t=r' in o:
  target='r'; print('task: regression');
 
-#---import daved models
+
+
+#---reading test set
+if 'f2' in locals(): #import csv test set
+ if '.csv' in f2:
+  testname=f2.replace('.csv', ''); datatype='csv'; 
+  x2_=PD.read_csv(f2, sep=',', encoding='utf8'); 
+  testinst=len(x2_.index); print('using test set or new set');
+ if '.zip' in f2:
+  testname=f2.replace('.zip', ''); datatype='zip';
+  zip=ZF.ZipFile(f2, 'r'); i_=zip.namelist(); print('using test set or new set');
+  if ',' in i_[0]: #extract supervised data from files in zip
+   x2_=[]; y2_=[]; names_=[];
+   for i in i_:
+    l_=i.split(','); 
+    if l_[1]!='':
+     label=l_[1]; 
+    else: label=0;
+    d=zip.open(i); #print(d);
+    if '.jpg' in i or '.png' in i:
+     d_=imread(d); names_.append(d.name); d_=resize(d_, (size,size,3),anti_aliasing=True); dshape=(size,size); d_=d_.flatten(); 
+     x2_.append(d_); y2_.append(label); #read, resize and flatten images
+ #ADD other file formats extraction
+   x2_=NP.array(x2_).astype('float')/255.0; y2_=NP.array(y2_).astype('int');
+   x2_=PD.DataFrame(x2_); y2_=PD.Series(y2_); testinst=len(x2_.index); print(testinst);
+
+
+
+#---import saved models
 if '.h4' in f and '-d.pred' in o: #import machine learning saved model
  loadmodel = joblib.load(f);
- o=f.replace('-',' -'); x_=x2_; print(f"apply {o} to {f2}"); print(tgtcol) #use model filename as o and test set as the main dataset to go into the pipeline with the same settings as the model trained
+ o=f.replace('-',' -'); x_=x2_; print(f"apply {o} to {f2}"); #print(tgtcol) #use model filename as o and test set as the main dataset to go into the pipeline with the same settings as the model trained
  if 'tgtcol' in locals() and tgtcol in x_.columns:
   y_=x_[tgtcol]; x_=x_.drop(columns=[tgtcol]); task='s'; print('target found');
  if 'txtcol' in locals() and txtcol in x_.columns:
-  t_=x_[txtcol]; x_=x_.drop(columns=[txtcol]); 
+  t_=x_[txtcol]; x_=x_.drop(columns=[txtcol]); print('text found');
+ if 'tscol' in locals() and tscol in x_.columns:
+  d_=x_[tscol]; x_=x_.drop(columns=[tscol]); print('date found');
 
 if '.h5' in f and '-d.pred' in o: #import deep learning saved model
  loadmodel = TF.keras.models.load_model(f);
  o=f.replace('-',' -'); x_=x2_; print(f"apply {o} to {f2}"); #use model filename as o and test set as the main dataset to go into the pipeline with the same settings as the model trained
+ if datatype=='zip':
+  x2_=PD.DataFrame(names_);
  if 'tgtcol' in locals() and tgtcol in x_.columns:
-  y_=x_[tgtcol]; x_=x_.drop(columns=[tgtcol]); task='s'; print('target found');
+  y_=x_[tgtcol]; task='s'; print('target found');
+  if datatype=='csv':
+   x_=x_.drop(columns=[tgtcol]);
  if 'txtcol' in locals() and txtcol in x_.columns:
-  t_=x_[txtcol]; x_=x_.drop(columns=[txtcol]); 
+  t_=x_[txtcol]; x_=x_.drop(columns=[txtcol]); print('text found');
+ if 'tscol' in locals() and tscol in x_.columns:
+  d_=x_[tscol]; x_=x_.drop(columns=[tscol]); print('date found');
+
+
 
 #---read data
 if '.csv' in f: #import .csv training set or (if there is a test set) create training+test set
@@ -297,7 +340,11 @@ if '.csv' in f: #import .csv training set or (if there is a test set) create tra
 
  if 'txtcol' in locals() and txtcol in x_.columns: #create dataframe to process text
   t_=x_[txtcol]; x_=x_.drop(columns=[txtcol]); t_=t_.reset_index(drop=True); #start row index from 0
+  print(f"taken {txtcol} as string column");
 
+ if 'tscol' in locals() and tscol in x_.columns: #create dataframe to process text
+  d_=x_[tscol]; x_=x_.drop(columns=[tscol]); d_=d_.reset_index(drop=True); d_=d_.rename({tscol:'date'}, axis='columns') #rename the time column
+  print(f"taken {tscol} as date column");
 
 if '.zip' in f: #extract data from .zip, loading in memory
  o=o.replace('-',' -'); print(f"processing {f} with {o}"); 
@@ -307,13 +354,14 @@ if '.zip' in f: #extract data from .zip, loading in memory
   task='s'; print('target found, suppose supervised task');
   x_=[]; y_=[]; print('reading data from .zip');
   for i in i_:
-   l_=i.split(','); label=l_[tgtcol]; d=zip.open(i); #print(d);
+   l_=i.split(','); label=l_[1]; d=zip.open(i); #print(d);
    if '.jpg' in i or '.png' in i:
-    d_=imread(d); d_=resize(d_, (size,size,3),anti_aliasing=True); dshape=(size,size); d_=d_.flatten(); x_.append(d_); y_.append(label); #read, resize and flatten images
+    d_=imread(d); d_=resize(d_, (size,size,3),anti_aliasing=True); dshape=(size,size); d_=d_.flatten(); 
+    x_.append(d_); y_.append(label); #read, resize and flatten images
 #ADD other file formats extraction
   print(dshape); x_=NP.array(x_).astype('float')/255.0;  y_=NP.array(y_).astype('float');
   x_=PD.DataFrame(x_); y_=PD.Series(y_); traininst=len(x_.index);
-  if 'x2_' in locals():
+  if 'x2_' in locals() and not '-d.pred' in o:
    tts=((100/(traininst+testinst))*testinst)/100; print(f'test set percentage={tts}');  #compute tts percentage  
    x_=PD.concat([x_, x2_], axis=0, ignore_index=True); y_=PD.concat([y_, y2_], axis=0, ignore_index=True);
 
@@ -372,21 +420,6 @@ if '-u.corr' in o: #correlation analysis
  timestamp=DT.datetime.now(); print(f"-u.corr stops other tasks\ntime:{timestamp}"); 
  sys.exit();
 
-if '-u.w2v' in o and 't_' in locals(): #word2vec
- if '-u.w2v=' in o:
-  r_=re.findall(r'-u.w2v=(.+?) ',o); fw=int(r_[0][0]); nw=int(r_[0][1]); fw=fw*10; nw=nw*10;
- else:
-  nw=20;
- print(f'apply word2vec, extract dictionary of most freq. words from rank {fw} to {nw}\ntheory: https://en.wikipedia.org/wiki/Word2vec');
- t_=t_.str.split(pat=" "); wmodel=W2V.models.Word2Vec(t_, min_count=2); words=list(wmodel.wv.vocab);  
- wmodel.wv.save_word2vec_format('w2v.txt', binary=False); wmodel.save('w2v.bin'); #save word2vec dictionary
- X = wmodel[wmodel.wv.index2entity[fw:nw]]; 
- pca=SK.decomposition.PCA(n_components=2); result=pca.fit_transform(X); MP.scatter(result[:, 0], result[:, 1]); 
- words_=list(wmodel.wv.index2entity[fw:nw]); #print(words_); # fit a 2d PCA model to the w2v vectors
- [MP.annotate(word, xy=(result[i, 0], result[i, 1])) for i, word in enumerate(words_)]; 
- MP.title('w2v 2d space'); MP.savefig(fname='w2v-space'); MP.show(); MP.clf(); #visualize w2v-space and save it
- print('extracted word2vec dictionary from text. save w2v.txt, w2v.bin and w2v-space.png');
- timestamp=DT.datetime.now(); print(f"-u.w2v stops other tasks\ntime:{timestamp}"); sys.exit();
 
 
 #---automatically detect target class type
@@ -466,12 +499,12 @@ if not x_.empty and not 'zip' in datatype and cols >= ncols: #if data not empty,
  print('async sparse one-hot matrix from labels:\n',x_) if '-d.data' in o else print('apply one-hot binarization of labels by default, obtain sparse async matrix'); #print(x_.describe()); 
 #SVD feature reduction
  if not '-d.r=0' in o: #check whether to run feature reduction or leave data as it is
-  if len(x_.columns) >=2:
+  if len(x_.columns) >2:
    svd=SK.decomposition.TruncatedSVD(svdim, random_state=1); x_=PD.DataFrame(svd.fit_transform(x_)); 
    print('sync dense SVD matrix from one-hot labels:\n',x_) if '-d.data' in o else print('apply Singular Value Decomposition of data by default, obtain dense sync matrix');
    print('theory: https://en.wikipedia.org/wiki/Singular_value_decomposition');
   else:
-   x_=PD.DataFrame(); print('tabular data dropped because too small');
+   x_=x_; print('tabular data is small, SVD not applied');
 
 
 
@@ -532,7 +565,7 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
 
 
  if '-x.d2v=' in o: #doc2vec
-  print('apply doc2vec\ntheory: https://en.wikipedia.org/wiki/Word2vec#Extensions');
+  print('apply doc2vec (will be removed in the next version) \ntheory: https://en.wikipedia.org/wiki/Word2vec#Extensions');
   orig_t_ = t_; #keep text for wordcloud
   r_=re.findall(r'-x.d2v=(.+?) ', o); size=int(r_[0]);  fx=1;
   t_=[TaggedDocument(words=word_tokenize(_d.lower()), tags=[str(i)]) for i, _d in enumerate(t_)]; 
@@ -543,13 +576,14 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
 
 
  if '-x.bert ' in o: #bert uncased multi language (contributor: Cristiano Casadei)
-  batch_size=32; print(f'extracting features with bert_multi_cased_L-12_H-768_A-12');
+  batch_size=32; print(f'extracting 768 features with bert multilanguage cased');
   os.system('pip install tensorflow-text'); fx=1;
   import tensorflow_text as text;
   text_input = TF.keras.layers.Input(shape=(), dtype=TF.string); 
   preprocessor = TH.KerasLayer("https://tfhub.dev/tensorflow/bert_multi_cased_preprocess/3")
   encoder_inputs = preprocessor(text_input);
   encoder = TH.KerasLayer("https://tfhub.dev/tensorflow/bert_multi_cased_L-12_H-768_A-12/4", trainable=True)
+  # ADD https://hub.tensorflow.google.cn/tensorflow/mobilebert_multi_cased_L-24_H-128_B-512_A-4_F-4_OPT/1
   outputs = encoder(encoder_inputs); 
   del(preprocessor); del(encoder);
   pooled_output = outputs["pooled_output"]     
@@ -568,24 +602,33 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
   print('sync dense bert matrix:\n',t_) if '-d.data' in o else print(f'extracted 768 features');
   print('theory: https://en.wikipedia.org/wiki/BERT_(language_model)');
 
- '''
- #GPT2
- if '-x.gpt' in o:
-  os.system('pip install transformers');
-  fx=1; orig_t_ = t_; #apply extraction, keep a copy of t_
-  from transformers import OpenAIGPTTokenizer, OpenAIGPTModel
-  import torch
-  tokenizer = OpenAIGPTTokenizer.from_pretrained('openai-gpt')
-  model = OpenAIGPTModel.from_pretrained('openai-gpt');
-  t2_=[];
-  for sent in tqdm(t_):
-   sent=str(sent)[:500];
-   inputs = tokenizer(str(sent), return_tensors="pt")
-   outputs = model(**inputs); #print(outputs);
-   last_hidden_states = outputs.last_hidden_state; t2_.append(last_hidden_states); #features
-   del(inputs); del(outputs); del(last_hidden_states);
-  t_=PD.DataFrame(t2_); del(t2_); print(t_);
- '''
+
+ if '-x.mobert ' in o: #bert uncased multi language (contributor: Cristiano Casadei)
+  batch_size=32; print(f'extracting 512 features with mobilebert multilanguage cased');
+  os.system('pip install tensorflow-text'); fx=1;
+  import tensorflow_text as text;
+  text_input = TF.keras.layers.Input(shape=(), dtype=TF.string); 
+  preprocessor = TH.KerasLayer("https://tfhub.dev/tensorflow/bert_multi_cased_preprocess/3")
+  encoder_inputs = preprocessor(text_input);
+  encoder = TH.KerasLayer("https://hub.tensorflow.google.cn/tensorflow/mobilebert_multi_cased_L-24_H-128_B-512_A-4_F-4_OPT/1", trainable=True)
+  outputs = encoder(encoder_inputs); 
+  del(preprocessor); del(encoder);
+  pooled_output = outputs["pooled_output"]     
+  sequence_output = outputs["sequence_output"] 
+  embedding_model = TF.keras.Model(text_input, [pooled_output, encoder_inputs]);
+  df = None
+  for batch in tqdm(range(math.ceil(len(t_) / batch_size))):
+   sentences = TF.constant(t_[batch*batch_size:(batch+1)*batch_size]);
+   bert, enc_inps=embedding_model(sentences);
+   if df is None:
+    df=PD.DataFrame(bert.numpy());
+   else:
+    df = df.append(PD.DataFrame(bert.numpy()));
+  orig_t_ = t_;
+  t_ = df.reset_index(drop=True);
+  print('sync dense bert matrix:\n',t_) if '-d.data' in o else print(f'extracted 512 features');
+  print('theory: https://en.wikipedia.org/wiki/BERT_(language_model)');
+
 
  if '-x.d=' in o: #user defined lexical resources
   fx=1; 
@@ -629,8 +672,8 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
 inst=len(x_.index); feat=len(x_.columns); print(f'dataset shape: {inst} instances, {feat} features');
 
 
-#---class statistics
-if '-d.viz' in o:
+#---class statistics and correlation complexity
+if '-d.viz' in o and not '-t.' in o:
  if task=='s':
   MP.hist(y_, color='black', edgecolor='black', linewidth=0);  MP.ylabel('frequency'); MP.title('class distribution');  MP.savefig(fname='class-dist'); MP.show(); MP.clf(); #class dist
 if target=='r':
@@ -640,17 +683,33 @@ if target=='c':
  print(f"class freq"); print(y_.value_counts()); 
  ynp_=y_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nclass=len(classes); print(f"num classes= {nclass}")
 
-
-#---processed features unsupervised learning: clustering
 xc_=PD.concat([y_, x_], axis=1); xcc=xc_.corr(); xcc=PD.Series(xcc.iloc[0]); xcc=xcc.iloc[1:]; 
-complexity=1-(xcc.abs().max()); print(f"corr. complexity= {complexity:.3f}"); #compute complexity
+complexity=1-(xcc.abs().max()); print(f"corr. complexity= {complexity:.3f}"); #compute correlation complexity
+
+
+#---processed features unsupervised learning: w2v and clustering
+if '-u.w2v' in o and 't_' in locals(): #word2vec
+ if '-u.w2v=' in o:
+  r_=re.findall(r'-u.w2v=(.+?) ',o); fw=int(r_[0][0]); nw=int(r_[0][1]); fw=fw*10; nw=nw*10;
+ else:
+  nw=20;
+ print(f'apply word2vec, extract dictionary of most freq. words from rank {fw} to {nw}\ntheory: https://en.wikipedia.org/wiki/Word2vec');
+ t_=t_.str.split(pat=" "); wmodel=W2V.models.Word2Vec(t_, min_count=2); words=list(wmodel.wv.vocab);  
+ wmodel.wv.save_word2vec_format('w2v.txt', binary=False); wmodel.save('w2v.bin'); #save word2vec dictionary
+ X = wmodel[wmodel.wv.index2entity[fw:nw]]; 
+ pca=SK.decomposition.PCA(n_components=2); result=pca.fit_transform(X); MP.scatter(result[:, 0], result[:, 1]); 
+ words_=list(wmodel.wv.index2entity[fw:nw]); #print(words_); # fit a 2d PCA model to the w2v vectors
+ [MP.annotate(word, xy=(result[i, 0], result[i, 1])) for i, word in enumerate(words_)]; 
+ MP.title('w2v 2d space'); MP.savefig(fname='w2v-space'); MP.show(); MP.clf(); #visualize w2v-space and save it
+ print('extracted word2vec dictionary from text. save w2v.txt, w2v.bin and w2v-space.png');
+ timestamp=DT.datetime.now(); print(f"-u.w2v stops other tasks\ntime:{timestamp}"); sys.exit();
+
 
 if '-u.km=' in o: #kmeans clustering
  r_=re.findall(r'-u.km=(.+?) ',o); nk=int(r_[0]);
  clust = SK.cluster.KMeans(n_clusters=nk, random_state=0).fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['kmeans']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('kmeans').mean(); print('applied kmeans clustering. added 1 feature'); 
  print('theory: https://en.wikipedia.org/wiki/K-means_clustering');
  af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close();  print(f"num clusters= {nk}");
- print(g_.to_string()+"\n\n");
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space kmeans clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
@@ -658,8 +717,7 @@ if '-u.km=' in o: #kmeans clustering
 if '-u.optics' in o: #optics clustering
  clust = SK.cluster.OPTICS(min_cluster_size=None).fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['optics']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('optics').mean(); print('applied optics clustering. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/OPTICS_algorithm');
- af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n");  af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); print(f"num clusters= {nk}");
- print(g_.to_string()+"\n\n");
+ af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); print(f"num clusters= {nk}");
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space optics clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
@@ -668,7 +726,6 @@ if '-u.msh' in o: #meanshift clustering
  clust = SK.cluster.MeanShift().fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['mshift']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('mshift').mean(); print('applied mshift clustering. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/Mean_shift');
  af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); print(f"num clusters= {nk}");
- print(g_.to_string()+"\n\n");
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space meanshift clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
@@ -691,7 +748,6 @@ if '-u.som' in o: #self organising map clustering (contributor: Fabio Celli)
  af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
  ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); 
  nk=len(classes); print(f"num clusters= {nk}");
- print(g_.to_string()+"\n\n");
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); 
   MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(col_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
@@ -703,21 +759,20 @@ if '-u.ap' in o: #affinity propagation clustering
  clust = SK.cluster.AffinityPropagation(damping=0.5).fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['affinity']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('affinity').mean(); print('applied affinity propagation clustering. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/Affinity_propagation');
  af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); print(f"num clusters= {nk}");
- print(g_.to_string()+"\n\n");
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space affinity propagation clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
 
-
-#if '-u.gxm' in o: #gaussian models expectation maximisation
-# r_=re.findall(r'-u.gxm=(.+?) ',o); nk=int(r_[0]);
-# clust = SK.mixture.GaussianMixture(n_components=nk).fit(x_); l_=PD.DataFrame(clust.predict); l_.columns=['expectmax']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('expectmax').mean(); print('applied expectation maximisation clustering. added 1 feature');
-# print('theory: https://en.wikipedia.org/wiki/Expectation-maximization_algorithm');
-# af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); print(f"num clusters= {nk}");
-# if '-d.viz' in o:
-#  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
-#  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space expectation maximisation clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
-
+to_implement='''
+if '-u.gxm' in o: #gaussian models expectation maximisation
+ r_=re.findall(r'-u.gxm=(.+?) ',o); nk=int(r_[0]);
+ clust = SK.mixture.GaussianMixture(n_components=nk).fit(x_); l_=PD.DataFrame(clust.predict); l_.columns=['expectmax']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('expectmax').mean(); print('applied expectation maximisation clustering. added 1 feature');
+ print('theory: https://en.wikipedia.org/wiki/Expectation-maximization_algorithm');
+ af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); print(f"num clusters= {nk}");
+ if '-d.viz' in o:
+  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
+  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space expectation maximisation clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
+'''
 
 
 #---exporting
@@ -769,7 +824,7 @@ if sparse>=0.9:
 print(f"sparseness= {sparse:.3f}");
 
 
-x_.columns = range(x_.shape[1]); #duplicate_columns = x_.columns[x_.columns.duplicated()]; print(duplicate_columns);#make columns unique 
+x_.columns = range(x_.shape[1]); #make columns unique 
 
 
 if '-d.fdist' in o:
@@ -777,9 +832,7 @@ if '-d.fdist' in o:
  for col in x_:
   mu=x_[col].mean(); mi=x_[col].min(); ma=x_[col].max(); me=x_[col].median(); sd=x_[col].std(); print(f"min={mi:.1f} max={ma:.1f} avg={mu:.3f} sd={sd:.3f} med={me:.3f}  distribution of feature {col}"); 
 
-if '-d.data' in o:
- print('data ready for learning:'); print(x_);
-
+viz_deprecated='''
 if '-d.viz' in o:
  if task=='s':
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=y_, edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('copper_r', nclass));
@@ -790,20 +843,42 @@ if '-d.viz' in o:
  else:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=y_, edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('copper_r', 1));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA unsupervised data space'); MP.savefig(fname='pca-data-space.png'); MP.show(); MP.clf(); #pca space
-
+'''
 
 
 
 #---predictions with saved model
 if '.h4' in f: #apply machine learning saved model
- #loadmodel = joblib.load(f);
- y2_pred=loadmodel.predict(x_); y2_pred=PD.DataFrame(y2_pred); #print(type())
- n_=PD.concat([x2_,y2_pred], axis=1); print('applied saved model on supplied test set'); 
- af= open(f"{testname}-predictions.csv", 'w'); af.write(n_.to_csv()); af.close();  print(f"data with predictions saved as {testname}-predictions.csv");
- sys.exit();
+ #print(y_); #print(len(y_)); #print(loadmodel.k_ar); 
+ if '-t.' in o:
+  if '-t.a' in o:
+   y2_pred=loadmodel.forecast(steps=100)[0];
+  else:
+   y2_pred=loadmodel.forecast(steps=100);
+  y2_pred=PD.DataFrame(y2_pred); print(y2_pred)
+  n_=PD.concat([y_,y2_pred], axis=0).reset_index(); print('applied saved model on supplied dataset. results:\n'); print(n_);
+  af= open(f"{testname}-predictions.csv", 'w'); af.write(n_.to_csv()); af.close();  print(f"data with predictions saved as {testname}-predictions.csv");
+  sys.exit();  
+ else:
+  y2_pred=loadmodel.predict(x_); y2_pred=PD.DataFrame(y2_pred); #print(type())
+  n_=PD.concat([x2_,y2_pred], axis=1); print('applied saved model on supplied dataset. results:\n'); print(n_);
+  af= open(f"{testname}-predictions.csv", 'w'); af.write(n_.to_csv()); af.close();  print(f"data with predictions saved as {testname}-predictions.csv");
+  sys.exit();
 
 if '.h5' in f: #apply deep learning saved model
- y2_pred=loadmodel.predict(x_); 
+ if '-t.' in o: #in case of timeseries
+  d_=PD.to_datetime(d_); y_=PD.DataFrame(y_); 
+  y_=PD.concat([y_,d_], axis=1); y_['date']=d_; y_.sort_values(by="date"); # sort x_ in date order
+  y_=y_.drop(columns=['date']); y_['date']=y_.index;  #substitute date with integer index
+  scaler = SK.preprocessing.MinMaxScaler(feature_range=(0, 1)); y_=y_.drop(columns=['date']); y_ = scaler.fit_transform(y_)
+  y_ = NP.reshape(y_, (y_.shape[0], y_.shape[1], 1));
+  y2_pred=loadmodel.predict(y_); 
+  y2_pred = scaler.inverse_transform(y2_pred);
+ else:
+  if datatype=='zip':
+   x_=x_.to_numpy(); print(x_.shape);
+   x_=x_.reshape(-1,dshape[0],dshape[1],3);
+  y2_pred=loadmodel.predict(x_);
  if target=='c':
   y2_pred=PD.DataFrame(y2_pred); y2_pred=y2_pred.idxmax(axis=1); #print(y2_pred);
  if target=='r':
@@ -813,21 +888,36 @@ if '.h5' in f: #apply deep learning saved model
  sys.exit();
 
 
-#---evaluation method
+
+#---train and test split
 #if '-e.cv=' in o: # cross validation *TO REMOVE*
 # r_=re.findall(r'-e.cv=(.+?) ',o); folds=int(r_[0]); cv = SK.model_selection.RepeatedKFold(n_splits=folds, random_state=1); # prepare the cross-validation eval
 
 if '-e.tts' in o:
- r_=re.findall(r'-e.tts=(.+?) ',o); mi=float(r_[0]); 
+ r_=re.findall(r'-e.tts=(.+?) ',o); split=float(r_[0]); 
  if 'x2_' in locals():
-  mi=tts;
+  split=tts;
 else:
-  mi=0.3; print('using 70% train 30% test percentage split by default');
-if 'mi' in locals(): #if split percentage is defined, then split train and test sets
- x_train, x_test, y_train, y_test = SK.model_selection.train_test_split(x_, y_, test_size=mi, shuffle=True, random_state=1) # prepare train test eval 
+  split=0.3; print('using 70% train 30% test percentage split by default');
+if 'split' in locals(): #if split percentage is defined, then split train and test sets
+ if '-t.' in o: #in case of timeseries
+  d_=PD.to_datetime(d_); y_=PD.DataFrame(y_);
+  #x_=PD.concat([d_, x_], axis=1); y_=PD.concat([d_, y_], axis=1); #put timestamps to train and test
+  x_['date']=d_; x_.sort_values(by="date"); # sort x_ in date order
+  y_['date']=d_; y_.sort_values(by="date"); # sort x_ in date order
+  tscol='date';
+  x_train, x_test, y_train, y_test = SK.model_selection.train_test_split(x_, y_, test_size=split, shuffle=False) # prepare train test eval 
+ else:
+  x_train, x_test, y_train, y_test = SK.model_selection.train_test_split(x_, y_, test_size=split, shuffle=True, random_state=1) # prepare train test eval 
  xtrain_inst=len(x_train.index); feat=len(x_train.columns); print(f'training set shape: {xtrain_inst} instances, {feat} features');
  xtest_inst=len(x_test.index); feat=len(x_test.columns); print(f'test set shape: {xtest_inst} instances, {feat} features');
  x_test2=x_test; #create a copy of x_test for evaluation in case of shape change
+
+if '-d.data' in o:
+ if '-t.' in o: #in case of timeseries
+  print('data ready for learning:'); print(y_);  
+ else:
+  print('data ready for learning:'); print(x_);
 
 #---outlier detection
 if '-o.' in o:
@@ -872,7 +962,7 @@ if '-o.' in o:
   acc=SK.metrics.f1_score(y_test, y_pred); 
   print(f"baseline after outlier detection: F1= {acc:.3f}"); 
  if target=='r':
-  model=SK.dummy.DummyRegressor(strategy='mean'); model.fit(x_train, y_train); y_pred=model.predict(x_test);
+  model=SK.linear_model.LinearRegression(); model.fit(x_train, y_train); y_pred=model.predict(x_test);
   r2=SK.metrics.r2_score(y_test, y_pred);
   print(f"baseline after outlier detection: R2= {r2:.3f}");
 
@@ -880,8 +970,8 @@ if '-o.' in o:
 
 #---supervised learning
 if '-s.base' in o and target=='c':
- model=SK.dummy.DummyClassifier(strategy='prior'); print('compute majority baseline'); 
- model.fit(x_train, y_train); y_pred=model.predict(x_test);  #'most_frequent', 'prior',
+ model=SK.linear_model.LogisticRegression(max_iter=5000); print('evaluate anomaly removal with linear models'); 
+ model.fit(x_train, y_train); y_pred=model.predict(x_test); 
 if '-s.base' in o and target=='r':
  model=SK.dummy.DummyRegressor(strategy='mean'); print('compute mean baseline');
  model.fit(x_train, y_train); y_pred=model.predict(x_test);  #'mean', 'median',
@@ -946,10 +1036,10 @@ if '-s.svm' in o and target=='r':
   r_=re.findall(r'-s.svm=(.+?) ',o); kern=r_[0][0]; mi=int(r_[0][1]);
  if kern=='p':
   model=SK.svm.NuSVR(kernel='poly', degree=mi);model.fit(x_train, y_train); y_pred=model.predict(x_test);
-  print('using polynomial kernel\ntheory: https://en.wikipedia.org/wiki/Polynomial_kernel')
+  print(f"using polynomial kernel={mi}\ntheory: https://en.wikipedia.org/wiki/Polynomial_kernel")
  if kern=='r':
   model=SK.svm.NuSVR(kernel='rbf', nu=mi/10);model.fit(x_train, y_train); y_pred=model.predict(x_test); 
-  print('using rbf kernel\ntheory: https://en.wikipedia.org/wiki/Radial_basis_function_kernel')
+  print(f"using rbf kernel={mi/10}\ntheory: https://en.wikipedia.org/wiki/Radial_basis_function_kernel")
 
 if '-s.rf' in o and target=='c':
  model=SK.ensemble.RandomForestClassifier(random_state=1);model.fit(x_train, y_train); y_pred=model.predict(x_test); 
@@ -980,7 +1070,7 @@ if '-s.xgb' in o and target=='r':
  print('apply gradient boosting regression\ntheory: https://en.wikipedia.org/wiki/Gradient_boosting');
 
 
-if 'model' in locals():
+if 'model' in locals() and '-s.' in o:
  if target=='c': #compute classes for machine learning
   classes=model.classes_;
  if '-d.save' in o and not '-s.nn' in o: #save machine learning models
@@ -991,7 +1081,6 @@ if 'model' in locals():
    opt='-d.t=r'+opt;
   joblib.dump(model, f"{filename}{opt}.h4");print(f"model saved as {filename}{opt}.h4");
   #af= open(f"{filename}-format4model.csv", 'w'); af.write(x_test.to_csv()); af.close();  
-
 
 
 
@@ -1032,6 +1121,7 @@ if '-s.nn' in o:
  #activations: linear(lin,-inf/+inf) gelu(nonlin,-0.17/+inf) selu(nonlin,-a/+inf) sigmoid(nonlin,0/1) tanh(nonlin,-1/+1) softplus(nonlin,0/+inf) softsign(nonlin,-1/+1). linear=regression, relu|selu|gelu=general purpose, sigmoid|tanh=binary classification, softplus|softsign=multiclass classifiction
  #losses: hinge kld cosine_similarity mse msle huber binary_crossentropy sparse_categorical_crossentropy
  #metrics: mape mae accuracy top_k_categorical_accuracy categorical_accuracy
+
  if '-s.nn=f' in o: #feedforward
   model=TF.keras.Sequential();
   model.add(TF.keras.layers.Dense(feat, activation=activ)); #initial nodes are=num features
@@ -1072,7 +1162,7 @@ if '-s.nn' in o:
   model.add(TF.keras.layers.SimpleRNN(nu, activation=activ))
   model.add(TF.keras.layers.Dense(nclass, activation=outactiv))
  if '-s.nn=c' in o: #cnn
-  if len(dshape)==1:
+  if len(dshape)==1: #for text
    model = TF.keras.Sequential();
    model.add(TF.keras.layers.Embedding(maxval,nu,input_length=feat))
    [model.add(TF.keras.layers.Conv1D(int(nu/2), 7, activation=activ,padding='same' )) for n in range(0,nl)]
@@ -1080,7 +1170,7 @@ if '-s.nn' in o:
    model.add(TF.keras.layers.GlobalMaxPooling1D());
    model.add(TF.keras.layers.Dropout(0.3));
    model.add(TF.keras.layers.Dense(nclass, activation=outactiv));
-  if len(dshape)==2:
+  if len(dshape)==2: #for images
    x_train=x_train.reshape((xtrain_inst,dshape[0],dshape[1],3));
    x_test=x_test.reshape((xtest_inst,dshape[0],dshape[1],3));
    model = TF.keras.Sequential();
@@ -1118,24 +1208,58 @@ if '-s.nn' in o:
 
 
 #---time series forecasting
-if '-t.ml' in o:
- x_train= x_train.set_index('time'); y_train= y_train.set_index('time');  #set date as the instance index
- x_test= x_test.set_index('time'); y_test= y_test.set_index('time');  #set date as the instance index
- ewma = pd.DataFrame.ewm
- yn_= ewma( y_, com=2 )
- model=SK.linear_model.BayesianRidge();model.fit(x_train, y_train); y_pred=model.predict(x_test); y_pred=y_pred.flatten(); 
- print('apply bayesian ridge regression (on normalized space)\ntheory: https://en.wikipedia.org/wiki/Bayesian_linear_regression');
+if '-t.' in o:
+ dy_=y_test[tscol]; dy_=PD.Series(dy_);# take dates of test set
+ x_train= x_train.set_index(tscol); y_train= y_train.set_index(tscol);  #set date as the instance index
+ x_test= x_test.set_index(tscol); y_test= y_test.set_index(tscol);  #set date as the instance index
+ #print(dir(SM.tsa));
+
+if '-t.arma' in o:
+ model=SM.tsa.ARMA(y_train, order=(3, 2, 1)).fit();# fit model
+ y_pred=model.predict(len(y_train), len(y_train)+len(y_test)-1)# make prediction
+ y_pred=y_pred.to_numpy();
+ print(f"using AutoReg Moving Average for time series\ntheory https://en.wikipedia.org/wiki/Autoregressive%E2%80%93moving-average_model")
+if '-t.arima' in o: 
+ model=SM.tsa.ARIMA(y_train, order=(3, 2, 1)).fit();# fit model
+ y_pred=model.predict(len(y_train), len(y_train)+len(y_test)-1, typ='levels')# make prediction
+ y_pred=y_pred.to_numpy();
+ print(f"using AutoReg Integrated Moving Average for time series\ntheory https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average")
+if '-t.sarima' in o: 
+ model = SM.tsa.SARIMAX(y_train, order=(3, 2, 1)).fit(disp=False)
+ y_pred=model.predict(len(y_train), len(y_train)+len(y_test)-1)# make prediction
+ y_pred=y_pred.to_numpy();
+ print(f"using Seasonal AutoReg Integrated Moving Average for time series\ntheory https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average")
+if '-t.hwes' in o: 
+ model = SM.tsa.Holt(y_train).fit()
+ y_pred=model.predict(len(y_train), len(y_train)+len(y_test)-1)# make prediction
+ y_pred=y_pred.to_numpy();
+ print(f"using HoltWinters Exponential Smoothing for time series\ntheory https://en.wikipedia.org/wiki/Exponential_smoothing")
+
+
+if 'model' in locals() and '-t.' in o:
+ if target=='c': 
+  classes=model.classes_;
+ if '-d.save' in o and not '-t.nn' in o: #save machine learning models
+  opt=re.sub(r'-d.save|-e\..+|-d.viz| ','', o); 
+  if target=='c':
+   opt='-d.t=c'+opt;
+  else:
+   opt='-d.t=r'+opt;
+  joblib.dump(model, f"{filename}{opt}.h4");print(f"model saved as {filename}{opt}.h4");
+  #af= open(f"{filename}-format4model.csv", 'w'); af.write(x_test.to_csv()); af.close();  
+
+
 
 
 if not 'y_pred' in locals():
- print('no supervised model trained. nothing else to do.'); sys.exit();
+ print('no supervised model trained. algorithm not found.'); sys.exit();
 
 
 #---model details
 if '-d.md' in o and not '-s.base' in o:
  print('model details:');
  #print(dir(model));
- if 'weights' in dir(model) and not '-s.knn' in o: #nn
+ if 'weights' in dir(model) and not '.knn' in o: #nn
   mw=f" per.layer.node.weights:\n{model.weights}"; 
  if 'coef_' in dir(model) and not 'support_vectors_' in dir(model) and not '-s.xgb' in o: #lr, lcm, sgd, nb 
   mw=f" features * per.class.feat.weights {model.coef_} + per.class.intercept {model.intercept_}"; 
@@ -1145,17 +1269,17 @@ if '-d.md' in o and not '-s.base' in o:
   mw=f" points of support vectors:\n{model.support_vectors_}"; 
  if 'feature_importances_' in dir(model) and not '-s.dt' in o: #rf ada, xgb
   mw=f" feature.importance:\n{model.feature_importances_}"; 
- if '-s.dt' in o:
+ if '.dt' in o:
   mwtree=SK.tree.export_text(model); mw=f" rule.tree:\n{mwtree}"; #dt
- if '-s.knn' in o:
+ if '.knn' in o:
   mw=model.kneighbors(x_); mw=f" per.instance.neighbors.indexes:\n{mw[1]}\n per.neighbor.distances:\n{mw[0]}"; #knn
  
  if 'get_params' in dir(model):
   print(model.get_params());
- if '-s.nn' in o:
+ if '.nn' in o:
   print(model.summary());
-
- print(mw);
+ if 'mw' in locals():
+  print(mw);
 
 
 #---evaluation
@@ -1167,7 +1291,7 @@ if '-d.md' in o and not '-s.base' in o:
 #  scores = SK.model_selection.cross_val_score(model, x_, y_, scoring='r2', cv=cv, n_jobs=-1); print('eval with {folds}-fold cross-validation R2= %.3f (+ - %.2f)' % (NP.mean(scores), NP.std(scores))) 
 
 
-if '-s.' in o: #if the task is supervised run evaluation
+if '-s.' in o or '-t.' in o: #if the task is supervised run evaluation
  x_test=x_test2; #restore x_test in its dataframe form
  if target=='c': 
   #scores=model.fit(x_train, y_train);  y_pred = model.predict_classes(x_test); print(scores); #print(y_test); print(y_pred);
@@ -1183,31 +1307,38 @@ if '-s.' in o: #if the task is supervised run evaluation
   p_scaled=SK.preprocessing.MinMaxScaler().fit_transform(y_pred.reshape(-1,1)); ps_=PD.DataFrame(p_scaled); #normalize predictions
   r2=SK.metrics.r2_score(y_test, y_pred); #nmae=mean_absolute_percentage_error(y_test, y_pred); 
   print(f'eval on test set. R2= {r2:.3f}, MAE= {mae:.3f}'); #eval with train-test split. balanced_accuracy_score, accuracy_score, f1_score, roc_auc_score, mean_absolute_percentage_error
-  NP.set_printoptions(precision=2); print('predictions:'); print(y_pred); print('ground truth:'); print(y_test.to_numpy()); 
+  NP.set_printoptions(precision=2); 
+  if '-d.data' in o:
+   print('predictions:'); print(y_pred.flatten()); print('ground truth:'); print(y_test.to_numpy().flatten()); 
   af= open('results.txt', 'a'); af.write(f"\n\n{f}, {o} --> R2= {r2:.3f}, MAE= {mae:.3f}\n"); af.close();
-
-
+  
 
 #---visualizations
 #print("\n");
 if '-d.viz' in o:
- if task=='s' and target=='c': 
-  pca = SK.decomposition.PCA(2); projected = pca.fit_transform(x_test);
-  MP.scatter(projected[:, 0], projected[:, 1], c=y_test, edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('copper_r', nclass))
-  MP.xlabel('component 1');  MP.ylabel('component 2');  MP.colorbar();
-  MP.title('2D PCA ground truth test set'); MP.savefig(fname='pca-test-space.png'); MP.show(); MP.clf();
+ if '-s.' in o: #supervised scatterplots
+  if task=='s' and target=='c': 
+   pca = SK.decomposition.PCA(2); projected = pca.fit_transform(x_test);
+   MP.scatter(projected[:, 0], projected[:, 1], c=y_test, edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('copper_r', nclass))
+   MP.xlabel('component 1');  MP.ylabel('component 2');  MP.colorbar();
+   MP.title('2D PCA ground truth test set'); MP.savefig(fname='pca-test-space.png'); MP.show(); MP.clf();
+   pca = SK.decomposition.PCA(2); projected = pca.fit_transform(x_test);
+   MP.scatter(projected[:, 0], projected[:, 1], c=y_pred, edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('copper_r', nclass))
+   MP.xlabel('component 1');  MP.ylabel('component 2');  MP.colorbar();
+   MP.title('2D PCA predictions on test set'); MP.savefig(fname='pca-testpred-space.png'); MP.show(); MP.clf();
+  if task=='s' and target=='r':
+   MP.scatter(ys_, ps_, alpha=0.8); MP.xlabel('ground truth (norm)');  MP.ylabel('predictions (norm)'); #MP.show(); MP.clf();
+   MP.scatter(ys_, ys_, alpha=0.2); #MP.legend(handles=['ys_', 'ps_'], title='title', bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='xx-small');
+   MP.title('predictions-truth scatterplot'); MP.savefig(fname='target-pred-fit-space.png'); MP.show(); MP.clf();
 
-  pca = SK.decomposition.PCA(2); projected = pca.fit_transform(x_test);
-  MP.scatter(projected[:, 0], projected[:, 1], c=y_pred, edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('copper_r', nclass))
-  MP.xlabel('component 1');  MP.ylabel('component 2');  MP.colorbar();
-  MP.title('2D PCA predictions on test set'); MP.savefig(fname='pca-testpred-space.png'); MP.show(); MP.clf();
- if task=='s' and target=='r':
-  MP.scatter(ys_, ps_, alpha=0.8); MP.xlabel('target ground truth');  MP.ylabel('target predictions'); #MP.show(); MP.clf();
-  MP.scatter(ys_, ys_, alpha=0.2); #MP.legend(handles=['ys_', 'ps_'], title='title', bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='xx-small');
-  MP.title('predictions-truth scatterplot'); MP.savefig(fname='target-pred-fit-space.png'); MP.show(); MP.clf();
+ if '-t.' in o:# multiple timeseries line plots
+  #y_pred=PD.DataFrame(y_pred);
+  #print(dy_);print(y_test);print(y_pred);  print(len(dy_));print(len(y_test));print(len(y_pred));
+  MP.plot(dy_, y_test, marker='', color='orange', linewidth=2, label='ground truth')
+  MP.plot(dy_, y_pred, marker='', color='blue', linestyle='dashed', linewidth=2, label='predictions')
+  MP.title('test set linechart'); MP.legend(); MP.xticks(rotation=45, ha="right"); MP.show(); MP.clf();
 
-
- if '-x.' in o and target=='c':#wordclouds
+ if '-x.' in o and 't_' in locals() and target=='c':#wordclouds
   print('terms most associated to each class')
   os.system("pip install wordcloud stop-words");
   from wordcloud import WordCloud;
@@ -1226,5 +1357,6 @@ if '-d.viz' in o:
    MP.axis('off');
    MP.savefig('wordcloud_%s.png' % k); MP.show(); MP.clf();
 
-timestamp=DT.datetime.now(); print(timestamp);
+timestamp=DT.datetime.now(); print(timestamp); 
+
 
