@@ -412,7 +412,8 @@ if '-u.arl' in o: #association rule mining
  sys.exit();
 
 if '-u.corr' in o: #correlation analysis 
- x_=PD.concat([x_, y_], axis=1)
+ if 'y_' in locals():
+  x_=PD.concat([x_, y_], axis=1)
  x_=PD.get_dummies(x_); #x_=x_.reset_index(drop=True); #get one-hot values and restart row index from 0
  print("correlation matrix on one-hot values:\n"+x_.corr().to_string()+"\n");
  af= open('analysis.txt', 'a'); af.write("correlation matrix on one-hot values:\n\n"+x_.corr().to_string()+"\n\n"); af.close();
