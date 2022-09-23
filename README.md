@@ -1,12 +1,13 @@
 # LEARNIPY
-* version 0.6
-* making machine learning easier
+* version 0.7
+* making machine learning easy for everyone
 * written with ♥ by Fabio Celli, 
 * email: fabio.celli.phd@gmail.com
 * twitter: @facells
 * tested in Google colab
 * License: MIT (Commercial use,  Modification, Distribution, Private use are permitted, Liability is yours, No software warranty)
 * Conditions: Report the following license and copyright notice with code.
+
 "Copyright (c) 2021 Fabio Celli.
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -24,24 +25,32 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
+
 ### 1) AIM 
 * we want to make machine learning accesible and easy to use for everyone. 
 * We want a system that is self-contained (one file), portable, 100% written in Python.
+
 ### 2) DATA FORMATTING
 * data.csv must be a comma-separated file (,)
 * the target column can be named 'class' in the .csv file or defined with -d.c= option
 * the text column can be named 'text' in the .csv file or defined with -d.s= option
 * data.zip must contain .png or .jpg files. the files names must be comma-separated. example: imgID,class,.jpg
+
 ### 4) USAGE 
 * to train a model: %run learnipy.py 'options' traindata [testdata], for example
+
  >%run learnipy.py '-d.t=c -x.tm=700 -d.viz -s.nn=f' traindata.csv
+
 * 'options' is a string containing the operations, defined at paragraph 4.
 * yourdata.csv can be a .csv for tabular and text data or .zip for pictures.
 * [testdata] is optional, if given is used as a test set, if not the training set is split
 * to make predictions on new data: %run learnipy.py '-d.pred' model testdata, for example
+
  >%run learnipy.py '-d.pred' model.h5 testdata.csv
+
 * models can have .h5 (deep learning) or .h4 (machine learning) extension
 * try it on https://colab.research.google.com/drive/1DfDp2VFaTTMz_B6uLrOdWKQkrer32S9M?usp=sharing
+
 ### 4) DOCUMENTATION
 #### data management
 * -d.t=c|r    *define type of task. c=classification, r=regression*
@@ -49,7 +58,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -d.s=n      *define the string column treated as text. n=name of text column
 * -d.c=n      *define the column of the target class. n=name (for .csv) or index (for .zip) of class column*
 * -d.r=0      *do not use feature reduction, keep original features (not applicable with -d.save)*
-* -d.z=30     *define custom resize of pictures. 30=size 30x30*
 * -d.m=1      *fill class missing values. 1=replace all missing values in class with mean/mode (otherwise are deleted by default)*
 * -d.viz      *print pca-projected 2d data scatterplot and other visualizations*
 * -d.md       *model details. prints info on algorithm parameters and data modeling*
@@ -72,14 +80,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -r.svd=5    *singular value decomposition. turn sparse label matrix to dense and sync. 5=number of features*
 * -r.lsa=5    *latent semantic analysis. turn sparse word/char matrix to dense and sync. 5=number of features*
 #### feature extraction
-* -x.ng=23cf  *ngrams. turn text to word|char ngrams freq|tfidf matrix and apply lsa. 2=min, 3=max, c=chars|w=words, f=freq|t=tfidf*
-* -x.tm=5     *token matrix. turn text into word frequency matrix. 5=number of features*
-* -x.ts=5     *token sequences. columns are padded sequences of words. 5=number of features* 
-* -x.cm=5     *char matrix. turn text into character frequency matrix. 5=number of features*
-* -x.d2v=5    *(deprecated. will be removed) turn text into doc2vec word-context dense feature matrix. 5=number of features*
-* -x.bert     *extract 768 features from text to a dense matrix with multi-language bert transformer model*
-* -x.mobert   *extract 512 features from text to a dense matrix with multi-language mobile bert transformer model*
-* -x.d=e      *extract features from custom dictionary. e=dictionary. check https://github.com/facells/learnipy/tree/main/resources
+* -x.ng=23cf4 *ngrams. turn text ngrams matrix and apply lsa. 2=min, 3=max, c=chars|w=words, f=freq|t=tfidf, 4=num x 100*
+* -x.tm=5     *text token matrix. turn text into word frequency matrix. 5=number of features*
+* -x.ts=5     *text token sequences. columns are padded sequences of words. 5=number of features* 
+* -x.cm=5     *text char matrix. turn text into character frequency matrix. 5=number of features*
+* -x.bert     *text extraction. 768 features from text to a dense matrix with multi-language bert transformer model*
+* -x.mobert   *text extraction. 512 features from text to a dense matrix with multi-language mobile bert transformer model*
+* -x.d=e      *text extraction from custom dictionary. e=dictionary. check https://github.com/facells/learnipy/tree/main/resources
+* -x.rsz[=32] *image resize custom feature extraction. 32=size 32x32, default 16x16 (768 features)*
+* -x.resnet   *image extraction. 2048 features from pre-trained imagenet model
+* -x.vgg      *image extraction. 512 sparse features from pre-trained imagenet model
+* -x.effnet   *image extraction. 1408 dense features from pre-trained imagenet model
 #### unsupervised learning
 * -u.km=2     *kmeans, centroid clustering. add a new colum to dataset. results in analysis.txt. 2=num clusters*
 * -u.optics   *optics, density clustering. add a new colum to dataset. results in analysis.txt*
@@ -114,6 +125,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -t.hwes     *Holt-Winters exponential smoothing*
 #### evaluation
 * -e.tts=0.2  *train-test split. 0.2=20% test split. ignored if test set is provided*
+
 ### 5) CHANGELOG
 * v0.0: developed the main features
 * v0.1: added -u.corr, -u.arl, -x.w2v, -x.d2v, -s.sgd, -s.xgb, .zip input, -s.nn=c
@@ -122,6 +134,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.4: added -d.export -g.mct, -u.som, -d.md, included -s.psvm in -s.svm, added wiki links, moved -u.w2v
 * v0.5: added -p.trs, -p.tsw, -o.if, -o.mcd, -o.lof, -u.ap, fixed bug on .zip reading, improved -u.corr
 * v0.6: improved anomaly detection evaluation, added -t., -x.mobert
+* v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng
+
 ### 6) TO DO LIST
 * links to sklearn and tensorflow documentation for algorithms
 * -g.mct (markov chains generated text)
