@@ -1,7 +1,7 @@
 documentation='''
 # LEARNIPY
-* version 0.6
-* making machine learning easier
+* version 0.7
+* making machine learning easy for everyone
 * written with ♥ by Fabio Celli, 
 * email: fabio.celli.phd@gmail.com
 * twitter: @facells
@@ -59,7 +59,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -d.s=n      *define the string column treated as text. n=name of text column
 * -d.c=n      *define the column of the target class. n=name (for .csv) or index (for .zip) of class column*
 * -d.r=0      *do not use feature reduction, keep original features (not applicable with -d.save)*
-* -d.z=30     *define custom resize of pictures. 30=size 30x30*
 * -d.m=1      *fill class missing values. 1=replace all missing values in class with mean/mode (otherwise are deleted by default)*
 * -d.viz      *print pca-projected 2d data scatterplot and other visualizations*
 * -d.md       *model details. prints info on algorithm parameters and data modeling*
@@ -82,14 +81,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -r.svd=5    *singular value decomposition. turn sparse label matrix to dense and sync. 5=number of features*
 * -r.lsa=5    *latent semantic analysis. turn sparse word/char matrix to dense and sync. 5=number of features*
 #### feature extraction
-* -x.ng=23cf  *ngrams. turn text to word|char ngrams freq|tfidf matrix and apply lsa. 2=min, 3=max, c=chars|w=words, f=freq|t=tfidf*
-* -x.tm=5     *token matrix. turn text into word frequency matrix. 5=number of features*
-* -x.ts=5     *token sequences. columns are padded sequences of words. 5=number of features* 
-* -x.cm=5     *char matrix. turn text into character frequency matrix. 5=number of features*
-* -x.d2v=5    *(deprecated. will be removed) turn text into doc2vec word-context dense feature matrix. 5=number of features*
-* -x.bert     *extract 768 features from text to a dense matrix with multi-language bert transformer model*
-* -x.mobert   *extract 512 features from text to a dense matrix with multi-language mobile bert transformer model*
-* -x.d=e      *extract features from custom dictionary. e=dictionary. check https://github.com/facells/learnipy/tree/main/resources
+* -x.ng=23cf4 *ngrams. turn text ngrams matrix and apply lsa. 2=min, 3=max, c=chars|w=words, f=freq|t=tfidf, 4=num x 100*
+* -x.tm=5     *text token matrix. turn text into word frequency matrix. 5=number of features*
+* -x.ts=5     *text token sequences. columns are padded sequences of words. 5=number of features* 
+* -x.cm=5     *text char matrix. turn text into character frequency matrix. 5=number of features*
+* -x.bert     *text extraction. 768 features from text to a dense matrix with multi-language bert transformer model*
+* -x.mobert   *text extraction. 512 features from text to a dense matrix with multi-language mobile bert transformer model*
+* -x.d=e      *text extraction from custom dictionary. e=dictionary. check https://github.com/facells/learnipy/tree/main/resources
+* -x.rsz[=32] *image resize custom feature extraction. 32=size 32x32, default 16x16 (768 features)*
+* -x.resnet   *image extraction. 2048 features from pre-trained imagenet model
+* -x.vgg      *image extraction. 512 sparse features from pre-trained imagenet model
+* -x.effnet   *image extraction. 1408 dense features from pre-trained imagenet model
 #### unsupervised learning
 * -u.km=2     *kmeans, centroid clustering. add a new colum to dataset. results in analysis.txt. 2=num clusters*
 * -u.optics   *optics, density clustering. add a new colum to dataset. results in analysis.txt*
@@ -133,6 +135,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.4: added -d.export -g.mct, -u.som, -d.md, included -s.psvm in -s.svm, added wiki links, moved -u.w2v
 * v0.5: added -p.trs, -p.tsw, -o.if, -o.mcd, -o.lof, -u.ap, fixed bug on .zip reading, improved -u.corr
 * v0.6: improved anomaly detection evaluation, added -t., -x.mobert
+* v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng
 
 ### 6) TO DO LIST
 * links to sklearn and tensorflow documentation for algorithms
@@ -171,6 +174,8 @@ from tqdm import tqdm;
 import urllib.request; 
 import statsmodels.api as SM
 
+
+
 NP.random.seed(1); TF.random.set_seed(2);
 TF.compat.v1.logging.set_verbosity(TF.compat.v1.logging.ERROR);
 MP.clf();
@@ -184,6 +189,52 @@ o=sys.argv[1]+' ';
 
 if '-h' in o: 
  print(documentation); sys.exit();
+
+#import image pretrained models
+if '-x.resnet' in o:
+ print('import resnet to extract 2048 features from images');
+ from tensorflow.keras.applications.resnet50 import ResNet50
+ from tensorflow.keras.preprocessing import image
+ from tensorflow.keras.applications.resnet50 import preprocess_input, decode_predictions
+ from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+ from tensorflow.keras.models import Model
+ imgmodel = ResNet50(weights='imagenet')
+ base_model = ResNet50(weights='imagenet', include_top=False)
+ # add a global spatial average pooling layer
+ x = base_model.output
+ head = GlobalAveragePooling2D()(x)
+ imgmodel = Model(inputs=base_model.input, outputs=head)   # this is the model we will train
+
+if '-x.vgg' in o:
+ print('import vgg to extract 512 features from images');
+ from tensorflow.keras.applications.vgg16 import VGG16
+ from tensorflow.keras.preprocessing import image
+ from tensorflow.keras.applications.vgg16 import preprocess_input
+ from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+ from tensorflow.keras.models import Model
+ imgmodel = VGG16(weights='imagenet')
+ base_model = VGG16(weights='imagenet', include_top=False)
+ # add a global spatial average pooling layer
+ x = base_model.output
+ head = GlobalAveragePooling2D()(x)
+ imgmodel = Model(inputs=base_model.input, outputs=head)   # this is the model we will train
+
+
+if '-x.effnet' in o:
+ print('import efficientnet to extract 1408 features from images');
+ from tensorflow.keras.applications import EfficientNetB2
+ from tensorflow.keras.preprocessing import image
+ from tensorflow.keras.applications.efficientnet import preprocess_input
+ from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+ from tensorflow.keras.models import Model
+ imgmodel = EfficientNetB2(weights='imagenet')
+ base_model = EfficientNetB2(weights='imagenet', include_top=False)
+ # add a global spatial average pooling layer
+ x = base_model.output
+ head = GlobalAveragePooling2D()(x)
+ imgmodel = Model(inputs=base_model.input, outputs=head)   # this is the model we will train
+
+
 
 
 #---files reading
@@ -228,10 +279,10 @@ if 'f2' in locals() and '.csv' in f2: #import csv test set
 if 'f2' in locals() and '.zip' in f2:
  datatype='zip';
 
-if '-d.z=' in o:#get custom size of picture
- r_=re.findall(r'-d.z=(.+?) ',o); size=int(r_[0]); print(f"using pics size {size}x{size}");  
+if '-x.rsz' in o:#extract features from image with resize
+ r_=re.findall(r'-x.rsz=(.+?) ',o); size=int(r_[0]); imgfeats=(size*size)*3; print(f"using image size {size}x{size}, extract {imgfeats} features");  
 else:#otherwise apply default size 28x28
- size=28; print(f"using default size for pics {size}x{size}"); 
+ size=16; imgfeats=(size*size)*3; #print(f"using default image size {size}x{size}, extract {imgfeats} features"); 
 
 if '-d.ts=' in o:#get name of timestamp column
  r_=re.findall(r'-d.ts=(.+?) ',o); tscol=(r_[0]); print(f"using '{tscol}' as timestamp column");
@@ -352,15 +403,51 @@ if '.zip' in f: #extract data from .zip, loading in memory
  zip=ZF.ZipFile(f, 'r'); i_=zip.namelist(); 
  if ',' in i_[0]: #extract supervised data from files in zip
   task='s'; print('target found, suppose supervised task');
-  x_=[]; y_=[]; print('reading data from .zip');
-  for i in i_:
+  x_=[]; y_=[]; b_=[]; bl_=[]; print('reading data from .zip, apply feature extraction');
+  for num_i, i in enumerate(tqdm(i_)):
    l_=i.split(','); label=l_[1]; d=zip.open(i); #print(d);
    if '.jpg' in i or '.png' in i:
-    d_=imread(d); d_=resize(d_, (size,size,3),anti_aliasing=True); dshape=(size,size); d_=d_.flatten(); 
-    x_.append(d_); y_.append(label); #read, resize and flatten images
+    if '-x.resnet' in o: #resnet img feature extraction
+     d_=imread(d); d_=resize(d_, (224,224,3),anti_aliasing=True); 
+     x = image.img_to_array(d_); b_.append(x); bl_.append(label);
+     if len(b_) == 16 or num_i == len(i_)-1:
+      x=NP.array(b_);
+      x = preprocess_input(x)
+      d_ = imgmodel.predict(x); dshape=(2048,); d_=d_.reshape((len(b_),2048));
+      for id_ in range(len(b_)):
+       x_.append(d_[id_]); y_.append(bl_[id_]);
+      b_=[]; bl_=[];
+    elif '-x.vgg' in o: #vgg img feature extraction
+     d_=imread(d); d_=resize(d_, (224,224,3),anti_aliasing=True); 
+     x = image.img_to_array(d_); b_.append(x); bl_.append(label);
+     if len(b_) == 16 or num_i == len(i_)-1:
+      x=NP.array(b_);
+      x = preprocess_input(x)
+      d_ = imgmodel.predict(x); dshape=(512,); d_=d_.reshape((len(b_),512));
+      for id_ in range(len(b_)):
+       x_.append(d_[id_]); y_.append(bl_[id_]);
+      b_=[]; bl_=[];
+    elif '-x.effnet' in o: #efficientnetB2 img feature extraction
+     d_=imread(d); d_=resize(d_, (224,224,3),anti_aliasing=True); 
+     x = image.img_to_array(d_); b_.append(x); bl_.append(label);
+     if len(b_) == 16 or num_i == len(i_)-1:
+      x=NP.array(b_);
+      x = preprocess_input(x)
+      d_ = imgmodel.predict(x); dshape=(1408,); d_=d_.reshape((len(b_),1408));
+      for id_ in range(len(b_)):
+       x_.append(d_[id_]); y_.append(bl_[id_]);
+      b_=[]; bl_=[];
+
+    else: #using resize img feature extraction (default)
+     d_=imread(d); d_=resize(d_, (size,size,3),anti_aliasing=True); dshape=(size,size); d_=d_.flatten();
+     x_.append(d_); y_.append(label); #put in x_ and y_ extracted features and labels
+
+
+
 #ADD other file formats extraction
-  print(dshape); x_=NP.array(x_).astype('float')/255.0;  y_=NP.array(y_).astype('float');
-  x_=PD.DataFrame(x_); y_=PD.Series(y_); traininst=len(x_.index);
+  x_=NP.array(x_).astype('float')/255.0; x_=PD.DataFrame(x_); traininst=len(x_.index);
+  y_=PD.Series(y_);  #y_=y_.astype('float');
+
   if 'x2_' in locals() and not '-d.pred' in o:
    tts=((100/(traininst+testinst))*testinst)/100; print(f'test set percentage={tts}');  #compute tts percentage  
    x_=PD.concat([x_, x2_], axis=0, ignore_index=True); y_=PD.concat([y_, y2_], axis=0, ignore_index=True);
@@ -376,7 +463,6 @@ if '.zip' in f: #extract data from .zip, loading in memory
   x_=NP.array(x_).astype('float')/255.0;
   x_=PD.DataFrame(x_);
 
- print(f"original data shape is {dshape}");
 
 if not '.zip' in f and not '.csv' in f and not '.zip' in f2 and not '.csv' in f2:
  print('please input a .csv or .zip dataset'); sys.exit();
@@ -411,15 +497,6 @@ if '-u.arl' in o: #association rule mining
  print(f"-u.arl stops other tasks\ntime:{timestamp}");
  sys.exit();
 
-if '-u.corr' in o: #correlation analysis 
- if 'y_' in locals():
-  x_=PD.concat([x_, y_], axis=1)
- x_=PD.get_dummies(x_); #x_=x_.reset_index(drop=True); #get one-hot values and restart row index from 0
- print("correlation matrix on one-hot values:\n"+x_.corr().to_string()+"\n");
- af= open('analysis.txt', 'a'); af.write("correlation matrix on one-hot values:\n\n"+x_.corr().to_string()+"\n\n"); af.close();
- print('theory: https://en.wikipedia.org/wiki/Pearson_correlation_coefficient');
- timestamp=DT.datetime.now(); print(f"-u.corr stops other tasks\ntime:{timestamp}"); 
- sys.exit();
 
 
 
@@ -509,6 +586,7 @@ if not x_.empty and not 'zip' in datatype and cols >= ncols: #if data not empty,
 
 
 
+
 if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
  print('original text data:\n',t_) if '-d.data' in o else 0;
 
@@ -517,6 +595,7 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
   r_=re.findall(r'-x.tm=(.+?) ', o); wu=int(r_[0]); 
   t = TF.keras.preprocessing.text.Tokenizer(num_words=wu, lower=True, char_level=False, oov_token=wu)
   t.fit_on_texts(t_); seq=t.texts_to_sequences(t_); wv_=t.sequences_to_matrix(seq, mode='freq');  t_=PD.DataFrame(wv_);
+  print('word indexes:\n',t.index_word);
   fx=1; print('token freq matrix:\n',t_) if '-d.data' in o else print(f'extracting {wu} token frequence features from text');
 
  if '-x.cm=' in o: #one hot char matrix
@@ -524,6 +603,7 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
   r_=re.findall(r'-x.cm=(.+?) ', o); wu=int(r_[0]); 
   t = TF.keras.preprocessing.text.Tokenizer(num_words=wu, lower=True, char_level=True, oov_token=wu)
   t.fit_on_texts(t_); seq=t.texts_to_sequences(t_); wv_=t.sequences_to_matrix(seq, mode='freq');  t_=PD.DataFrame(wv_);
+  print('word indexes:\n',t.index_word);
   fx=1; print('token freq matrix:\n',t_) if '-d.data' in o else print(f'extracting {wu} chars frequence features from text');
 
  if '-x.ts=' in o: #one hot sequence matrix
@@ -539,23 +619,27 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
 
  if '-x.ng=' in o:
   orig_t_ = t_; #keep text for wordcloud
-  r_=re.findall(r'-x.ng=(.+?) ',o); mi=int(r_[0][0]); ma=int(r_[0][1]); ty=(r_[0][2]); mo=(r_[0][3]);
+  r_=re.findall(r'-x.ng=(.+?) ',o); mi=int(r_[0][0]); ma=int(r_[0][1]); ty=(r_[0][2]); mo=(r_[0][3]); 
+  if len(r_[0]) ==5:
+   mxf=int(r_[0][4])*100;
+  else:
+   mxf=1000;
   if ty=='c' and mo=='f':
-   w=SK.feature_extraction.text.CountVectorizer(ngram_range=(mi,ma),analyzer='char_wb',max_features=2000); wv_=w.fit_transform(t_); fx=1;
-   fn_=[]; [fn_.append('t-'+i) for i in w.get_feature_names()]; t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
-   print('async sparse char ngram matrix:\n',t_) if '-d.data' in o else print(f'extract {mi}-{ma} char ngram from text');
+   w=SK.feature_extraction.text.CountVectorizer(ngram_range=(mi,ma),analyzer='char_wb',max_features=mxf); wv_=w.fit_transform(t_); fx=1;
+   fn_=[]; [fn_.append(i) for i in w.get_feature_names()]; t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
+   print('async sparse char ngram matrix:\n',t_) if '-d.data' in o else print(f'extract {mi}-{ma} char ngram from text'); print(fn_);
   if ty=='w' and mo=='f':
-   w=SK.feature_extraction.text.CountVectorizer(ngram_range=(mi,ma),analyzer='word',max_features=2000); wv_=w.fit_transform(t_); fx=1;
-   fn_=[]; [fn_.append('t-'+i) for i in w.get_feature_names()]; t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
-   print('async sparse word ngram matrix:\n',t_) if '-d.data' in o else print(f'extract word {mi}-{ma}gram from text');
+   w=SK.feature_extraction.text.CountVectorizer(ngram_range=(mi,ma),analyzer='word',max_features=mxf); wv_=w.fit_transform(t_); fx=1;
+   fn_=[]; [fn_.append(i) for i in w.get_feature_names()]; t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
+   print('async sparse word ngram matrix:\n',t_) if '-d.data' in o else print(f'extract word {mi}-{ma}gram from text'); print(fn_);
   if ty=='c' and mo=='t':
-   w=SK.feature_extraction.text.TfidfVectorizer(ngram_range=(mi,ma),analyzer='char_wb',max_features=2000); wv_=w.fit_transform(t_); fx=1;
-   fn_=[]; [fn_.append('t-'+i) for i in w.get_feature_names()]; t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
-   print('async sparse char ngram matrix:\n',t_) if '-d.data' in o else print(f'extract tf-idf {mi}-{ma} char ngram from text');
+   w=SK.feature_extraction.text.TfidfVectorizer(ngram_range=(mi,ma),analyzer='char_wb',max_features=mxf); wv_=w.fit_transform(t_); fx=1;
+   fn_=[]; [fn_.append(i) for i in w.get_feature_names()]; t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
+   print('async sparse char ngram matrix:\n',t_) if '-d.data' in o else print(f'extract tf-idf {mi}-{ma} char ngram from text'); print(fn_);
   if ty=='w' and mo=='t':
-   w=SK.feature_extraction.text.TfidfVectorizer(ngram_range=(mi,ma),analyzer='word',max_features=2000); wv_=w.fit_transform(t_); fx=1;
-   fn_=[]; [fn_.append('t-'+i) for i in w.get_feature_names()]; t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
-   print('async sparse word ngram matrix:\n',t_) if '-d.data' in o else print(f'extract tf-idf word {mi}-{ma}grams from text'); 
+   w=SK.feature_extraction.text.TfidfVectorizer(ngram_range=(mi,ma),analyzer='word',max_features=mxf); wv_=w.fit_transform(t_); fx=1;
+   fn_=[]; [fn_.append(i) for i in w.get_feature_names()]; t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
+   print('async sparse word ngram matrix:\n',t_) if '-d.data' in o else print(f'extract tf-idf word {mi}-{ma}grams from text'); print(fn_);
   #lsadim=int(len(fn_)/2);
   if not '-d.r=0' in o:
    svd=SK.decomposition.TruncatedSVD(lsadim, random_state=1); t_=PD.DataFrame(svd.fit_transform(t_));
@@ -563,6 +647,7 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
    print('theory: https://en.wikipedia.org/wiki/Latent_semantic_analysis');
   if '-d.save ' in o:
    print(f"WARNING: the test set must contain at least {lsadim} instances for compatibility with the model"); 
+
 
 
  if '-x.d2v=' in o: #doc2vec
@@ -584,7 +669,6 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
   preprocessor = TH.KerasLayer("https://tfhub.dev/tensorflow/bert_multi_cased_preprocess/3")
   encoder_inputs = preprocessor(text_input);
   encoder = TH.KerasLayer("https://tfhub.dev/tensorflow/bert_multi_cased_L-12_H-768_A-12/4", trainable=True)
-  # ADD https://hub.tensorflow.google.cn/tensorflow/mobilebert_multi_cased_L-24_H-128_B-512_A-4_F-4_OPT/1
   outputs = encoder(encoder_inputs); 
   del(preprocessor); del(encoder);
   pooled_output = outputs["pooled_output"]     
@@ -674,21 +758,34 @@ inst=len(x_.index); feat=len(x_.columns); print(f'dataset shape: {inst} instance
 
 
 #---class statistics and correlation complexity
-if '-d.viz' in o and not '-t.' in o:
- if task=='s':
-  MP.hist(y_, color='black', edgecolor='black', linewidth=0);  MP.ylabel('frequency'); MP.title('class distribution');  MP.savefig(fname='class-dist'); MP.show(); MP.clf(); #class dist
-if target=='r':
- mu=y_.mean(); mi=y_.min(); ma=y_.max(); sd=y_.std(); me=y_.median(); print(f"min={mi:.1f} max={ma:.1f} avg={mu:.3f} sd={sd:.3f} med={me:.3f} numeric target distribution"); 
- nclass=1;
-if target=='c':
- print(f"class freq"); print(y_.value_counts()); 
- ynp_=y_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nclass=len(classes); print(f"num classes= {nclass}")
+if not '-u.corr' in o:
+ if '-d.viz' in o and not '-t.' in o:
+  if task=='s':
+   MP.hist(y_, color='black', edgecolor='black', linewidth=0);  MP.ylabel('frequency'); MP.title('class distribution');  MP.savefig(fname='class-dist'); MP.show(); MP.clf(); #class dist
+ if target=='r':
+  mu=y_.mean(); mi=y_.min(); ma=y_.max(); sd=y_.std(); me=y_.median(); print(f"min={mi:.1f} max={ma:.1f} avg={mu:.3f} sd={sd:.3f} med={me:.3f} numeric target distribution"); 
+  nclass=1;
+ if target=='c':
+  print(f"class freq"); print(y_.value_counts()); 
+  ynp_=y_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nclass=len(classes); print(f"num classes= {nclass}")
+ 
+ xc_=PD.concat([y_, x_], axis=1); xcc=xc_.corr(); xcc=PD.Series(xcc.iloc[0]); xcc=xcc.iloc[1:]; 
+ complexity=1-(xcc.abs().max()); print(f"corr. complexity= {complexity:.3f}"); #compute correlation complexity
 
-xc_=PD.concat([y_, x_], axis=1); xcc=xc_.corr(); xcc=PD.Series(xcc.iloc[0]); xcc=xcc.iloc[1:]; 
-complexity=1-(xcc.abs().max()); print(f"corr. complexity= {complexity:.3f}"); #compute correlation complexity
+
+#---processed features unsupervised learning: corr, w2v and clustering
+
+if '-u.corr' in o: #correlation analysis 
+ if 'y_' in locals():
+  x_=PD.concat([x_, y_], axis=1)
+ x_=PD.get_dummies(x_); #x_=x_.reset_index(drop=True); #get one-hot values and restart row index from 0
+ print("correlation matrix on one-hot values:\n"+x_.corr().to_string()+"\n");
+ af= open('analysis.txt', 'a'); af.write("correlation matrix on one-hot values:\n\n"+x_.corr().to_string()+"\n\n"); af.close();
+ print('theory: https://en.wikipedia.org/wiki/Pearson_correlation_coefficient');
+ timestamp=DT.datetime.now(); print(f"-u.corr stops other tasks\ntime:{timestamp}"); 
+ sys.exit();
 
 
-#---processed features unsupervised learning: w2v and clustering
 if '-u.w2v' in o and 't_' in locals(): #word2vec
  if '-u.w2v=' in o:
   r_=re.findall(r'-u.w2v=(.+?) ',o); fw=int(r_[0][0]); nw=int(r_[0][1]); fw=fw*10; nw=nw*10;
@@ -1163,7 +1260,7 @@ if '-s.nn' in o:
   model.add(TF.keras.layers.SimpleRNN(nu, activation=activ))
   model.add(TF.keras.layers.Dense(nclass, activation=outactiv))
  if '-s.nn=c' in o: #cnn
-  if len(dshape)==1: #for text
+  if len(dshape)==1: #for tables
    model = TF.keras.Sequential();
    model.add(TF.keras.layers.Embedding(maxval,nu,input_length=feat))
    [model.add(TF.keras.layers.Conv1D(int(nu/2), 7, activation=activ,padding='same' )) for n in range(0,nl)]
