@@ -769,8 +769,8 @@ if not '-u.corr' in o:
   print(f"class freq"); print(y_.value_counts()); 
   ynp_=y_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nclass=len(classes); print(f"num classes= {nclass}")
  
- #xc_=PD.concat([y_, x_], axis=1); xcc=xc_.corr(); xcc=PD.Series(xcc.iloc[0]); xcc=xcc.iloc[1:]; 
- #complexity=1-(xcc.abs().max()); print(f"corr. complexity= {complexity:.3f}"); #compute correlation complexity
+ xc_=PD.concat([y_, x_], axis=1); xcc=xc_.corr(); xcc=PD.Series(xcc.iloc[0]); xcc=xcc.iloc[1:]; 
+ complexity=1-(xcc.abs().max()); print(f"corr. complexity= {complexity:.3f}"); #compute correlation complexity
 
 
 #---processed features unsupervised learning: corr, w2v and clustering
