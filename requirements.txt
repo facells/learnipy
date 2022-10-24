@@ -1,0 +1,9 @@
+pandas
+tensorflow
+scikit-learn
+scikit-image
+matplotlib
+gensim
+nltk
+tensorflow-hub
+statsmodels
