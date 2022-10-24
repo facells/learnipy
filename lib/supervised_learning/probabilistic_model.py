@@ -10,7 +10,7 @@ def apply_pb(target, x_train, y_train, x_test):
         model = linear_model.BayesianRidge()
         model.fit(x_train, y_train)
         y_pred = model.predict(x_test)
-        y_pred = y_pred.flatten() #TODO perchè flatten?
+        y_pred = y_pred.flatten()
         print('apply bayesian ridge regression (on normalized space)\ntheory: https://en.wikipedia.org/wiki/Bayesian_linear_regression')
 
     return y_pred, model

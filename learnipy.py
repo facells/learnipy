@@ -130,11 +130,11 @@ else:  # otherwise apply default name
     if '.csv' in f or datatype == 'csv':
         tgtcol = 'class'
         print('extract "class" as target class')
-    if '.zip' in f or datatype == 'zip':
+    elif '.zip' in f or datatype == 'zip':
         tgtcol = 1
         print('extract index 1 from comma separated file name as target class')
-
-#TODO in questo caso è possibile che tgtcol non abbia un valore. Il motivo è che sicuramente entrerà in uno degli if?
+    else:
+        ###TODO eccezione
 
 if '-d.x=' in o:  # get name of column to drop
     from lib.data_management import drop_column
@@ -376,7 +376,7 @@ if 't_' in locals():
 # ---data preprocessing
 if '-p.ir' in o:
     from lib.preprocessing import instance_randomization
-    x_ = instance_randomization.apply_ir_v2(x_)
+    x_ = instance_randomization.apply_ir(x_)
 
 # if '-p.stnd' in o: *TO REMOVE*
 #     x_scaled=SK.preprocessing.StandardScaler().fit_transform(x_.values)
@@ -462,13 +462,13 @@ if 't_' in locals() and '-x.' in o:  # extract features from text, apply LSA
 
     if '-x.ts=' in o:  # one hot sequence matrix
         from lib.feature_extraction import text_token_sequences
-        orig_t_, t_, fx = text_token_sequences.tts(t_, o)
+        orig_t_, t_, fx, x_ = text_token_sequences.tts(t_, o)
 
     if '-x.ng=' in o:
         from lib.feature_extraction import ngrams
         orig_t_, t_, fx = ngrams.ng(t_, o, lsadim)
 
-    if '-x.d2v=' in o:  # doc2vec #TODO manca nella documentazione
+    if '-x.d2v=' in o:  # doc2vec #TODO controllare il seed
         from lib.feature_extraction import doc2vec
         orig_t_, t_, fx = doc2vec.get_doc2vec(t_, o)
 
@@ -544,24 +544,24 @@ if '-u.w2v' in o and 't_' in locals():  # word2vec
 
 if '-u.km=' in o:  # kmeans clustering
     from lib.unsupervised_learning import centroid_clustering
-    centroid_clustering.kmeans(x_, o) #TODO i parametri di ritorno ci devono essere oppure è solo visualizzazione?
+    x_ = centroid_clustering.kmeans(x_, o)
 
 if '-u.optics' in o:  # optics clustering
     from lib.unsupervised_learning import density_clustering
-    density_clustering.optics(x_, o)
+    x_ = density_clustering.optics(x_, o)
 
 if '-u.msh' in o:  # meanshift clustering
     from lib.unsupervised_learning import density_clustering
 
-    density_clustering.mean_shift(x_, o)
+    x_ = density_clustering.mean_shift(x_, o)
 
 if '-u.som' in o:  # self organising map clustering (contributor: Fabio Celli)
     from lib.unsupervised_learning import nn_clustering
-    nn_clustering.self_organizing_map(x_, o, feat)
+    x_ = nn_clustering.self_organizing_map(x_, o, feat)
 
 if '-u.ap' in o:  # affinity propagation clustering
     from lib.unsupervised_learning import affinity_propagation_clustering
-    affinity_propagation_clustering.affinity_propagation(x_, o)
+    x_ = affinity_propagation_clustering.affinity_propagation(x_, o)
 
 to_implement = '''
 if '-u.gxm' in o: #gaussian models expectation maximisation
@@ -614,7 +614,6 @@ if '-x.ts=' in o:
     # x_=PD.DataFrame(x_scaled, columns=x_.columns)
     # print('apply feature normalization') #normalization by column
     maxval = 1000
-    #TODO va decommentato?
 print(f"max value for neural network embedding= {maxval}")
 
 
@@ -672,7 +671,7 @@ if '.h4' in f:  # apply machine learning saved model
     # print(y_)
     # print(len(y_))
     # print(loadmodel.k_ar)
-    if '-t.' in o: #TODO ci sono diversi tipi di timeseries, sono distinte?
+    if '-t.' in o:
         if '-t.a' in o:
             y2_pred = loadmodel.forecast(steps=100)[0]
         else:
@@ -871,7 +870,7 @@ if 'model' in locals() and '-s.' in o:
         # af.write(x_test.to_csv())
         # af.close()
 
-if '-s.nn' in o: #TODO separo in una funzione?
+if '-s.nn' in o:
     x_train = x_train.to_numpy()
     x_test = x_test.to_numpy()
     y_train = y_train.to_numpy()

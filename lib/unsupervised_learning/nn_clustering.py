@@ -35,3 +35,5 @@ def self_organizing_map(x_, o, feat):
     if '-d.viz' in o:
         from ..data_management.visualization import pca_projected
         pca_projected(x_, clust, nk, 'self organizing map')
+
+    return x_

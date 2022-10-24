@@ -54,5 +54,3 @@ def prepare_prediction_h5(f, x2_, f2, tgtcol, txtcol, tscol, datatype, names_):
 
     return x_, y_, t_, d_, task
 
-
-    #TODO è possibile che si entri in piu di uno degli if durante il processo?

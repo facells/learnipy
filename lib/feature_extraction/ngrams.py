@@ -1,4 +1,4 @@
-def ng(t_, o, lsadim): #TODO oppure svdim ma sono uguali
+def ng(t_, o, lsadim):
     import re
     from sklearn import feature_extraction
     import pandas as PD

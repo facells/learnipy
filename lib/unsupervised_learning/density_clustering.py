@@ -21,6 +21,8 @@ def optics(x_, o):
         from ..data_management.visualization import pca_projected
         pca_projected(x_, clust, nk, 'optics')
 
+    return x_
+
 
 def mean_shift(x_, o):
     from sklearn import cluster
@@ -44,3 +46,5 @@ def mean_shift(x_, o):
     if '-d.viz' in o:
         from ..data_management.visualization import pca_projected
         pca_projected(x_, clust, nk, 'mean shift')
+
+    return x_

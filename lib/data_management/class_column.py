@@ -1,7 +1,7 @@
 def get_class(o):
     import re
 
-    tgtcol = ""
+    tgtcol = "class"
 
     if re.search(r'-d.c=[a-zA-Z]', o):
         r_ = re.findall(r'-d.c=(.+?) ', o)
@@ -13,4 +13,3 @@ def get_class(o):
         print(f"'{tgtcol}' is the target class index")
 
     return tgtcol
-    #TODO cosa torno altrimennti?

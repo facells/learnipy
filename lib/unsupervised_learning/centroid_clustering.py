@@ -19,3 +19,5 @@ def kmeans(x_, o):
     if '-d.viz' in o:
         from ..data_management.visualization import pca_projected
         pca_projected(x_, clust, nk, 'kmeans clustering')
+
+    return x_

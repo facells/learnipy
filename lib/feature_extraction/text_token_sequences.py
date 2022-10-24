@@ -4,7 +4,7 @@ def tts(t_, o):
     import tensorflow as TF
 
     orig_t_ = t_
-    x_ = PD.DataFrame() #TODO non utilizzato
+    x_ = PD.DataFrame()
     print(
         'tabular data dropped to prevent mixing tabular data and sequence text')  # empty x_ data to avoid mixing text and tabular data
     r_ = re.findall(r'-x.ts=(.+?) ', o)
@@ -27,4 +27,4 @@ def tts(t_, o):
     print('token index sequences:\n', t_) if '-d.data' in o else print(
         f'extracting {wu} token indices sequence features from text')
 
-    return orig_t_, t_, fx
+    return orig_t_, t_, fx, x_

@@ -23,8 +23,6 @@ def custom_dict(t_, o):
         l_ = urllib.request.urlopen(
             'https://raw.githubusercontent.com/facells/learnipy/main/resources/dom.dic').read().decode(
             'utf-8').splitlines()
-
-        #TODO esistono anche nel pacchetto learnipy, vanno cambiati i riferimenti o mantenuto l'url?
     else:
         print('using custom dictionary')
         l_ = open(l, encoding="utf8").read().splitlines()
