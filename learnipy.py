@@ -135,7 +135,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.4: added -d.export -g.mct, -u.som, -d.md, included -s.psvm in -s.svm, added wiki links, moved -u.w2v
 * v0.5: added -p.trs, -p.tsw, -o.if, -o.mcd, -o.lof, -u.ap, fixed bug on .zip reading, improved -u.corr
 * v0.6: improved anomaly detection evaluation, added -t., -x.mobert
-* v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng, fixed bug on -d.c with .zip indexes
+* v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng
 
 ### 6) TO DO LIST
 * links to sklearn and tensorflow documentation for algorithms
@@ -298,12 +298,12 @@ if '-d.c=' in o:#get name of class column
  if re.search(r'-d.c=[a-zA-Z]', o):
   r_=re.findall(r'-d.c=(.+?) ',o); tgtcol=(r_[0]); print(f"'{tgtcol}' is the target class column"); 
  if re.search(r'-d.c=[0-9]', o):
-  r_=re.findall(r'-d.c=(.+?) ',o); tgtcol=int(r_[0]); print(f"'{tgtcol}' is the target class index"); 
+  r_=re.findall(r'-d.c=(.+?) ',o); tgtcol=int(r_[0]); print(f"'{tgtcol}' is the target class column"); 
 else:#otherwise apply default name
  if '.csv' in f or datatype=='csv':
   tgtcol='class'; print('extract "class" as target class'); 
  if '.zip' in f or datatype=='zip':
-  tgtcol=1; print('extract index 1 from comma separated file name as target class');
+  tgtcol=1; print('extract ,label, from file name as target class');
 
 if '-d.x=' in o:#get name of column to drop
  r_=re.findall(r'-d.x=(.+?) ',o); drop=r_[0].split(','); 
@@ -403,17 +403,9 @@ if '.zip' in f: #extract data from .zip, loading in memory
  zip=ZF.ZipFile(f, 'r'); i_=zip.namelist(); 
  if ',' in i_[0]: #extract supervised data from files in zip
   task='s'; print('target found, suppose supervised task');
-  x_=[]; y_=[]; b_=[]; bl_=[]; print('reading data from .zip');
-  if '-x.resnet' in o:
-   print('apply resnet feature extraction');
-  elif '-x.vgg' in o:
-   print('apply vgg feature extraction');
-  elif '-x.effnet' in o:
-   print('apply efficientnet feature extraction');
-  else:
-   print(f'apply {size}x{size} img resize feature extraction');
+  x_=[]; y_=[]; b_=[]; bl_=[]; print('reading data from .zip, apply feature extraction');
   for num_i, i in enumerate(tqdm(i_)):
-   l_=i.split(','); label=l_[tgtcol]; d=zip.open(i); #print(d);
+   l_=i.split(','); label=l_[1]; d=zip.open(i); #print(d);
    if '.jpg' in i or '.png' in i:
     if '-x.resnet' in o: #resnet img feature extraction
      d_=imread(d); d_=resize(d_, (224,224,3),anti_aliasing=True); 
@@ -510,7 +502,7 @@ if '-u.arl' in o: #association rule mining
 
 #---automatically detect target class type
 if task=='s': 
- if y_.dtype.kind in 'biufc' or '-d.t=r' in o or not '-d.t=c' in o:
+ if y_.dtype.kind in 'biufc' and not '-d.t=c' in o:
   #y_=(y_-y_.min())/(y_.max()-y_.min()); 
   y_=y_.astype('float'); target='r'; print('read target as number, turned to float. to read target as a label use -d.t=c instead');
   if '-p.cn' in o:
