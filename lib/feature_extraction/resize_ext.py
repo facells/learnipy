@@ -7,12 +7,10 @@ def resize_ext(o):
     print(f"using image size {size}x{size}, extract {imgfeats} features")
     return size, imgfeats
 
-def extract(d, size, label):
+def extract(x_, y_, d, size, label):
     from skimage.io import imread
     from skimage.transform import resize
 
-    x_ = []
-    y_ = []
     d_ = imread(d)
     d_ = resize(d_, (size, size, 3), anti_aliasing=True)
     dshape = (size, size)

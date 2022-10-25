@@ -3,6 +3,9 @@ def self_organizing_map(x_, o, feat):
     import math
     import pandas as PD
     import numpy as NP
+    from sklearn import decomposition
+    import matplotlib.pyplot as MP
+    MP.rcParams["figure.figsize"] = (5, 4)
     os.system('pip install minisom')
     from minisom import MiniSom  # library
 
@@ -10,6 +13,7 @@ def self_organizing_map(x_, o, feat):
     nodes = int(4 * math.sqrt(len(xn_)))  # compute nodes of the matrix based on instances
     clust = MiniSom(nodes, nodes, feat, sigma=0.3, learning_rate=0.5, random_seed=2)  # initialize SOM
     clust.train(xn_, 100)  # train SOM with 100 iterations
+    print(clust)
     l_ = []
     col_ = []  # new column with som results
     for i in xn_:
@@ -33,7 +37,16 @@ def self_organizing_map(x_, o, feat):
     nk = len(classes)
     print(f"num clusters= {nk}")
     if '-d.viz' in o:
-        from ..data_management.visualization import pca_projected
-        pca_projected(x_, clust, nk, 'self organizing map')
+        pca = decomposition.PCA(2)
+        projected = pca.fit_transform(x_)
+        MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(col_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk))
+        MP.xlabel('component 1')
+        MP.ylabel('component 2')
+        MP.colorbar()
+        MP.title('2D PCA data space som clusters')
+        MP.savefig(fname='pca-cluster-space.png')
+        MP.show()
+        MP.clf()  # pca space
+
 
     return x_

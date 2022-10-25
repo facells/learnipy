@@ -1,5 +1,6 @@
 pandas
 tensorflow
+tensorflow-text
 scikit-learn
 scikit-image
 matplotlib

@@ -13,4 +13,4 @@ def apply_lcm(target, x_train, y_train, x_test):
         y_pred = y_pred.flatten()
         print('apply PartialLeastSquare regression \ntheory: https://en.wikipedia.org/wiki/Partial_least_squares_regression')
 
-    return y_pred
+    return y_pred, model

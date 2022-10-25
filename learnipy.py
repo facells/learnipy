@@ -127,6 +127,7 @@ if '-d.c=' in o:  # get name of class column
     tgtcol = class_column.get_class(o)
 
 else:  # otherwise apply default name
+
     if '.csv' in f or datatype == 'csv':
         tgtcol = 'class'
         print('extract "class" as target class')
@@ -134,7 +135,7 @@ else:  # otherwise apply default name
         tgtcol = 1
         print('extract index 1 from comma separated file name as target class')
     else:
-        ###TODO eccezione
+        raise RuntimeError('Dataset format not supported!')
 
 if '-d.x=' in o:  # get name of column to drop
     from lib.data_management import drop_column
@@ -195,13 +196,15 @@ if '.h4' in f and '-d.pred' in o:  # import machine learning saved model
 
     from lib.data_management import make_prediction
 
-    x_, y_, t_, d_ = make_prediction.prepare_prediction_h4(f, x2_, f2, tgtcol, txtcol, tscol)
+    x_, y_, t_, d_, task, loadmodel, o = make_prediction.prepare_prediction_h4(f, x2_, f2, tgtcol, txtcol, tscol)
 
 
 if '.h5' in f and '-d.pred' in o:  # import deep learning saved model
     from lib.data_management import make_prediction
 
-    x_, y_, t_, d_, task = make_prediction.prepare_prediction_h5(f, x2_, f2, tgtcol, txtcol, tscol, datatype, names_)
+    if datatype != 'zip':
+        names_ = None
+    x_, y_, t_, d_, task, loadmodel, o = make_prediction.prepare_prediction_h5(f, x2_, f2, tgtcol, txtcol, tscol, datatype, names_)
 
 # ---read data
 if '.csv' in f:  # import .csv training set or (if there is a test set) create training+test set
@@ -276,24 +279,21 @@ if '.zip' in f:  # extract data from .zip, loading in memory
             # print(d)
             if '.jpg' in i or '.png' in i:
                 from lib.feature_extraction import extract_features
-
                 if '-x.resnet' in o:  # resnet img feature extraction
-
-                    x_, y_, dshape = extract_features.extract_using_model(imgmodel, image, preprocess_input, d, label, num_i, i_, 2048)
+                    x_, y_, dshape = extract_features.extract_using_model(x_, y_, imgmodel, image, preprocess_input, d, label, num_i, i_, 2048)
 
                 elif '-x.vgg' in o:  # vgg img feature extraction
-
-                    x_, y_, dshape = extract_features.extract_using_model(imgmodel, image, preprocess_input, d, label, num_i, i_, 512)
+                    x_, y_, dshape = extract_features.extract_using_model(x_, y_, imgmodel, image, preprocess_input, d, label, num_i, i_, 512)
 
                 elif '-x.effnet' in o:  # efficientnetB2 img feature extraction
-
-                    x_, y_, dshape = extract_features.extract_using_model(imgmodel, image, preprocess_input, d, label, num_i, i_, 1408)
+                    x_, y_, dshape = extract_features.extract_using_model(x_, y_, imgmodel, image, preprocess_input, d, label, num_i, i_, 1408)
 
                 else:  # using resize img feature extraction (default)
                     from lib.feature_extraction import resize_ext
+                    x_, y_, dshape = resize_ext.extract(x_, y_, d, size, label)
 
-                    x_, y_, dshape = resize_ext.extract(d, size, label)
-
+        print("CIAO")
+        print(len(x_))
         # ADD other file formats extraction
         x_ = NP.array(x_).astype('float') / 255.0
         x_ = PD.DataFrame(x_)
@@ -342,7 +342,7 @@ if '-u.arl' in o:  # association rule mining
 
 # ---automatically detect target class type
 if task == 's':
-    if y_.dtype.kind in 'biufc' or '-d.t=r' in o or not '-d.t=c' in o:
+    if y_.dtype.kind in 'biufc' and not '-d.t=c' in o:
         # y_=(y_-y_.min())/(y_.max()-y_.min())
         y_ = y_.astype('float')
         target = 'r'
@@ -370,7 +370,7 @@ if 'y_' in locals() and '-d.m=1' in o:  # replace missing values with mode or me
             y_ = y_.fillna(y_.mode())
             print('WARNING: there are missing values in the target class, filled with the mode.')  # fill all missing values in y_ with 0
 
-if 't_' in locals():
+if 't_' in locals() and t_ is not None:
     t_ = t_.astype(str)
 
 # ---data preprocessing
@@ -468,7 +468,7 @@ if 't_' in locals() and '-x.' in o:  # extract features from text, apply LSA
         from lib.feature_extraction import ngrams
         orig_t_, t_, fx = ngrams.ng(t_, o, lsadim)
 
-    if '-x.d2v=' in o:  # doc2vec #TODO controllare il seed
+    if '-x.d2v=' in o:  # doc2vec
         from lib.feature_extraction import doc2vec
         orig_t_, t_, fx = doc2vec.get_doc2vec(t_, o)
 
@@ -837,7 +837,7 @@ if '-s.svm' in o and target == 'c':
         mi = 5
 
     from lib.supervised_learning import support_vector_machine
-    y_pred, model = support_vector_machine.apply_svm(kern, mi, x_train, y_train, x_test)
+    y_pred, model = support_vector_machine.apply_svm(target, kern, mi, x_train, y_train, x_test)
 
 if '-s.rf' in o:
     from lib.supervised_learning import ensemble_learning

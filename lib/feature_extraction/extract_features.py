@@ -1,10 +1,8 @@
-def extract_using_model(imgmodel, image, preprocess_input, d, label, num_i, i_, shape):
+def extract_using_model(x_, y_, imgmodel, image, preprocess_input, d, label, num_i, i_, shape):
     from skimage.io import imread
     from skimage.transform import resize
     import numpy as NP
 
-    x_ = []
-    y_ = []
     b_ = []
     bl_ = []
     d_ = imread(d)

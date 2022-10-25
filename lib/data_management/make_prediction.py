@@ -22,7 +22,7 @@ def prepare_prediction_h4(f, x2_, f2, tgtcol, txtcol, tscol):
         x_ = x_.drop(columns=[tscol])
         print('date found')
 
-    return x_, y_, t_, d_
+    return x_, y_, t_, d_, task, loadmodel, o
 
 
 def prepare_prediction_h5(f, x2_, f2, tgtcol, txtcol, tscol, datatype, names_):
@@ -52,5 +52,5 @@ def prepare_prediction_h5(f, x2_, f2, tgtcol, txtcol, tscol, datatype, names_):
         x_ = x_.drop(columns=[tscol])
         print('date found')
 
-    return x_, y_, t_, d_, task
+    return x_, y_, t_, d_, task, loadmodel, o
 

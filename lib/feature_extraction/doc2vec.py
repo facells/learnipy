@@ -10,7 +10,7 @@ def get_doc2vec(t_, o):
     size = int(r_[0])
     fx = 1
     t_ = [TaggedDocument(words=word_tokenize(_d.lower()), tags=[str(i)]) for i, _d in enumerate(t_)]
-    wmodel = Doc2Vec(vector_size=size)
+    wmodel = Doc2Vec(vector_size=size, seed=123, workers=1)
     wmodel.build_vocab(t_)
     wmodel.train(t_, total_examples=len(t_), epochs=1)
     t_ = PD.DataFrame(wmodel.docvecs.vectors_docs)  # turn to doc2vec vectors
