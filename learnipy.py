@@ -152,6 +152,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 
 #TO DO: add drop features by index, gen markov chains, gen gan
 
+import os;
+
 
 import warnings; warnings.filterwarnings('ignore'); 
 import datetime as DT;
@@ -165,7 +167,6 @@ import gensim as W2V; from gensim.models.doc2vec import Doc2Vec, TaggedDocument;
 import nltk; from nltk.tokenize import word_tokenize; nltk.download('punkt', quiet=True);
 import sys; 
 import re;
-import os;
 import math;
 import joblib;
 import shutil;
@@ -671,7 +672,7 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
 
  if '-x.bert ' in o: #bert uncased multi language (contributor: Cristiano Casadei)
   batch_size=32; print(f'extracting 768 features with bert multilanguage cased');
-  os.system('pip install tensorflow-text'); fx=1;
+  os.system('pip install tensorflow_text==2.9.0'); fx=1;
   import tensorflow_text as text;
   text_input = TF.keras.layers.Input(shape=(), dtype=TF.string); 
   preprocessor = TH.KerasLayer("https://tfhub.dev/tensorflow/bert_multi_cased_preprocess/3")
@@ -698,7 +699,7 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
 
  if '-x.mobert ' in o: #bert uncased multi language (contributor: Cristiano Casadei)
   batch_size=32; print(f'extracting 512 features with mobilebert multilanguage cased');
-  os.system('pip install tensorflow-text'); fx=1;
+  os.system('pip install tensorflow_text==2.9.0'); fx=1;
   import tensorflow_text as text;
   text_input = TF.keras.layers.Input(shape=(), dtype=TF.string); 
   preprocessor = TH.KerasLayer("https://tfhub.dev/tensorflow/bert_multi_cased_preprocess/3")
