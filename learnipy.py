@@ -138,13 +138,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng, fixed bug on -d.c with .zip indexes
 
 ### 6) TO DO LIST
+* fix bert feature extraction
 * links to sklearn and tensorflow documentation for algorithms
 * -g.mct (markov chains generated text)
 * -g.gpt (gpt generated from text)
 * improve -u.corr  (correlation ranking)
 * remove -x.d2v because it is not replicable
-* -x.gap global average pooling image feature extraction
-* table to image extraction
+* add agent based models
+* add forecasting with sktime
 * improve test set input
 * -u.gxm expectation maximisation
 
