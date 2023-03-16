@@ -154,6 +154,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 
 import os;
 
+#os.system('pip install pandas==1.3')
 
 import warnings; warnings.filterwarnings('ignore'); 
 import datetime as DT;
@@ -635,19 +636,19 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
    mxf=1000;
   if ty=='c' and mo=='f':
    w=SK.feature_extraction.text.CountVectorizer(ngram_range=(mi,ma),analyzer='char_wb',max_features=mxf); wv_=w.fit_transform(t_); fx=1;
-   fn_=[]; [fn_.append(i) for i in w.get_feature_names()]; t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
+   fn_=[]; [fn_.append(i) for i in w.get_feature_names_out()]; t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
    print('async sparse char ngram matrix:\n',t_) if '-d.data' in o else print(f'extract {mi}-{ma} char ngram from text'); print(fn_);
   if ty=='w' and mo=='f':
    w=SK.feature_extraction.text.CountVectorizer(ngram_range=(mi,ma),analyzer='word',max_features=mxf); wv_=w.fit_transform(t_); fx=1;
-   fn_=[]; [fn_.append(i) for i in w.get_feature_names()]; t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
+   fn_=[]; [fn_.append(i) for i in w.get_feature_names_out()]; t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
    print('async sparse word ngram matrix:\n',t_) if '-d.data' in o else print(f'extract word {mi}-{ma}gram from text'); print(fn_);
   if ty=='c' and mo=='t':
    w=SK.feature_extraction.text.TfidfVectorizer(ngram_range=(mi,ma),analyzer='char_wb',max_features=mxf); wv_=w.fit_transform(t_); fx=1;
-   fn_=[]; [fn_.append(i) for i in w.get_feature_names()]; t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
+   fn_=[]; [fn_.append(i) for i in w.get_feature_names_out()]; t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
    print('async sparse char ngram matrix:\n',t_) if '-d.data' in o else print(f'extract tf-idf {mi}-{ma} char ngram from text'); print(fn_);
   if ty=='w' and mo=='t':
    w=SK.feature_extraction.text.TfidfVectorizer(ngram_range=(mi,ma),analyzer='word',max_features=mxf); wv_=w.fit_transform(t_); fx=1;
-   fn_=[]; [fn_.append(i) for i in w.get_feature_names()]; t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
+   fn_=[]; [fn_.append(i) for i in w.get_feature_names_out()]; t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
    print('async sparse word ngram matrix:\n',t_) if '-d.data' in o else print(f'extract tf-idf word {mi}-{ma}grams from text'); print(fn_);
   #lsadim=int(len(fn_)/2);
   if not '-d.r=0' in o:
@@ -814,27 +815,30 @@ if '-u.w2v' in o and 't_' in locals(): #word2vec
 
 if '-u.km=' in o: #kmeans clustering
  r_=re.findall(r'-u.km=(.+?) ',o); nk=int(r_[0]);
- clust = SK.cluster.KMeans(n_clusters=nk, random_state=0).fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['kmeans']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('kmeans').mean(); print('applied kmeans clustering. added 1 feature'); 
+ clust = SK.cluster.KMeans(n_clusters=nk, random_state=0).fit(x_.values); l_=PD.DataFrame(clust.labels_); l_.columns=['kmeans']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('kmeans').mean(); print('applied kmeans clustering. added 1 feature'); 
  print('theory: https://en.wikipedia.org/wiki/K-means_clustering');
- af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close();  print(f"num clusters= {nk}");
+ af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
+ print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");
  if '-d.viz' in o:
-  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
+  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space kmeans clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
 
 if '-u.optics' in o: #optics clustering
  clust = SK.cluster.OPTICS(min_cluster_size=None).fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['optics']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('optics').mean(); print('applied optics clustering. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/OPTICS_algorithm');
- af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); print(f"num clusters= {nk}");
+ af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); 
+ print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");
  if '-d.viz' in o:
-  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
+  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space optics clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
 
 if '-u.msh' in o: #meanshift clustering
  clust = SK.cluster.MeanShift().fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['mshift']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('mshift').mean(); print('applied mshift clustering. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/Mean_shift');
- af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); print(f"num clusters= {nk}");
+ af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); 
+ print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");
  if '-d.viz' in o:
-  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
+  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space meanshift clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
 
 if '-u.som' in o: #self organising map clustering (contributor: Fabio Celli)
@@ -854,9 +858,9 @@ if '-u.som' in o: #self organising map clustering (contributor: Fabio Celli)
  print('theory: https://en.wikipedia.org/wiki/Self-organizing_map');
  af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
  ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); 
- nk=len(classes); print(f"num clusters= {nk}");
+ nk=len(classes);  print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");
  if '-d.viz' in o:
-  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); 
+  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); 
   MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(col_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); 
   MP.colorbar(); MP.title('2D PCA data space som clusters'); 
@@ -865,9 +869,10 @@ if '-u.som' in o: #self organising map clustering (contributor: Fabio Celli)
 if '-u.ap' in o: #affinity propagation clustering
  clust = SK.cluster.AffinityPropagation(damping=0.5).fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['affinity']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('affinity').mean(); print('applied affinity propagation clustering. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/Affinity_propagation');
- af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); print(f"num clusters= {nk}");
+ af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); 
+ print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");
  if '-d.viz' in o:
-  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
+  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space affinity propagation clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
 
 to_implement='''
