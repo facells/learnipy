@@ -100,7 +100,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -u.som      *self organising map, neural network clustering. add a new colum to dataset. results in analysis.txt*
 * -u.w2v[=15] *word2vec dictionary from text, pca-2d word2vec space. 1=words to filter x10, 5=words to visualize x10*
 * -u.arl      *association rule learning with apriori. prints results in analysis.txt*
-* -u.corr     *feature analysis with pearson correlations. prints results in analysis.txt*
+* -u.corr     *feature analysis with spearman correlation rankings. prints results in analysis.txt*
+* -u.corm     *feature analysis with pearson correlation matrix. prints results in analysis.txt*
 #### outlier detection
 * -o.if       *isolation forest. find and remove outliers using random forest regions*
 * -o.mcd      *minimum covariance determinant with ellipsis envelope. find and remove outliers using gaussian distribution*
@@ -136,13 +137,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.5: added -p.trs, -p.tsw, -o.if, -o.mcd, -o.lof, -u.ap, fixed bug on .zip reading, improved -u.corr
 * v0.6: improved anomaly detection evaluation, added -t., -x.mobert
 * v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng, fixed bug on -d.c with .zip indexes
+* v0.8: added/improved -u.corr and -u.corm
 
 ### 6) TO DO LIST
 * fix bert feature extraction
 * links to sklearn and tensorflow documentation for algorithms
 * -g.mct (markov chains generated text)
 * -g.gpt (gpt generated from text)
-* improve -u.corr  (correlation ranking)
 * remove -x.d2v because it is not replicable
 * add agent based models
 * add forecasting with sktime
@@ -155,7 +156,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 
 import os;
 
-#os.system('pip install pandas==1.3')
+#os.system('pip install -U tensorflow==2.9.0')
+
 
 import warnings; warnings.filterwarnings('ignore'); 
 import datetime as DT;
@@ -176,7 +178,7 @@ import tensorflow_hub as TH;
 from tqdm import tqdm;
 import urllib.request; 
 import statsmodels.api as SM
-
+from scipy import stats as ST
 
 
 NP.random.seed(1); TF.random.set_seed(2);
@@ -673,8 +675,9 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
 
 
  if '-x.bert ' in o: #bert uncased multi language (contributor: Cristiano Casadei)
-  batch_size=32; print(f'extracting 768 features with bert multilanguage cased');
-  os.system('pip install tensorflow_text==2.9.0'); fx=1;
+  batch_size=32; print(f'extracting 768 features with bert multilanguage cased'); fx=1;
+
+  os.system('pip install -U tensorflow_text==2.9.0'); 
   import tensorflow_text as text;
   text_input = TF.keras.layers.Input(shape=(), dtype=TF.string); 
   preprocessor = TH.KerasLayer("https://tfhub.dev/tensorflow/bert_multi_cased_preprocess/3")
@@ -701,7 +704,7 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
 
  if '-x.mobert ' in o: #bert uncased multi language (contributor: Cristiano Casadei)
   batch_size=32; print(f'extracting 512 features with mobilebert multilanguage cased');
-  os.system('pip install tensorflow_text==2.9.0'); fx=1;
+  os.system('pip install -U tensorflow_text==2.9.0'); fx=1;
   import tensorflow_text as text;
   text_input = TF.keras.layers.Input(shape=(), dtype=TF.string); 
   preprocessor = TH.KerasLayer("https://tfhub.dev/tensorflow/bert_multi_cased_preprocess/3")
@@ -769,7 +772,7 @@ inst=len(x_.index); feat=len(x_.columns); print(f'dataset shape: {inst} instance
 
 
 #---class statistics and correlation complexity
-if not '-u.corr' in o:
+if not '-u.cor' in o:
  if '-d.viz' in o and not '-t.' in o:
   if task=='s':
    MP.hist(y_, color='black', edgecolor='black', linewidth=0);  MP.ylabel('frequency'); MP.title('class distribution');  MP.savefig(fname='class-dist'); MP.show(); MP.clf(); #class dist
@@ -786,16 +789,36 @@ if not '-u.corr' in o:
 
 #---processed features unsupervised learning: corr, w2v and clustering
 
-if '-u.corr' in o: #correlation analysis 
+if '-u.corm' in o: #correlation matrix
  if 'y_' in locals():
   x_=PD.concat([x_, y_], axis=1)
  x_=PD.get_dummies(x_); #x_=x_.reset_index(drop=True); #get one-hot values and restart row index from 0
- print("correlation matrix on one-hot values:\n"+x_.corr().to_string()+"\n");
+ print("pearson correlation matrix (label values are one-hot encoded):\n"+x_.corr().to_string()+"\n");
  af= open('analysis.txt', 'a'); af.write("correlation matrix on one-hot values:\n\n"+x_.corr().to_string()+"\n\n"); af.close();
  print('theory: https://en.wikipedia.org/wiki/Pearson_correlation_coefficient');
  timestamp=DT.datetime.now(); print(f"-u.corr stops other tasks\ntime:{timestamp}"); 
  sys.exit();
 
+if '-u.corr' in o: #correlation list
+ if 'y_' in locals():
+  x_=PD.concat([x_, y_], axis=1)
+ x_=PD.get_dummies(x_); #x_=x_.reset_index(drop=True); #get one-hot values and restart row index from 0
+ print(x_)
+ print("spearman correlation ranks (label values are one-hot encoded):\n");
+ corfound='';
+ for i in x_:
+  xicol=x_[i];
+  for j in x_:
+   xjcol=x_[j]; 
+   corr,pval=ST.spearmanr(xicol, xjcol); #run correlation
+   if corr < 0.999 and pval < 0.05: #filter best correlations and remove self correlations
+    corr=f'{corr:.3f}'; pval=f'{pval:.3f}'
+    corfound=corfound+f"{xicol.name} and {xjcol.name}, r={corr}, p={pval}\n";
+ print(f'{corfound}\n')
+ af= open('analysis.txt', 'a'); af.write("correlation rankings on one-hot values:\n\n"+corfound+"\n\n"); af.close();
+ print('theory: https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient');
+ timestamp=DT.datetime.now(); print(f"-u.corr stops other tasks\ntime:{timestamp}"); 
+ sys.exit();
 
 if '-u.w2v' in o and 't_' in locals(): #word2vec
  if '-u.w2v=' in o:
