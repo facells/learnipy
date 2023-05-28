@@ -98,7 +98,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -u.msh      *mshift, density clustering. add a new colum to dataset. results in analysis.txt*
 * -u.ap       *affinity propagation exemplar clustering. add a new colum to dataset. results in analysis.txt*
 * -u.som      *self organising map, neural network clustering. add a new colum to dataset. results in analysis.txt*
-* -u.w2v[=15] *word2vec dictionary from text, pca-2d word2vec space. 1=words to filter x10, 5=words to visualize x10*
 * -u.arl      *association rule learning with apriori. prints results in analysis.txt*
 * -u.corr     *feature analysis with spearman correlation rankings. prints results in analysis.txt*
 * -u.corm     *feature analysis with pearson correlation matrix. prints results in analysis.txt*
@@ -137,7 +136,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.5: added -p.trs, -p.tsw, -o.if, -o.mcd, -o.lof, -u.ap, fixed bug on .zip reading, improved -u.corr
 * v0.6: improved anomaly detection evaluation, added -t., -x.mobert
 * v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng, fixed bug on -d.c with .zip indexes
-* v0.8: added/improved -u.corr and -u.corm
+* v0.8: added/improved -u.corr and -u.corm, fixed -x.bert, removed w2v and d2v
 
 ### 6) TO DO LIST
 * fix bert feature extraction
@@ -823,21 +822,22 @@ if '-u.corr' in o: #correlation list
  timestamp=DT.datetime.now(); print(f"-u.corr stops other tasks\ntime:{timestamp}"); 
  sys.exit();
 
-if '-u.w2v' in o and 't_' in locals(): #word2vec
- if '-u.w2v=' in o:
-  r_=re.findall(r'-u.w2v=(.+?) ',o); fw=int(r_[0][0]); nw=int(r_[0][1]); fw=fw*10; nw=nw*10;
- else:
-  nw=20;
- print(f'apply word2vec, extract dictionary of most freq. words from rank {fw} to {nw}\ntheory: https://en.wikipedia.org/wiki/Word2vec');
- t_=t_.str.split(pat=" "); wmodel=W2V.models.Word2Vec(t_, min_count=2); words=list(wmodel.wv.vocab);  
- wmodel.wv.save_word2vec_format('w2v.txt', binary=False); wmodel.save('w2v.bin'); #save word2vec dictionary
- X = wmodel[wmodel.wv.index2entity[fw:nw]]; 
- pca=SK.decomposition.PCA(n_components=2); result=pca.fit_transform(X); MP.scatter(result[:, 0], result[:, 1]); 
- words_=list(wmodel.wv.index2entity[fw:nw]); #print(words_); # fit a 2d PCA model to the w2v vectors
- [MP.annotate(word, xy=(result[i, 0], result[i, 1])) for i, word in enumerate(words_)]; 
- MP.title('w2v 2d space'); MP.savefig(fname='w2v-space'); MP.show(); MP.clf(); #visualize w2v-space and save it
- print('extracted word2vec dictionary from text. save w2v.txt, w2v.bin and w2v-space.png');
- timestamp=DT.datetime.now(); print(f"-u.w2v stops other tasks\ntime:{timestamp}"); sys.exit();
+#REMOVED v0.8
+#if '-u.w2v' in o and 't_' in locals(): #word2vec
+# if '-u.w2v=' in o:
+#  r_=re.findall(r'-u.w2v=(.+?) ',o); fw=int(r_[0][0]); nw=int(r_[0][1]); fw=fw*10; nw=nw*10;
+# else:
+#  nw=20;
+# print(f'apply word2vec, extract dictionary of most freq. words from rank {fw} to {nw}\ntheory: https://en.wikipedia.org/wiki/Word2vec');
+# t_=t_.str.split(pat=" "); wmodel=W2V.models.Word2Vec(t_, min_count=2); words=list(wmodel.wv.vocab);  
+# wmodel.wv.save_word2vec_format('w2v.txt', binary=False); wmodel.save('w2v.bin'); #save word2vec dictionary
+# X = wmodel[wmodel.wv.index2entity[fw:nw]]; 
+# pca=SK.decomposition.PCA(n_components=2); result=pca.fit_transform(X); MP.scatter(result[:, 0], result[:, 1]); 
+# words_=list(wmodel.wv.index2entity[fw:nw]); #print(words_); # fit a 2d PCA model to the w2v vectors
+# [MP.annotate(word, xy=(result[i, 0], result[i, 1])) for i, word in enumerate(words_)]; 
+# MP.title('w2v 2d space'); MP.savefig(fname='w2v-space'); MP.show(); MP.clf(); #visualize w2v-space and save it
+# print('extracted word2vec dictionary from text. save w2v.txt, w2v.bin and w2v-space.png');
+# timestamp=DT.datetime.now(); print(f"-u.w2v stops other tasks\ntime:{timestamp}"); sys.exit();
 
 
 if '-u.km=' in o: #kmeans clustering
