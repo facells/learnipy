@@ -1,6 +1,6 @@
 documentation='''
 # LEARNIPY
-* version 0.7
+* version 0.8
 * making machine learning easy for everyone
 * written with ♥ by Fabio Celli, 
 * email: fabio.celli.phd@gmail.com
@@ -804,19 +804,21 @@ if '-u.corr' in o: #correlation list
  if 'y_' in locals():
   x_=PD.concat([x_, y_], axis=1)
  x_=PD.get_dummies(x_); #x_=x_.reset_index(drop=True); #get one-hot values and restart row index from 0
- print(x_)
  print("spearman correlation ranks (label values are one-hot encoded):\n");
- corfound='';
+ #corfound=f'dimensions,rho,pval\n';
+ cf_=PD.DataFrame()
  for i in x_:
   xicol=x_[i];
   for j in x_:
    xjcol=x_[j]; 
    corr,pval=ST.spearmanr(xicol, xjcol); #run correlation
-   if corr < 0.999 and pval < 0.05: #filter best correlations and remove self correlations
+   if corr < 0.999 and corr > -0.999 and pval < 0.05: #filter best correlations and remove self correlations
     corr=f'{corr:.3f}'; pval=f'{pval:.3f}'
-    corfound=corfound+f"{xicol.name} and {xjcol.name}, r={corr}, p={pval}\n";
- print(f'{corfound}\n')
- af= open('analysis.txt', 'a'); af.write("correlation rankings on one-hot values:\n\n"+corfound+"\n\n"); af.close();
+    cf2_ = PD.DataFrame({"dimensions": [f"{xicol.name} and {xjcol.name}"],"rho":[corr],"pval":[pval]})
+    cf_ = cf_.append(cf2_)
+    #corfound=corfound+f"{xicol.name} and {xjcol.name},{corr},{pval}\n";
+ cf_=cf_.sort_values(by=["rho"], ascending=False); print(cf_)
+ af= open('analysis.txt', 'a'); af.write("correlation rankings on one-hot values:\n\n"+cf_.to_string()+"\n\n"); af.close();
  print('theory: https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient');
  timestamp=DT.datetime.now(); print(f"-u.corr stops other tasks\ntime:{timestamp}"); 
  sys.exit();
