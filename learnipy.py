@@ -398,8 +398,9 @@ if '.csv' in f: #import .csv training set or (if there is a test set) create tra
   t_=x_[txtcol]; x_=x_.drop(columns=[txtcol]); t_=t_.reset_index(drop=True); #start row index from 0
   print(f"taken {txtcol} as string column");
 
- if 'tscol' in locals() and tscol in x_.columns: #create dataframe to process text
-  d_=x_[tscol]; x_=x_.drop(columns=[tscol]); d_=d_.reset_index(drop=True); d_=d_.rename({tscol:'date'}, axis='columns') #rename the time column
+ if 'tscol' in locals() and tscol in x_.columns: #create dataframe to process date
+  d_=x_[tscol]; x_=x_.drop(columns=[tscol]); d_=d_.reset_index(drop=True); 
+  d_=d_.rename({tscol:'date'}) #rename the time column
   print(f"taken {tscol} as date column");
 
 if '.zip' in f: #extract data from .zip, loading in memory
@@ -589,7 +590,7 @@ if not x_.empty and not 'zip' in datatype and cols >= ncols: #if data not empty,
  x_=PD.get_dummies(x_); x_=x_.reset_index(drop=True); #get one-hot values and restart row index from 0
  print('async sparse one-hot matrix from labels:\n',x_) if '-d.data' in o else print('apply one-hot binarization of labels by default, obtain sparse async matrix'); #print(x_.describe()); 
 #SVD feature reduction
- if not '-d.r=0' in o: #check whether to run feature reduction or leave data as it is
+ if not '-d.r=0' in o and not '-u.cor' in o: #check whether to run feature reduction or leave data as it is
   if len(x_.columns) >2:
    svd=SK.decomposition.TruncatedSVD(svdim, random_state=1); x_=PD.DataFrame(svd.fit_transform(x_)); 
    print('sync dense SVD matrix from one-hot labels:\n',x_) if '-d.data' in o else print('apply Singular Value Decomposition of data by default, obtain dense sync matrix');
@@ -677,7 +678,7 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
  if '-x.bert ' in o: #bert uncased multi language (contributor: Cristiano Casadei)
   batch_size=32; print(f'extracting 768 features with bert multilanguage cased'); fx=1;
 
-  os.system('pip install -U tensorflow_text==2.9.0'); 
+  os.system('pip install -U tensorflow_text'); 
   import tensorflow_text as text;
   text_input = TF.keras.layers.Input(shape=(), dtype=TF.string); 
   preprocessor = TH.KerasLayer("https://tfhub.dev/tensorflow/bert_multi_cased_preprocess/3")
@@ -704,7 +705,7 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
 
  if '-x.mobert ' in o: #bert uncased multi language (contributor: Cristiano Casadei)
   batch_size=32; print(f'extracting 512 features with mobilebert multilanguage cased');
-  os.system('pip install -U tensorflow_text==2.9.0'); fx=1;
+  os.system('pip install -U tensorflow_text'); fx=1;
   import tensorflow_text as text;
   text_input = TF.keras.layers.Input(shape=(), dtype=TF.string); 
   preprocessor = TH.KerasLayer("https://tfhub.dev/tensorflow/bert_multi_cased_preprocess/3")
@@ -765,7 +766,7 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
   x_=PD.concat([x_, t_], axis=1);
  else:
   print('no text feature extraction. text column dropped');
-  if x_.empty:
+  if feat==0: #x_.empty:
    print('no features. prcess stopped'); sys.exit();
 
 inst=len(x_.index); feat=len(x_.columns); print(f'dataset shape: {inst} instances, {feat} features');
