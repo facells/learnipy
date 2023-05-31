@@ -811,7 +811,7 @@ if '-u.corr' in o: #correlation list
   for j in x_:
    xjcol=x_[j]; 
    corr,pval=ST.spearmanr(xicol, xjcol); #run correlation
-   if corr < 0.999 and corr > -0.999 and pval < 0.05: #filter best correlations and remove self correlations
+   if corr < 0.999 and corr > -0.999 and pval < 0.05 and tgtcol in x_.columns and tgtcol==xicol.name: #filter best correlations and remove self correlations
     corr=f'{corr:.3f}'; pval=f'{pval:.6f}'
     cf2_ = PD.DataFrame({"dimensions": [f"{xicol.name} and {xjcol.name}"],"rho":[corr],"pval":[pval]})
     cf_ = cf_.append(cf2_)
