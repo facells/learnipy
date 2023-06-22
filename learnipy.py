@@ -60,6 +60,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -d.c=n      *define the column of the target class. n=name (for .csv) or index (for .zip) of class column*
 * -d.r=0      *do not use feature reduction, keep original features (not applicable with -d.save)*
 * -d.f=c_v    *filter out rows of column c with value v*
+* -d.b=0.5    *resample rows. if value <1 subsamples % of rows without duplicates. if >1 bootstrapping with duplication *
 * -d.m=1      *fill class missing values. 1=replace all missing values in class with mean/mode (otherwise are deleted by default)*
 * -d.viz      *print pca-projected 2d data scatterplot and other visualizations*
 * -d.md       *model details. prints info on algorithm parameters and data modeling*
@@ -100,8 +101,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -u.ap       *affinity propagation exemplar clustering. add a new colum to dataset. results in analysis.txt*
 * -u.som      *self organising map, neural network clustering. add a new colum to dataset. results in analysis.txt*
 * -u.arl      *association rule learning with apriori. prints results in analysis.txt*
-* -u.corr     *feature analysis with spearman correlation rankings. prints results in analysis.txt*
-* -u.corm     *feature analysis with pearson correlation matrix. prints results in analysis.txt*
+* -u.corr=s|p *correlation rankings and p-values. s=spearman (monotone+linear), p=pearson (linear). prints results in analysis.txt*
+* -u.corm=s|p *correlation matrix. s=spearman (monotone+linear), p=pearson (linear). prints results in analysis.txt*
 #### outlier detection
 * -o.if       *isolation forest. find and remove outliers using random forest regions*
 * -o.mcd      *minimum covariance determinant with ellipsis envelope. find and remove outliers using gaussian distribution*
@@ -379,18 +380,29 @@ if '.csv' in f: #import .csv training set or (if there is a test set) create tra
  if '-p.ri' in o:
   x_ = x_.sample(frac=1).reset_index(drop=True); print('apply instance randomization in the training set'); #shuffle instances
 
+#---concat train and test if separated
  if 'x2_' in locals():
   tts=((100/(traininst+testinst))*testinst)/100; print(f'test set percentage={tts}');  #compute tts percentage  
   if not x2_.empty:
    x_=PD.concat([x_, x2_], axis=0, ignore_index=True); 
 
- #---filter selected rows
+ #---filter rows on one column value
  if '-d.f=' in o:
   r_=re.findall(r'-d.f=(.+?)_(.+?) ', o); #print(r_);
   fcol=r_[0][0]; fpat=r_[0][1];
   x_=x_.loc[x_[fcol] == fpat]; 
   print(f"dataset after filtering instances:\n\n {x_}\n");
 
+#---subsample or bootstrap rows
+ if '-d.b=' in o:
+  r_=re.findall(r'-d.b=(.+?) ', o); #print(r_);
+  nsamp=float(r_[0]); boot=False;
+  if nsamp >1:
+   boot=True
+  x_=x_.sample(frac=nsamp, replace=boot, random_state=1); x_=x_.reset_index(); 
+  print(f"dataset after resampling and randomize instances:\n\n {x_}\n");
+
+#---detect and separe different types of columns
  if 'tgtcol' in locals() and tgtcol in x_.columns: #remove rows with missing values in class and extract target class dataframe
   if not '-d.m=1' in o:
    x_=x_.dropna(subset=[tgtcol]); print(f"remove rows with missing values in {tgtcol}");
@@ -799,27 +811,36 @@ if not '-u.cor' in o:
 #---processed features unsupervised learning: corr, w2v and clustering
 
 if '-u.corm' in o: #correlation matrix
+ r_=re.findall(r'-u.corm=(.+?) ',o); 
+ if r_[0]=='s':
+  cort='spearman'
+ else:
+  cort='pearson'
  if 'y_' in locals():
   x_=PD.concat([x_, y_], axis=1)
  x_=PD.get_dummies(x_); #x_=x_.reset_index(drop=True); #get one-hot values and restart row index from 0
- print("pearson correlation matrix (label values are one-hot encoded):\n"+x_.corr().to_string()+"\n");
- af= open('analysis.txt', 'a'); af.write("correlation matrix on one-hot values:\n\n"+x_.corr().to_string()+"\n\n"); af.close();
+ print("pearson correlation matrix (label values are one-hot encoded):\n"+x_.corr(method=cort).to_string()+"\n");
+ af= open('analysis.txt', 'a'); af.write("correlation matrix on one-hot values:\n\n"+x_.corr(method=cort).to_string()+"\n\n"); af.close();
  print('theory: https://en.wikipedia.org/wiki/Pearson_correlation_coefficient');
  timestamp=DT.datetime.now(); print(f"-u.corr stops other tasks\ntime:{timestamp}"); 
  sys.exit();
 
 if '-u.corr' in o: #correlation list
+ r_=re.findall(r'-u.corr=(.+?) ',o); 
  if 'y_' in locals():
   x_=PD.concat([x_, y_], axis=1)
  x_=PD.get_dummies(x_); #x_=x_.reset_index(drop=True); #get one-hot values and restart row index from 0
- print("spearman correlation ranks (label values are one-hot encoded):\n");
+ print("correlation ranks (label values are one-hot encoded):\n");
  #corfound=f'dimensions,rho,pval\n';
  cf_=PD.DataFrame()
  for i in x_:
   xicol=x_[i];
   for j in x_:
    xjcol=x_[j]; 
-   corr,pval=ST.spearmanr(xicol, xjcol); #run correlation
+   if r_[0]=='s':
+    corr,pval=ST.spearmanr(xicol, xjcol); #run correlation
+   else:
+    corr,pval=ST.pearsonr(xicol, xjcol);
    if corr < 0.999 and corr > -0.999 and pval < 0.05 and tgtcol in x_.columns and tgtcol==xicol.name: #filter best correlations and remove self correlations
     corr=f'{corr:.3f}'; pval=f'{pval:.6f}'
     cf2_ = PD.DataFrame({"dimensions": [f"{xicol.name} and {xjcol.name}"],"rho":[corr],"pval":[pval]})
