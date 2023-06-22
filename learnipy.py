@@ -59,6 +59,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -d.s=n      *define the string column treated as text. n=name of text column
 * -d.c=n      *define the column of the target class. n=name (for .csv) or index (for .zip) of class column*
 * -d.r=0      *do not use feature reduction, keep original features (not applicable with -d.save)*
+* -d.f=c_v    *filter out rows of column c with value v*
 * -d.m=1      *fill class missing values. 1=replace all missing values in class with mean/mode (otherwise are deleted by default)*
 * -d.viz      *print pca-projected 2d data scatterplot and other visualizations*
 * -d.md       *model details. prints info on algorithm parameters and data modeling*
@@ -136,14 +137,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.5: added -p.trs, -p.tsw, -o.if, -o.mcd, -o.lof, -u.ap, fixed bug on .zip reading, improved -u.corr
 * v0.6: improved anomaly detection evaluation, added -t., -x.mobert
 * v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng, fixed bug on -d.c with .zip indexes
-* v0.8: added/improved -u.corr and -u.corm, fixed -x.bert, removed w2v and d2v
+* v0.8: added/improved -u.corr and -u.corm, fixed -x.bert, removed w2v and d2v, added -d.f
 
 ### 6) TO DO LIST
-* fix bert feature extraction
-* links to sklearn and tensorflow documentation for algorithms
 * -g.mct (markov chains generated text)
 * -g.gpt (gpt generated from text)
-* remove -x.d2v because it is not replicable
 * add agent based models
 * add forecasting with sktime
 * improve test set input
@@ -388,10 +386,10 @@ if '.csv' in f: #import .csv training set or (if there is a test set) create tra
 
  #---filter selected rows
  if '-d.f=' in o:
-  print(x_)
-  r_=re.findall(r'-d.f=(.+?)_(.+?) ', o); print(r_);
+  r_=re.findall(r'-d.f=(.+?)_(.+?) ', o); #print(r_);
   fcol=r_[0][0]; fpat=r_[0][1];
-  x_=x_.loc[x_[fcol] == fpat] print(x_);
+  x_=x_.loc[x_[fcol] == fpat]; 
+  print(f"dataset after filtering instances:\n\n {x_}\n");
 
  if 'tgtcol' in locals() and tgtcol in x_.columns: #remove rows with missing values in class and extract target class dataframe
   if not '-d.m=1' in o:
@@ -673,15 +671,15 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
    print(f"WARNING: the test set must contain at least {lsadim} instances for compatibility with the model"); 
 
 
-
- if '-x.d2v=' in o: #doc2vec
-  print('apply doc2vec (will be removed in the next version) \ntheory: https://en.wikipedia.org/wiki/Word2vec#Extensions');
-  orig_t_ = t_; #keep text for wordcloud
-  r_=re.findall(r'-x.d2v=(.+?) ', o); size=int(r_[0]);  fx=1;
-  t_=[TaggedDocument(words=word_tokenize(_d.lower()), tags=[str(i)]) for i, _d in enumerate(t_)]; 
-  wmodel=Doc2Vec(vector_size=size); wmodel.build_vocab(t_); wmodel.train(t_, total_examples=len(t_), epochs=1); 
-  t_=PD.DataFrame(wmodel.docvecs.vectors_docs); #turn to doc2vec vectors
-  print('sync dense doc2vec matrix:\n',t_) if '-d.data' in o else print(f'extracting {size} doc2vec features from text');
+#REMOVED v0.8
+#if '-x.d2v=' in o: #doc2vec
+# print('apply doc2vec (will be removed in the next version) \ntheory: https://en.wikipedia.org/wiki/Word2vec#Extensions');
+# orig_t_ = t_; #keep text for wordcloud
+# r_=re.findall(r'-x.d2v=(.+?) ', o); size=int(r_[0]);  fx=1;
+# t_=[TaggedDocument(words=word_tokenize(_d.lower()), tags=[str(i)]) for i, _d in enumerate(t_)]; 
+# wmodel=Doc2Vec(vector_size=size); wmodel.build_vocab(t_); wmodel.train(t_, total_examples=len(t_), epochs=1); 
+# t_=PD.DataFrame(wmodel.docvecs.vectors_docs); #turn to doc2vec vectors
+# print('sync dense doc2vec matrix:\n',t_) if '-d.data' in o else print(f'extracting {size} doc2vec features from text');
 
 
 
