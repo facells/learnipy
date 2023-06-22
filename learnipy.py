@@ -386,6 +386,13 @@ if '.csv' in f: #import .csv training set or (if there is a test set) create tra
   if not x2_.empty:
    x_=PD.concat([x_, x2_], axis=0, ignore_index=True); 
 
+ #---filter selected rows
+ if '-d.f=' in o:
+  print(x_)
+  r_=re.findall(r'-d.f=(.+?)_(.+?) ', o); print(r_);
+  fcol=r_[0][0]; fpat=r_[0][1];
+  x_=x_.loc[x_[fcol] == fpat] print(x_);
+
  if 'tgtcol' in locals() and tgtcol in x_.columns: #remove rows with missing values in class and extract target class dataframe
   if not '-d.m=1' in o:
    x_=x_.dropna(subset=[tgtcol]); print(f"remove rows with missing values in {tgtcol}");
@@ -485,6 +492,7 @@ if not '.zip' in f and not '.csv' in f and not '.zip' in f2 and not '.csv' in f2
 if '-d.x=' in o:
  x_=x_.drop(columns=drop);
 
+
 #---info on visualizations
 if '-d.viz' in o:
  print('all scatterplots are 2D-PCA spaces\ntheory: https://en.wikipedia.org/wiki/Principal_component_analysis');
@@ -568,6 +576,9 @@ if '-p.tsw=' in o:
  print(f'remove stopwords: {swlist}');
 
 ncols=len(x_._get_numeric_data().columns); cols=len(x_.columns); #count of label and numeric columns in dataset
+
+
+
 
 #---feature reduction (applied in saved models)
 if '-r.svd=' in o: #define dimensions for SVD
