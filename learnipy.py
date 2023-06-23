@@ -837,14 +837,14 @@ if '-u.corm' in o: #correlation matrix
  x_=PD.get_dummies(x_); #x_=x_.reset_index(drop=True); #get one-hot values and restart row index from 0
  print("pearson correlation matrix (label values are one-hot encoded):\n"+x_.corr(method=cort).to_string()+"\n");
  af= open('analysis.txt', 'a'); af.write("correlation matrix on one-hot values:\n\n"+x_.corr(method=cort).to_string()+"\n\n"); af.close();
- print('theory: https://en.wikipedia.org/wiki/Pearson_correlation_coefficient');
- timestamp=DT.datetime.now(); print(f"-u.corr stops other tasks\ntime:{timestamp}"); 
+ print('theory: https://en.wikipedia.org/wiki/Correlation_coefficient');
+ timestamp=DT.datetime.now(); print(f"-u.corm stops other tasks\ntime:{timestamp}"); 
  sys.exit();
 
 if '-u.corr' in o: #correlation list
  r_=re.findall(r'-u.corr=(.+?) ',o); 
- if 'y_' in locals():
-  x_=PD.concat([x_, y_], axis=1)
+ #if 'y_' in locals():
+ # x_=PD.concat([x_, y_], axis=1)
  x_=PD.get_dummies(x_); #x_=x_.reset_index(drop=True); #get one-hot values and restart row index from 0
  print("correlation ranks (label values are one-hot encoded):\n");
  #corfound=f'dimensions,rho,pval\n';
@@ -854,17 +854,17 @@ if '-u.corr' in o: #correlation list
   for j in x_:
    xjcol=x_[j]; 
    if r_[0]=='s':
-    corr,pval=ST.spearmanr(xicol, xjcol); #run correlation
+    corr,pval=ST.spearmanr(xicol, xjcol); #print(f'{corr},{pval}') #run correlation
    else:
     corr,pval=ST.pearsonr(xicol, xjcol);
-   if corr < 0.999 and corr > -0.999 and pval < 0.05 and tgtcol in x_.columns and tgtcol==xicol.name: #filter best correlations and remove self correlations
-    corr=f'{corr:.3f}'; pval=f'{pval:.6f}'
+   if corr < 0.999 and corr > -0.999 and pval < 0.05 :#and tgtcol in x_.columns and tgtcol==xicol.name: #filter best correlations and remove self correlations
+    corr=f'{corr:.3f}'; pval=f'{pval:.6f}'; 
     cf2_ = PD.DataFrame({"dimensions": [f"{xicol.name} and {xjcol.name}"],"rho":[corr],"pval":[pval]})
     cf_ = cf_.append(cf2_)
     #corfound=corfound+f"{xicol.name} and {xjcol.name},{corr},{pval}\n";
- cf_=cf_.sort_values(by=["rho"], ascending=False); print(cf_)
+ cf_=cf_.sort_values(by=["rho"], ascending=False).drop_duplicates(subset=['rho','pval']).reset_index(drop=True); print(cf_);
  af= open('analysis.txt', 'a'); af.write("correlation rankings on one-hot values:\n\n"+cf_.to_string()+"\n\n"); af.close();
- print('theory: https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient');
+ print('theory: https://en.wikipedia.org/wiki/Correlation_coefficient');
  timestamp=DT.datetime.now(); print(f"-u.corr stops other tasks\ntime:{timestamp}"); 
  sys.exit();
 
