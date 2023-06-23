@@ -415,7 +415,8 @@ if '.csv' in f: #import .csv training set or (if there is a test set) create tra
   else:
    x_=x_.groupby(gbcol).mean().reset_index(); gbout='mean';
   print(f"dataset after grouping instances with {gbout} function:\n\n {x_}\n");
-
+  x_=x_.drop(gbcol, axis=1); 
+  print(f"{gbcol} removed. only numerical columns left. \n\n ");
 
 #---detect and separe different types of columns
  if 'tgtcol' in locals() and tgtcol in x_.columns: #remove rows with missing values in class and extract target class dataframe
