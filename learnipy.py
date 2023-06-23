@@ -62,6 +62,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -d.f=c_v    *filter out rows of column c with value v*
 * -d.b=0.5    *resample rows. if value <1 subsamples % of rows without duplicates. if >1 bootstrapping with duplication *
 * -d.m=1      *fill class missing values. 1=replace all missing values in class with mean/mode (otherwise are deleted by default)*
+* -d.g=c_a|s  *group rows by column c (must be nominal). keeps only numeric columns aggregated as a=average or s=sum*
 * -d.viz      *print pca-projected 2d data scatterplot and other visualizations*
 * -d.md       *model details. prints info on algorithm parameters and data modeling*
 * -d.fdst     *print info on feature distribution*
@@ -138,7 +139,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.5: added -p.trs, -p.tsw, -o.if, -o.mcd, -o.lof, -u.ap, fixed bug on .zip reading, improved -u.corr
 * v0.6: improved anomaly detection evaluation, added -t., -x.mobert
 * v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng, fixed bug on -d.c with .zip indexes
-* v0.8: added/improved -u.corr and -u.corm, fixed -x.bert, removed w2v and d2v, added -d.f
+* v0.8: added/improved -u.corr and -u.corm, fixed -x.bert, removed w2v and d2v, added -d.f, -d.b and -d.g
 
 ### 6) TO DO LIST
 * -g.mct (markov chains generated text)
@@ -402,6 +403,19 @@ if '.csv' in f: #import .csv training set or (if there is a test set) create tra
   x_=x_.sample(frac=nsamp, replace=boot, random_state=1); x_=x_.reset_index(); 
   print(f"dataset after resampling and randomize instances:\n\n {x_}\n");
 
+#---group rows by one column
+ if '-d.g=' in o:
+  r_=re.findall(r'-d.g=(.+?)_(.+?) ', o); #print(r_);
+  gbcol=r_[0][0]; gbtype=r_[0][1];
+  if gbtype=='s':
+   x_=x_.groupby(gbcol).sum().reset_index(); gbout='sum'; #print(dir(x_.groupby(gbcol)))
+  elif gbtype=='a':
+   x_=x_.groupby(gbcol).mean().reset_index(); gbout='mean';
+  else:
+   x_=x_.groupby(gbcol).mean().reset_index(); gbout='mean';
+  print(f"dataset after grouping instances with {gbout} function:\n\n {x_}\n");
+
+
 #---detect and separe different types of columns
  if 'tgtcol' in locals() and tgtcol in x_.columns: #remove rows with missing values in class and extract target class dataframe
   if not '-d.m=1' in o:
@@ -418,6 +432,7 @@ if '.csv' in f: #import .csv training set or (if there is a test set) create tra
   d_=x_[tscol]; x_=x_.drop(columns=[tscol]); d_=d_.reset_index(drop=True); 
   d_=d_.rename({tscol:'date'}) #rename the time column
   print(f"taken {tscol} as date column");
+
 
 if '.zip' in f: #extract data from .zip, loading in memory
  o=o.replace('-',' -'); print(f"processing {f} with {o}"); 
