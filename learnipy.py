@@ -139,7 +139,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.5: added -p.trs, -p.tsw, -o.if, -o.mcd, -o.lof, -u.ap, fixed bug on .zip reading, improved -u.corr
 * v0.6: improved anomaly detection evaluation, added -t., -x.mobert
 * v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng, fixed bug on -d.c with .zip indexes
-* v0.8: added/improved -u.corr and -u.corm, fixed -x.bert, removed w2v and d2v, added -d.f, -d.b and -d.g
+* v0.8: added/improved -u.corr and -u.corm, fixed -x.bert, removed w2v and d2v, added -d.f
 
 ### 6) TO DO LIST
 * -g.mct (markov chains generated text)
@@ -401,6 +401,7 @@ if '.csv' in f: #import .csv training set or (if there is a test set) create tra
   if nsamp >1:
    boot=True
   x_=x_.sample(frac=nsamp, replace=boot, random_state=1); x_=x_.reset_index(); 
+  x_=x_.drop(columns=['index']);
   print(f"dataset after resampling and randomize instances:\n\n {x_}\n");
 
 #---group rows by one column
