@@ -59,7 +59,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -d.s=n      *define the string column treated as text. n=name of text column
 * -d.c=n      *define the column of the target class. n=name (for .csv) or index (for .zip) of class column*
 * -d.r=0      *do not use feature reduction, keep original features (not applicable with -d.save)*
-* -d.f=c_v    *filter out rows of column c with value v*
+* -d.f=c_v    *filter. keep only rows of column c with value v*
 * -d.b=0.5    *resample rows. if value <1 subsamples % of rows without duplicates. if >1 bootstrapping with duplication *
 * -d.m=1      *fill class missing values. 1=replace all missing values in class with mean/mode (otherwise are deleted by default)*
 * -d.g=c_a|s  *group rows by column c (must be nominal). keeps only numeric columns aggregated as a=average or s=sum*
