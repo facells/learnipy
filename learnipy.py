@@ -96,14 +96,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -x.vgg      *image extraction. 512 sparse features from pre-trained imagenet model
 * -x.effnet   *image extraction. 1408 dense features from pre-trained imagenet model
 #### unsupervised learning
-* -u.km=2     *kmeans, centroid clustering. add a new colum to dataset. results in analysis.txt. 2=num clusters*
-* -u.optics   *optics, density clustering. add a new colum to dataset. results in analysis.txt*
-* -u.msh      *mshift, density clustering. add a new colum to dataset. results in analysis.txt*
-* -u.ap       *affinity propagation exemplar clustering. add a new colum to dataset. results in analysis.txt*
-* -u.som      *self organising map, neural network clustering. add a new colum to dataset. results in analysis.txt*
-* -u.arl      *association rule learning with apriori. prints results in analysis.txt*
-* -u.corr=s|p *correlation rankings and p-values. s=spearman (monotone+linear), p=pearson (linear). prints results in analysis.txt*
-* -u.corm=s|p *correlation matrix. s=spearman (monotone+linear), p=pearson (linear). prints results in analysis.txt*
+* -u.km=2     *kmeans, centroid clustering. add a new colum to dataset. results in log.txt. 2=num clusters*
+* -u.optics   *optics, density clustering. add a new colum to dataset. results in log.txt*
+* -u.msh      *mshift, density clustering. add a new colum to dataset. results in log.txt*
+* -u.ap       *affinity propagation exemplar clustering. add a new colum to dataset. results in log.txt*
+* -u.som      *self organising map, neural network clustering. add a new colum to dataset. results in log.txt*
+* -u.arl      *association rule learning with apriori. prints results in log.txt*
+* -u.corr=s|p *correlation rankings and p-values. s=spearman (monotone+linear), p=pearson (linear). prints results in log.txt*
+* -u.corm=s|p *correlation matrix. s=spearman (monotone+linear), p=pearson (linear). prints results in log.txt*
 #### outlier detection
 * -o.if       *isolation forest. find and remove outliers using random forest regions*
 * -o.mcd      *minimum covariance determinant with ellipsis envelope. find and remove outliers using gaussian distribution*
@@ -539,9 +539,9 @@ if '-u.arl' in o: #association rule mining
  frequent_itemsets = apriori(df, min_support=0.01, use_colnames=True); #print(frequent_itemsets)
  #frequent_itemsets = fpmax(df, min_support=0.01, use_colnames=True)
  results=association_rules(frequent_itemsets, metric="confidence", min_threshold=0.1);
- af= open('analysis.txt', 'a'); af.write(results.to_string()+"\n\n"); af.close(); 
+ af= open('log.txt', 'a'); af.write(results.to_string()+"\n\n"); af.close(); 
  print(results);
- print('results printed in analysis.txt file'); timestamp=DT.datetime.now(); 
+ print('results printed in log.txt file'); timestamp=DT.datetime.now(); 
  print(f"-u.arl stops other tasks\ntime:{timestamp}");
  sys.exit();
 
@@ -837,7 +837,7 @@ if '-u.corm' in o: #correlation matrix
   x_=PD.concat([x_, y_], axis=1)
  x_=PD.get_dummies(x_); #x_=x_.reset_index(drop=True); #get one-hot values and restart row index from 0
  print("pearson correlation matrix (label values are one-hot encoded):\n"+x_.corr(method=cort).to_string()+"\n");
- af= open('analysis.txt', 'a'); af.write(f"correlation matrix on one-hot values:\n{o}\n"+x_.corr(method=cort).to_string()+"\n\n"); af.close();
+ af= open('log.txt', 'a'); af.write(f"correlation matrix on one-hot values:\n{o}\n"+x_.corr(method=cort).to_string()+"\n\n"); af.close();
  print('theory: https://en.wikipedia.org/wiki/Correlation_coefficient');
  timestamp=DT.datetime.now(); print(f"-u.corm stops other tasks\ntime:{timestamp}"); 
  sys.exit();
@@ -859,12 +859,12 @@ if '-u.corr' in o: #correlation list
    else:
     corr,pval=ST.pearsonr(xicol, xjcol);
    if corr < 0.999 and corr > -0.999 and pval < 0.05 :#and tgtcol in x_.columns and tgtcol==xicol.name: #filter best correlations and remove self correlations
-    corr=f'{corr:.3f}'; pval=f'{pval:.6f}'; 
-    cf2_ = PD.DataFrame({"dimensions": [f"{xicol.name} and {xjcol.name}"],"rho":[corr],"pval":[pval]})
+    #corr=f'{corr:.6f}'; pval=f'{pval:.6f}'; 
+    cf2_ = PD.DataFrame({"dimensions": [f"{xicol.name} and {xjcol.name}"],"rho":[f'{corr:.3f}'],"pval":[f'{pval:.3f}']})
     cf_ = cf_.append(cf2_)
     #corfound=corfound+f"{xicol.name} and {xjcol.name},{corr},{pval}\n";
  cf_=cf_.sort_values(by=["rho"], ascending=False).drop_duplicates(subset=['rho','pval']).reset_index(drop=True); print(cf_);
- af= open('analysis.txt', 'a'); af.write(f"correlation rankings on one-hot values:\n{o}\n"+cf_.to_string()+"\n\n"); af.close();
+ af= open('log.txt', 'a'); af.write(f"correlation rankings on one-hot values:\n{o}\n"+cf_.to_string()+"\n\n"); af.close();
  print('theory: https://en.wikipedia.org/wiki/Correlation_coefficient');
  timestamp=DT.datetime.now(); print(f"-u.corr stops other tasks\ntime:{timestamp}"); 
  sys.exit();
@@ -891,7 +891,7 @@ if '-u.km=' in o: #kmeans clustering
  r_=re.findall(r'-u.km=(.+?) ',o); nk=int(r_[0]);
  clust = SK.cluster.KMeans(n_clusters=nk, random_state=0).fit(x_.values); l_=PD.DataFrame(clust.labels_); l_.columns=['kmeans']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('kmeans').mean(); print('applied kmeans clustering. added 1 feature'); 
  print('theory: https://en.wikipedia.org/wiki/K-means_clustering');
- af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
+ af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
  print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
@@ -900,7 +900,7 @@ if '-u.km=' in o: #kmeans clustering
 if '-u.optics' in o: #optics clustering
  clust = SK.cluster.OPTICS(min_cluster_size=None).fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['optics']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('optics').mean(); print('applied optics clustering. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/OPTICS_algorithm');
- af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); 
+ af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); 
  print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
@@ -909,7 +909,7 @@ if '-u.optics' in o: #optics clustering
 if '-u.msh' in o: #meanshift clustering
  clust = SK.cluster.MeanShift().fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['mshift']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('mshift').mean(); print('applied mshift clustering. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/Mean_shift');
- af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); 
+ af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); 
  print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
@@ -930,7 +930,7 @@ if '-u.som' in o: #self organising map clustering (contributor: Fabio Celli)
  g_=x_.groupby('som').mean(); 
  print(f'apply self organizing maps clustering with {nodes} x {nodes} matrix. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/Self-organizing_map');
- af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
+ af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
  ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); 
  nk=len(classes);  print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");
  if '-d.viz' in o:
@@ -943,7 +943,7 @@ if '-u.som' in o: #self organising map clustering (contributor: Fabio Celli)
 if '-u.ap' in o: #affinity propagation clustering
  clust = SK.cluster.AffinityPropagation(damping=0.5).fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['affinity']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('affinity').mean(); print('applied affinity propagation clustering. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/Affinity_propagation');
- af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); 
+ af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); 
  print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
@@ -954,7 +954,7 @@ if '-u.gxm' in o: #gaussian models expectation maximisation
  r_=re.findall(r'-u.gxm=(.+?) ',o); nk=int(r_[0]);
  clust = SK.mixture.GaussianMixture(n_components=nk).fit(x_); l_=PD.DataFrame(clust.predict); l_.columns=['expectmax']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('expectmax').mean(); print('applied expectation maximisation clustering. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/Expectation-maximization_algorithm');
- af= open('analysis.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); print(f"num clusters= {nk}");
+ af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); print(f"num clusters= {nk}");
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space expectation maximisation clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
