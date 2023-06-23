@@ -55,7 +55,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 ### 4) DOCUMENTATION
 #### data management
 * -d.t=c|r    *define type of task. c=classification, r=regression*
-* -d.d=n,m,o  *define the columns to exclude. n,m,o=names of columns to exclude*
+* -d.x=n,m,o  *define the columns to exclude. n,m,o=names of columns to exclude*
+* -d.k=n,m,o  *define the columns to keep. n,m,o=names of columns to keep*
 * -d.s=n      *define the string column treated as text. n=name of text column
 * -d.c=n      *define the column of the target class. n=name (for .csv) or index (for .zip) of class column*
 * -d.r=0      *do not use feature reduction, keep original features (not applicable with -d.save)*
@@ -139,7 +140,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.5: added -p.trs, -p.tsw, -o.if, -o.mcd, -o.lof, -u.ap, fixed bug on .zip reading, improved -u.corr
 * v0.6: improved anomaly detection evaluation, added -t., -x.mobert
 * v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng, fixed bug on -d.c with .zip indexes
-* v0.8: added/improved -u.corr and -u.corm, fixed -x.bert, removed w2v and d2v, added -d.f
+* v0.8: added/improved -u.corr and -u.corm, fixed -x.bert, removed w2v and d2v, added -d.f, -d.g, -d.k, -d.b
 
 ### 6) TO DO LIST
 * -g.mct (markov chains generated text)
@@ -309,8 +310,8 @@ else:#otherwise apply default name
  if '.zip' in f or datatype=='zip':
   tgtcol=1; print('extract index 1 from comma separated file name as target class');
 
-if '-d.d=' in o:#get name of column to drop
- r_=re.findall(r'-d.d=(.+?) ',o); drop=r_[0].split(','); 
+if '-d.x=' in o:#get name of column to drop
+ r_=re.findall(r'-d.x=(.+?) ',o); drop=r_[0].split(','); 
 
 if '-d.k=' in o:#get name of column to keep
  r_=re.findall(r'-d.k=(.+?) ',o); keep=r_[0].split(','); 
@@ -519,7 +520,7 @@ if not '.zip' in f and not '.csv' in f and not '.zip' in f2 and not '.csv' in f2
 
 
 #---drop selected columns
-if '-d.d=' in o:
+if '-d.x=' in o:
  x_=x_.drop(columns=drop);
 
 #---keep selected columns
