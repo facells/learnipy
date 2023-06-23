@@ -836,7 +836,7 @@ if '-u.corm' in o: #correlation matrix
   x_=PD.concat([x_, y_], axis=1)
  x_=PD.get_dummies(x_); #x_=x_.reset_index(drop=True); #get one-hot values and restart row index from 0
  print("pearson correlation matrix (label values are one-hot encoded):\n"+x_.corr(method=cort).to_string()+"\n");
- af= open('analysis.txt', 'a'); af.write("correlation matrix on one-hot values:\n\n"+x_.corr(method=cort).to_string()+"\n\n"); af.close();
+ af= open('analysis.txt', 'a'); af.write(f"correlation matrix on one-hot values:\n{o}\n"+x_.corr(method=cort).to_string()+"\n\n"); af.close();
  print('theory: https://en.wikipedia.org/wiki/Correlation_coefficient');
  timestamp=DT.datetime.now(); print(f"-u.corm stops other tasks\ntime:{timestamp}"); 
  sys.exit();
@@ -863,7 +863,7 @@ if '-u.corr' in o: #correlation list
     cf_ = cf_.append(cf2_)
     #corfound=corfound+f"{xicol.name} and {xjcol.name},{corr},{pval}\n";
  cf_=cf_.sort_values(by=["rho"], ascending=False).drop_duplicates(subset=['rho','pval']).reset_index(drop=True); print(cf_);
- af= open('analysis.txt', 'a'); af.write("correlation rankings on one-hot values:\n\n"+cf_.to_string()+"\n\n"); af.close();
+ af= open('analysis.txt', 'a'); af.write(f"correlation rankings on one-hot values:\n{o}\n"+cf_.to_string()+"\n\n"); af.close();
  print('theory: https://en.wikipedia.org/wiki/Correlation_coefficient');
  timestamp=DT.datetime.now(); print(f"-u.corr stops other tasks\ntime:{timestamp}"); 
  sys.exit();
