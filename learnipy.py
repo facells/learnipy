@@ -55,7 +55,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 ### 4) DOCUMENTATION
 #### data management
 * -d.t=c|r    *define type of task. c=classification, r=regression*
-* -d.x=n,m,o  *define the columns to exclude. n,m,o=names of columns to exclude*
+* -d.d=n,m,o  *define the columns to exclude. n,m,o=names of columns to exclude*
 * -d.s=n      *define the string column treated as text. n=name of text column
 * -d.c=n      *define the column of the target class. n=name (for .csv) or index (for .zip) of class column*
 * -d.r=0      *do not use feature reduction, keep original features (not applicable with -d.save)*
@@ -134,7 +134,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.0: developed the main features
 * v0.1: added -u.corr, -u.arl, -x.w2v, -x.d2v, -s.sgd, -s.xgb, .zip input, -s.nn=c
 * v0.2: added -x.bert, -x.tm, -x.ts, improved -s.nn, removed -e.cv (cross validation), fixed bug on text reading
-* v0.3: improved -x.bert, -x.d and -d.viz, added -d.c, -d.s, -d.m, -d.r, -d.x, changed -d.gen to -g.d
+* v0.3: improved -x.bert, -x.d and -d.viz, added -d.c, -d.s, -d.m, -d.r, -d.d, changed -d.gen to -g.d
 * v0.4: added -d.export -g.mct, -u.som, -d.md, included -s.psvm in -s.svm, added wiki links, moved -u.w2v
 * v0.5: added -p.trs, -p.tsw, -o.if, -o.mcd, -o.lof, -u.ap, fixed bug on .zip reading, improved -u.corr
 * v0.6: improved anomaly detection evaluation, added -t., -x.mobert
@@ -309,8 +309,11 @@ else:#otherwise apply default name
  if '.zip' in f or datatype=='zip':
   tgtcol=1; print('extract index 1 from comma separated file name as target class');
 
-if '-d.x=' in o:#get name of column to drop
- r_=re.findall(r'-d.x=(.+?) ',o); drop=r_[0].split(','); 
+if '-d.d=' in o:#get name of column to drop
+ r_=re.findall(r'-d.d=(.+?) ',o); drop=r_[0].split(','); 
+
+if '-d.k=' in o:#get name of column to keep
+ r_=re.findall(r'-d.k=(.+?) ',o); keep=r_[0].split(','); 
 
 if '-d.t=c' in o: #auto define classification or regression
  target='c'; print('task: classification')
@@ -516,9 +519,12 @@ if not '.zip' in f and not '.csv' in f and not '.zip' in f2 and not '.csv' in f2
 
 
 #---drop selected columns
-if '-d.x=' in o:
+if '-d.d=' in o:
  x_=x_.drop(columns=drop);
 
+#---keep selected columns
+if '-d.k=' in o:
+ x_=x_[keep];
 
 #---info on visualizations
 if '-d.viz' in o:
@@ -1485,7 +1491,7 @@ if '-s.' in o or '-t.' in o: #if the task is supervised run evaluation
   print(f"eval predictions on test set. BAL ACC= {acc:.3f}"); 
   rr=SK.metrics.classification_report(y_test, y_pred); print(rr);
   cm=SK.metrics.confusion_matrix(y_test, y_pred, labels=classes); cm=PD.DataFrame(cm); print("confusion matrix:\n",cm);
-  af= open('results.txt', 'a'); af.write(f"\n\n{f}, {o} -->BAL ACC= {acc:.3f}\n{rr}\nconfusion matrix:\n{cm}"); af.close(); 
+  af= open('log.txt', 'a'); af.write(f"\n\n{f}, {o} -->BAL ACC= {acc:.3f}\n{rr}\nconfusion matrix:\n{cm}"); af.close(); 
  if target=='r': 
   #scores=model.fit(x_train, y_train); y_pred=model.predict(x_test); 
   mae=SK.metrics.mean_absolute_error(y_test, y_pred); 
@@ -1496,7 +1502,7 @@ if '-s.' in o or '-t.' in o: #if the task is supervised run evaluation
   NP.set_printoptions(precision=2); 
   if '-d.data' in o:
    print('predictions:'); print(y_pred.flatten()); print('ground truth:'); print(y_test.to_numpy().flatten()); 
-  af= open('results.txt', 'a'); af.write(f"\n\n{f}, {o} --> R2= {r2:.3f}, MAE= {mae:.3f}\n"); af.close();
+  af= open('log.txt', 'a'); af.write(f"\n\n{f}, {o} --> R2= {r2:.3f}, MAE= {mae:.3f}\n"); af.close();
   
 
 #---visualizations
