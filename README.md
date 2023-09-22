@@ -1,5 +1,6 @@
+'''
 # LEARNIPY
-* version 0.7
+* version 0.8
 * making machine learning easy for everyone
 * written with ♥ by Fabio Celli, 
 * email: fabio.celli.phd@gmail.com
@@ -55,10 +56,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 #### data management
 * -d.t=c|r    *define type of task. c=classification, r=regression*
 * -d.x=n,m,o  *define the columns to exclude. n,m,o=names of columns to exclude*
+* -d.k=n,m,o  *define the columns to keep. n,m,o=names of columns to keep*
 * -d.s=n      *define the string column treated as text. n=name of text column
 * -d.c=n      *define the column of the target class. n=name (for .csv) or index (for .zip) of class column*
 * -d.r=0      *do not use feature reduction, keep original features (not applicable with -d.save)*
+* -d.f=c_v    *filter. keep only rows of column c with value v*
+* -d.b=0.5    *resample rows. if value <1 subsamples % of rows without duplicates. if >1 bootstrapping with duplication *
 * -d.m=1      *fill class missing values. 1=replace all missing values in class with mean/mode (otherwise are deleted by default)*
+* -d.g=c_a|s  *group rows by column c (must be nominal). keeps only numeric columns aggregated as a=average or s=sum*
 * -d.viz      *print pca-projected 2d data scatterplot and other visualizations*
 * -d.md       *model details. prints info on algorithm parameters and data modeling*
 * -d.fdst     *print info on feature distribution*
@@ -92,14 +97,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -x.vgg      *image extraction. 512 sparse features from pre-trained imagenet model
 * -x.effnet   *image extraction. 1408 dense features from pre-trained imagenet model
 #### unsupervised learning
-* -u.km=2     *kmeans, centroid clustering. add a new colum to dataset. results in analysis.txt. 2=num clusters*
-* -u.optics   *optics, density clustering. add a new colum to dataset. results in analysis.txt*
-* -u.msh      *mshift, density clustering. add a new colum to dataset. results in analysis.txt*
-* -u.ap       *affinity propagation exemplar clustering. add a new colum to dataset. results in analysis.txt*
-* -u.som      *self organising map, neural network clustering. add a new colum to dataset. results in analysis.txt*
-* -u.w2v[=15] *word2vec dictionary from text, pca-2d word2vec space. 1=words to filter x10, 5=words to visualize x10*
-* -u.arl      *association rule learning with apriori. prints results in analysis.txt*
-* -u.corr     *feature analysis with pearson correlations. prints results in analysis.txt*
+* -u.km=2     *kmeans, centroid clustering. add a new colum to dataset. results in log.txt. 2=num clusters*
+* -u.optics   *optics, density clustering. add a new colum to dataset. results in log.txt*
+* -u.msh      *mshift, density clustering. add a new colum to dataset. results in log.txt*
+* -u.ap       *affinity propagation exemplar clustering. add a new colum to dataset. results in log.txt*
+* -u.som      *self organising map, neural network clustering. add a new colum to dataset. results in log.txt*
+* -u.arl      *association rule learning with apriori. prints results in log.txt*
+* -u.corr=s|p *correlation rankings and p-values. s=spearman (monotone+linear), p=pearson (linear). prints results in log.txt*
+* -u.corm=s|p *correlation matrix. s=spearman (monotone+linear), p=pearson (linear). prints results in log.txt*
 #### outlier detection
 * -o.if       *isolation forest. find and remove outliers using random forest regions*
 * -o.mcd      *minimum covariance determinant with ellipsis envelope. find and remove outliers using gaussian distribution*
@@ -130,19 +135,19 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.0: developed the main features
 * v0.1: added -u.corr, -u.arl, -x.w2v, -x.d2v, -s.sgd, -s.xgb, .zip input, -s.nn=c
 * v0.2: added -x.bert, -x.tm, -x.ts, improved -s.nn, removed -e.cv (cross validation), fixed bug on text reading
-* v0.3: improved -x.bert, -x.d and -d.viz, added -d.c, -d.s, -d.m, -d.r, -d.x, changed -d.gen to -g.d
+* v0.3: improved -x.bert, -x.d and -d.viz, added -d.c, -d.s, -d.m, -d.r, -d.d, changed -d.gen to -g.d
 * v0.4: added -d.export -g.mct, -u.som, -d.md, included -s.psvm in -s.svm, added wiki links, moved -u.w2v
 * v0.5: added -p.trs, -p.tsw, -o.if, -o.mcd, -o.lof, -u.ap, fixed bug on .zip reading, improved -u.corr
 * v0.6: improved anomaly detection evaluation, added -t., -x.mobert
-* v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng
+* v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng, fixed bug on -d.c with .zip indexes
+* v0.8: added/improved -u.corr and -u.corm, fixed -x.bert, removed w2v and d2v, added -d.f, -d.g, -d.k, -d.b
 
 ### 6) TO DO LIST
-* links to sklearn and tensorflow documentation for algorithms
 * -g.mct (markov chains generated text)
 * -g.gpt (gpt generated from text)
-* improve -u.corr  (correlation ranking)
-* remove -x.d2v because it is not replicable
-* -x.gap global average pooling image feature extraction
-* table to image extraction
+* add agent based models
+* add forecasting with sktime
 * improve test set input
 * -u.gxm expectation maximisation
+
+'''
