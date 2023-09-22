@@ -1163,10 +1163,10 @@ if '-o.' in o:
 
 #---supervised learning
 if '-s.base' in o and target=='c':
- model=SK.linear_model.LogisticRegression(max_iter=5000); print('evaluate anomaly removal with linear models'); 
+ model=SK.dummy.DummyClassifier(strategy='prior', random_state=3,); print('evaluate with baseline dummy classifier'); 
  model.fit(x_train, y_train); y_pred=model.predict(x_test); 
 if '-s.base' in o and target=='r':
- model=SK.dummy.DummyRegressor(strategy='mean'); print('compute mean baseline');
+ model=SK.dummy.DummyRegressor(strategy='mean', random_state=3,); print('evaluate with mean baseline');
  model.fit(x_train, y_train); y_pred=model.predict(x_test);  #'mean', 'median',
 
 if '-s.nb' in o and target=='c':
