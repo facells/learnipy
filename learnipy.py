@@ -538,7 +538,7 @@ if '-d.viz' in o:
 #---unsupervised learning on unprocessed data
 
 if '-u.arl' in o: #association rule mining
- xn_=x_.to_numpy(); xn_=xn_.flatten(); xn_=NP.array(xn_, dtype=NP.str)
+ xn_=x_.to_numpy(); xn_=xn_.flatten(); xn_=NP.array(xn_, dtype=str)
  print('apply association rule learning (market basket analysis).\ntheory: https://en.wikipedia.org/wiki/Association_rule_learning \ndocs: https://github.com/rasbt/mlxtend');
  xn_=NP.char.split(xn_,sep=' '); 
  from mlxtend.preprocessing import TransactionEncoder;
@@ -839,8 +839,7 @@ if not '-u.' in o:
 #---processed features unsupervised learning: corr, w2v and clustering
 
 if '-u.corm' in o: #correlation matrix
- r_=re.findall(r'-u.corm=(.+?) ',o); 
- if r_[0]=='s':
+ if'-u.corm=s' in o:
   cort='spearman'
  else:
   cort='pearson'
@@ -854,27 +853,29 @@ if '-u.corm' in o: #correlation matrix
  sys.exit();
 
 if '-u.corr' in o: #correlation list
- r_=re.findall(r'-u.corr=(.+?) ',o); 
  #if 'y_' in locals():
  # x_=PD.concat([x_, y_], axis=1)
  x_=PD.get_dummies(x_); #x_=x_.reset_index(drop=True); #get one-hot values and restart row index from 0
  print("correlation ranks (label values are one-hot encoded):\n");
  #corfound=f'dimensions,rho,pval\n';
- cf_=PD.DataFrame()
+ corfound=f"dimensions,rho,pval\n";
  for i in x_:
   xicol=x_[i];
   for j in x_:
    xjcol=x_[j]; 
-   if r_[0]=='s':
+   if'-u.corr=s' in o:
     corr,pval=ST.spearmanr(xicol, xjcol); #print(f'{corr},{pval}') #run correlation
    else:
     corr,pval=ST.pearsonr(xicol, xjcol);
-   if corr < 0.999 and corr > -0.999 and pval < 0.05 :#and tgtcol in x_.columns and tgtcol==xicol.name: #filter best correlations and remove self correlations
-    #corr=f'{corr:.6f}'; pval=f'{pval:.6f}'; 
-    cf2_ = PD.DataFrame({"dimensions": [f"{xicol.name} and {xjcol.name}"],"rho":[f'{corr:.3f}'],"pval":[f'{pval:.3f}']})
-    cf_ = cf_.append(cf2_)
-    #corfound=corfound+f"{xicol.name} and {xjcol.name},{corr},{pval}\n";
- cf_=cf_.sort_values(by=["rho"], ascending=False).reset_index(drop=True); print(cf_);
+   if corr < 0.99 and corr > -0.99 and pval < 0.005 :#and tgtcol in x_.columns and tgtcol==xicol.name: #filter best correlations and remove self correlations
+    corr=f'{corr:.6f}'; pval=f'{pval:.6f}'; 
+    #cf2_ = PD.DataFrame({"dimensions": [f"{xicol.name} and {xjcol.name}"],"rho":[f'{corr:.3f}'],"pval":[f'{pval:.3f}']});
+    #print(cf2_);
+    corfound=corfound+f"{xicol.name} and {xjcol.name},{corr},{pval}\n";
+ import io; iofile = io.StringIO(corfound);
+ cf_ = PD.read_csv(iofile, sep=',');
+ cf_=cf_.sort_values(by=['rho'], ascending=False).reset_index(drop=True); 
+ print(cf_);
  af= open('log.txt', 'a'); af.write(f"correlation rankings on one-hot values:\n{o}\n"+cf_.to_string()+"\n\n"); af.close();
  print('theory: https://en.wikipedia.org/wiki/Correlation_coefficient');
  timestamp=DT.datetime.now(); print(f"-u.corr stops other tasks\ntime:{timestamp}"); 
