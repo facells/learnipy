@@ -98,6 +98,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -x.effnet   *image extraction. 1408 dense features from pre-trained imagenet model
 #### unsupervised learning
 * -u.km=2     *kmeans, centroid clustering. add a new colum to dataset. results in log.txt. 2=num clusters*
+* -u.kmpp=2   *kmeans++, centroid clustering. add a new colum to dataset. results in log.txt. 2=num clusters*
+* -u.sc=2     *spectral clustering. add a new colum to dataset. results in log.txt. 2=num clusters*
 * -u.optics   *optics, density clustering. add a new colum to dataset. results in log.txt*
 * -u.msh      *mshift, density clustering. add a new colum to dataset. results in log.txt*
 * -u.ap       *affinity propagation exemplar clustering. add a new colum to dataset. results in log.txt*
@@ -141,14 +143,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.6: improved anomaly detection evaluation, added -t., -x.mobert
 * v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng, fixed bug on -d.c with .zip indexes
 * v0.8: added/improved -u.corr and -u.corm, fixed -x.bert, removed w2v and d2v, added -d.f, -d.g, -d.k, -d.b
+* v0.9: added -u.kmpp, -u.sc
 
 ### 6) TO DO LIST
 * -g.mct (markov chains generated text)
 * -g.gpt (gpt generated from text)
 * add agent based models
+* add process mining
+* add network analysis
 * add forecasting with sktime
 * improve test set input
-* -u.gxm expectation maximisation
+
 
 '''
 
@@ -899,16 +904,37 @@ if '-u.km=' in o: #kmeans clustering
  clust = SK.cluster.KMeans(n_clusters=nk, random_state=0).fit(x_.values); l_=PD.DataFrame(clust.labels_); l_.columns=['kmeans']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('kmeans').mean(); print('applied kmeans clustering. added 1 feature'); 
  print('theory: https://en.wikipedia.org/wiki/K-means_clustering');
  af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
- print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");
+ print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space kmeans clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
+
+if '-u.kmpp=' in o: #kmeans++ clustering
+ r_=re.findall(r'-u.kmpp=(.+?) ',o); nk=int(r_[0]);
+ clust = SK.cluster.MiniBatchKMeans(n_clusters=nk, random_state=0, init='k-means++').fit(x_.values); l_=PD.DataFrame(clust.labels_); l_.columns=['kmeans++']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('kmeans++').mean(); print('applied kmeans++ clustering. added 1 feature'); 
+ print('theory: https://en.wikipedia.org/wiki/K-means_clustering');
+ af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
+ print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
+ if '-d.viz' in o:
+  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
+  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space kmeans clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
+
+if '-u.sc=' in o: #spectral clustering
+ r_=re.findall(r'-u.sc=(.+?) ',o); nk=int(r_[0]);
+ clust = SK.cluster.SpectralClustering(n_clusters=nk, random_state=0, assign_labels='cluster_qr',).fit(x_.values); l_=PD.DataFrame(clust.labels_); l_.columns=['spectral']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('spectral').mean(); print('applied spectral clustering. added 1 feature'); 
+ print('theory: https://en.wikipedia.org/wiki/Spectral_clustering');
+ af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
+ print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
+ if '-d.viz' in o:
+  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
+  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space kmeans clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
+
 
 if '-u.optics' in o: #optics clustering
  clust = SK.cluster.OPTICS(min_cluster_size=None).fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['optics']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('optics').mean(); print('applied optics clustering. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/OPTICS_algorithm');
  af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); 
- print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");
+ print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space optics clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
@@ -917,7 +943,7 @@ if '-u.msh' in o: #meanshift clustering
  clust = SK.cluster.MeanShift().fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['mshift']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('mshift').mean(); print('applied mshift clustering. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/Mean_shift');
  af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); 
- print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");
+ print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space meanshift clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
@@ -939,7 +965,7 @@ if '-u.som' in o: #self organising map clustering (contributor: Fabio Celli)
  print('theory: https://en.wikipedia.org/wiki/Self-organizing_map');
  af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
  ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); 
- nk=len(classes);  print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");
+ nk=len(classes);  print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); 
   MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(col_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
@@ -951,7 +977,7 @@ if '-u.ap' in o: #affinity propagation clustering
  clust = SK.cluster.AffinityPropagation(damping=0.5).fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['affinity']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('affinity').mean(); print('applied affinity propagation clustering. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/Affinity_propagation');
  af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); 
- print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");
+ print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space affinity propagation clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
