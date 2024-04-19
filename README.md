@@ -98,6 +98,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -x.effnet   *image extraction. 1408 dense features from pre-trained imagenet model
 #### unsupervised learning
 * -u.km=2     *kmeans, centroid clustering. add a new colum to dataset. results in log.txt. 2=num clusters*
+* -u.kmpp=2   *kmeans++, centroid clustering. add a new colum to dataset. results in log.txt. 2=num clusters*
+* -u.sc=2     *spectral clustering. add a new colum to dataset. results in log.txt. 2=num clusters*
 * -u.optics   *optics, density clustering. add a new colum to dataset. results in log.txt*
 * -u.msh      *mshift, density clustering. add a new colum to dataset. results in log.txt*
 * -u.ap       *affinity propagation exemplar clustering. add a new colum to dataset. results in log.txt*
@@ -141,13 +143,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.6: improved anomaly detection evaluation, added -t., -x.mobert
 * v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng, fixed bug on -d.c with .zip indexes
 * v0.8: added/improved -u.corr and -u.corm, fixed -x.bert, removed w2v and d2v, added -d.f, -d.g, -d.k, -d.b
+* v0.9: added -u.kmpp, -u.sc
 
 ### 6) TO DO LIST
 * -g.mct (markov chains generated text)
 * -g.gpt (gpt generated from text)
 * add agent based models
+* add process mining
+* add network analysis
 * add forecasting with sktime
 * improve test set input
-* -u.gxm expectation maximisation
+
 
 '''
