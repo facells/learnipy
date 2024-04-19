@@ -816,8 +816,8 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
 inst=len(x_.index); feat=len(x_.columns); print(f'dataset shape: {inst} instances, {feat} features');
 
 
-#---class statistics and correlation complexity
-if not '-u.cor' in o:
+#---class statistics and correlation complexity (only supervised learning)
+if not '-u.' in o:
  if '-d.viz' in o and not '-t.' in o:
   if task=='s':
    MP.hist(y_, color='black', edgecolor='black', linewidth=0);  MP.ylabel('frequency'); MP.title('class distribution');  MP.savefig(fname='class-dist'); MP.show(); MP.clf(); #class dist
@@ -1080,7 +1080,9 @@ if '.h5' in f: #apply deep learning saved model
  af= open(f"{testname}-predictions.csv", 'w'); af.write(n_.to_csv()); af.close();  print(f"data with predictions saved as {testname}-predictions.csv");
  sys.exit();
 
-
+#---stop unsupervised learning
+if not '-s.' in o or not '-t.' in o:
+ sys.exit();
 
 #---train and test split
 #if '-e.cv=' in o: # cross validation *TO REMOVE*
