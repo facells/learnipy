@@ -157,7 +157,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 
 '''
 
-#TO DO: add drop features by index, gen markov chains, gen gan
 
 import os;
 
