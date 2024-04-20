@@ -215,7 +215,7 @@ if '-x.resnet' in o:
  # add a global spatial average pooling layer
  x = base_model.output
  head = GlobalAveragePooling2D()(x)
- imgmodel = Model(inputs=base_model.input, outputs=head)   # this is the model we will train
+ imgmodel = Model(inputs=base_model.input, outputs=head)   
 
 if '-x.vgg' in o:
  print('import vgg to extract 512 features from images');
@@ -229,7 +229,7 @@ if '-x.vgg' in o:
  # add a global spatial average pooling layer
  x = base_model.output
  head = GlobalAveragePooling2D()(x)
- imgmodel = Model(inputs=base_model.input, outputs=head)   # this is the model we will train
+ imgmodel = Model(inputs=base_model.input, outputs=head)  
 
 
 if '-x.effnet' in o:
@@ -244,7 +244,7 @@ if '-x.effnet' in o:
  # add a global spatial average pooling layer
  x = base_model.output
  head = GlobalAveragePooling2D()(x)
- imgmodel = Model(inputs=base_model.input, outputs=head)   # this is the model we will train
+ imgmodel = Model(inputs=base_model.input, outputs=head)  
 
 
 
@@ -305,13 +305,13 @@ if '-d.ts=' in o:#get name of timestamp column
  r_=re.findall(r'-d.ts=(.+?) ',o); tscol=(r_[0]); 
  print(f"using '{tscol}' as timestamp column");
 else:#otherwise apply default name
- tscol='date'; print('extract "date" as timestamp column'); 
+ tscol='date'; print('search "date" as timestamp column'); 
 
 if '-d.s=' in o:#get name of string column
  r_=re.findall(r'-d.s=(.+?) ',o); txtcol=(r_[0]); 
  print(f"using '{txtcol}' as string column");
 else:#otherwise apply default name
- txtcol='text'; print('extract "text" as string column'); 
+ txtcol='text'; print('search "text" as string column'); 
 
 if '-d.c=' in o:#get name of class column
  if re.search(r'-d.c=[a-zA-Z]', o):
@@ -322,7 +322,7 @@ if '-d.c=' in o:#get name of class column
   print(f"'{tgtcol}' is the target class index"); 
 else:#otherwise apply default name
  if '.csv' in f or datatype=='csv':
-  tgtcol='class'; print('extract "class" as target class'); 
+  tgtcol='class'; print('search "class" as target class'); 
  if '.zip' in f or datatype=='zip':
   tgtcol=1; print('extract index 1 from comma separated file name as target class');
 
@@ -357,18 +357,23 @@ if 'f2' in locals(): #import csv test set
     else: label=0;
     d=zip.open(i); #print(d);
     if '.jpg' in i or '.png' in i:
-     d_=imread(d); names_.append(d.name); d_=resize(d_, (size,size,3),anti_aliasing=True); dshape=(size,size); d_=d_.flatten(); 
+     d_=imread(d); names_.append(d.name); 
+     d_=resize(d_, (size,size,3),anti_aliasing=True); dshape=(size,size); 
+     d_=d_.flatten(); 
      x2_.append(d_); y2_.append(label); #read, resize and flatten images
  #ADD other file formats extraction
    x2_=NP.array(x2_).astype('float')/255.0; y2_=NP.array(y2_).astype('int');
-   x2_=PD.DataFrame(x2_); y2_=PD.Series(y2_); testinst=len(x2_.index); print(testinst);
+   x2_=PD.DataFrame(x2_); y2_=PD.Series(y2_); testinst=len(x2_.index); 
+   print(testinst);
 
 
 
 #---import saved models
 if '.h4' in f and '-d.pred' in o: #import machine learning saved model
  loadmodel = joblib.load(f);
- o=f.replace('-',' -'); x_=x2_; print(f"apply {o} to {f2}"); #print(tgtcol) #use model filename as o and test set as the main dataset to go into the pipeline with the same settings as the model trained
+ o=f.replace('-',' -'); x_=x2_; print(f"apply {o} to {f2}"); 
+ #use model filename as o and test set as the main dataset 
+ #to go into the pipeline with the same settings as the model trained
  if 'tgtcol' in locals() and tgtcol in x_.columns:
   y_=x_[tgtcol]; x_=x_.drop(columns=[tgtcol]); task='s'; print('target found');
  if 'txtcol' in locals() and txtcol in x_.columns:
@@ -376,9 +381,11 @@ if '.h4' in f and '-d.pred' in o: #import machine learning saved model
  if 'tscol' in locals() and tscol in x_.columns:
   d_=x_[tscol]; x_=x_.drop(columns=[tscol]); print('date found');
 
-if '.h5' in f and '-d.pred' in o: #import deep learning saved model
+if '.h5' in f and '-d.pred' in o: 
  loadmodel = TF.keras.models.load_model(f);
- o=f.replace('-',' -'); x_=x2_; print(f"apply {o} to {f2}"); #use model filename as o and test set as the main dataset to go into the pipeline with the same settings as the model trained
+ o=f.replace('-',' -'); x_=x2_; print(f"apply {o} to {f2}"); 
+ #use model filename as o and test set as the main dataset 
+ #to go into the pipeline with the same settings as the model trained
  if datatype=='zip':
   x2_=PD.DataFrame(names_);
  if 'tgtcol' in locals() and tgtcol in x_.columns:
@@ -392,18 +399,21 @@ if '.h5' in f and '-d.pred' in o: #import deep learning saved model
 
 
 
-#---read data
-if '.csv' in f: #import .csv training set or (if there is a test set) create training+test set
+#---read data (if there is a test set create training+test set)
+if '.csv' in f: 
  o=o.replace('-',' -'); print(f"processing {f} with {o}"); 
  filename=f.replace('.csv', ''); datatype='csv';
- x_=PD.read_csv(f, sep=',', encoding='utf8'); traininst=len(x_.index); dshape=[1];
+ x_=PD.read_csv(f, sep=',', encoding='utf8'); traininst=len(x_.index);
+ dshape=[1];
  x_=x_.reset_index(drop=True); #start row index from 0
  if '-p.ri' in o:
-  x_ = x_.sample(frac=1).reset_index(drop=True); print('apply instance randomization in the training set'); #shuffle instances
+  x_ = x_.sample(frac=1).reset_index(drop=True); 
+  print('apply instance randomization in the training set'); #shuffle instances
 
 #---concat train and test if separated
  if 'x2_' in locals():
-  tts=((100/(traininst+testinst))*testinst)/100; print(f'test set percentage={tts}');  #compute tts percentage  
+  tts=((100/(traininst+testinst))*testinst)/100; 
+  print(f'test set percentage={tts}');  
   if not x2_.empty:
    x_=PD.concat([x_, x2_], axis=0, ignore_index=True); 
 
@@ -429,7 +439,7 @@ if '.csv' in f: #import .csv training set or (if there is a test set) create tra
   r_=re.findall(r'-d.g=(.+?)_(.+?) ', o); #print(r_);
   gbcol=r_[0][0]; gbtype=r_[0][1];
   if gbtype=='s':
-   x_=x_.groupby(gbcol).sum().reset_index(); gbout='sum'; #print(dir(x_.groupby(gbcol)))
+   x_=x_.groupby(gbcol).sum().reset_index(); gbout='sum'; 
   elif gbtype=='a':
    x_=x_.groupby(gbcol).mean().reset_index(); gbout='mean';
   else:
@@ -438,20 +448,25 @@ if '.csv' in f: #import .csv training set or (if there is a test set) create tra
   x_=x_.drop(gbcol, axis=1); 
   print(f"{gbcol} removed. only numerical columns left. \n\n ");
 
-#---detect and separe different types of columns
- if 'tgtcol' in locals() and tgtcol in x_.columns: #remove rows with missing values in class and extract target class dataframe
+#---detect and separate different types of columns
+ if 'tgtcol' in locals() and tgtcol in x_.columns: 
+  #remove rows with missing values in class and extract target class dataframe
   if not '-d.m=1' in o:
-   x_=x_.dropna(subset=[tgtcol]); print(f"remove rows with missing values in {tgtcol}");
+   x_=x_.dropna(subset=[tgtcol]); 
+   print(f"remove rows with missing values in {tgtcol}");
   y_=x_[tgtcol]; x_=x_.drop(columns=[tgtcol]); task='s'; print('target found');
  else:
-  print('no class given. only unsupervised tasks enabled.\nfor supervised tasks define a target with -d.c=name or name "class" the target column'); task='u';
+  print('no class.\nfor supervised learning use -d.c=name or "class" column'); 
+  task='u';
 
- if 'txtcol' in locals() and txtcol in x_.columns: #create dataframe to process text
-  t_=x_[txtcol]; x_=x_.drop(columns=[txtcol]); t_=t_.reset_index(drop=True); #start row index from 0
+ if 'txtcol' in locals() and txtcol in x_.columns: 
+  t_=x_[txtcol]; x_=x_.drop(columns=[txtcol]); 
+  t_=t_.reset_index(drop=True); #start row index from 0
   print(f"taken {txtcol} as string column");
 
- if 'tscol' in locals() and tscol in x_.columns: #create dataframe to process date
-  d_=x_[tscol]; x_=x_.drop(columns=[tscol]); d_=d_.reset_index(drop=True); 
+ if 'tscol' in locals() and tscol in x_.columns: 
+  d_=x_[tscol]; x_=x_.drop(columns=[tscol]); 
+  d_=d_.reset_index(drop=True); 
   d_=d_.rename({tscol:'date'}) #rename the time column
   print(f"taken {tscol} as date column");
 
@@ -506,26 +521,32 @@ if '.zip' in f: #extract data from .zip, loading in memory
       b_=[]; bl_=[];
 
     else: #using resize img feature extraction (default)
-     d_=imread(d); d_=resize(d_, (size,size,3),anti_aliasing=True); dshape=(size,size); d_=d_.flatten();
-     x_.append(d_); y_.append(label); #put in x_ and y_ extracted features and labels
+     d_=imread(d); d_=resize(d_, (size,size,3),anti_aliasing=True); 
+     dshape=(size,size); d_=d_.flatten();
+     x_.append(d_); y_.append(label); 
 
 
 
 #ADD other file formats extraction
-  x_=NP.array(x_).astype('float')/255.0; x_=PD.DataFrame(x_); traininst=len(x_.index);
+  x_=NP.array(x_).astype('float')/255.0; x_=PD.DataFrame(x_); 
+  traininst=len(x_.index);
   y_=PD.Series(y_);  #y_=y_.astype('float');
 
   if 'x2_' in locals() and not '-d.pred' in o:
-   tts=((100/(traininst+testinst))*testinst)/100; print(f'test set percentage={tts}');  #compute tts percentage  
-   x_=PD.concat([x_, x2_], axis=0, ignore_index=True); y_=PD.concat([y_, y2_], axis=0, ignore_index=True);
+   tts=((100/(traininst+testinst))*testinst)/100; 
+   print(f'test set percentage={tts}');  #compute tts percentage  
+   x_=PD.concat([x_, x2_], axis=0, ignore_index=True); 
+   y_=PD.concat([y_, y2_], axis=0, ignore_index=True);
 
  else:  #extract unsupervised data from files in zip
-  task='u'; print('no class given. only unsupervised tasks enabled.\nfor supervised tasks format your data as name,label,.jpg');
+  task='u'; 
+  print('no class.\nfor supervised learning format your data as name,label,.jpg');
   x_=[];
   for i in i_:
    d=zip.open(i); #print(d);
    if '.jpg' in i or '.png' in i:
-    d_=imread(d); dshape=d_.shape; d_=d_.flatten(); x_.append(d_); #read and flatten images
+    d_=imread(d); dshape=d_.shape; 
+    d_=d_.flatten(); x_.append(d_); #read and flatten images
 #ADD other file formats extraction
   x_=NP.array(x_).astype('float')/255.0;
   x_=PD.DataFrame(x_);
@@ -545,13 +566,20 @@ if '-d.k=' in o:
 
 #---info on visualizations
 if '-d.viz' in o:
- print('all scatterplots are 2D-PCA spaces\ntheory: https://en.wikipedia.org/wiki/Principal_component_analysis');
+ os.system('pip install pacmap');
+ import pacmap;
+ pca=pacmap.PaCMAP(n_components=2, n_neighbors=None, MN_ratio=0.5, FP_ratio=2.0); 
+ #pca=SK.decomposition.PCA(2);
+ print('''all scatterplots are 2D-PaCMAp reduced spaces
+ theory: https://en.wikipedia.org/wiki/Dimensionality_reduction#PaCMAp''');
 
 #---unsupervised learning on unprocessed data
 
 if '-u.arl' in o: #association rule mining
  xn_=x_.to_numpy(); xn_=xn_.flatten(); xn_=NP.array(xn_, dtype=str)
- print('apply association rule learning (market basket analysis).\ntheory: https://en.wikipedia.org/wiki/Association_rule_learning \ndocs: https://github.com/rasbt/mlxtend');
+ print('''apply association rule learning (market basket analysis).
+ theory: https://en.wikipedia.org/wiki/Association_rule_learning 
+ docs: https://github.com/rasbt/mlxtend''');
  xn_=NP.char.split(xn_,sep=' '); 
  from mlxtend.preprocessing import TransactionEncoder;
  import mlxtend;
@@ -559,7 +587,7 @@ if '-u.arl' in o: #association rule mining
  te = TransactionEncoder()
  te_ary = te.fit(xn_).transform(xn_)
  df = PD.DataFrame(te_ary, columns=te.columns_); 
- frequent_itemsets = apriori(df, min_support=0.01, use_colnames=True); #print(frequent_itemsets)
+ frequent_itemsets = apriori(df, min_support=0.01, use_colnames=True); 
  #frequent_itemsets = fpmax(df, min_support=0.01, use_colnames=True)
  results=association_rules(frequent_itemsets, metric="confidence", min_threshold=0.1);
  af= open('log.txt', 'a'); af.write(results.to_string()+"\n\n"); af.close(); 
@@ -569,30 +597,33 @@ if '-u.arl' in o: #association rule mining
  sys.exit();
 
 
-
-
 #---automatically detect target class type
 if task=='s': 
  if y_.dtype.kind in 'biufc' and not '-d.t=c' in o:
   #y_=(y_-y_.min())/(y_.max()-y_.min()); 
-  y_=y_.astype('float'); target='r'; print('read target as number, turned to float. to read target as a label use -d.t=c instead');
+  y_=y_.astype('float'); target='r'; 
+  print('read target as number, turned to float. to read it as a label use -d.t=c');
   if '-p.cn' in o:
-   y_=(y_-y_.min())/(y_.max()-y_.min()); print('apply target numbers 0-1 normalization');
+   y_=(y_-y_.min())/(y_.max()-y_.min()); 
+   print('apply target numbers 0-1 normalization');
  else:
-  y_=y_.astype('category').cat.codes.astype('int'); target='c'; print('read target as label, turned to integer category')
+  y_=y_.astype('category').cat.codes.astype('int'); 
+  target='c'; print('read target as label, turned to integer category')
 
 
 #---manage filling missing values in features
 if 'x_' in locals() and not '-u.arl' in o:
  if x_.isnull().values.any():
-  x_ = x_.fillna(0); print('filling missing values with 0 by default'); #fill all missing values in x_ with 0
+  x_ = x_.fillna(0); print('filling missing values with 0 by default'); 
 
 if 'y_' in locals() and '-d.m=1' in o: #replace missing values with mode or mean
  if y_.isnull().values.any():
   if target=='r':
-   y_ = y_.fillna(y_.mean()); print('WARNING: there are missing values in the target class, filled with the mean.'); #fill all missing values in y_ with 0
+   y_ = y_.fillna(y_.mean()); 
+   print('WARNING: missing values in the target class, filled with the mean.'); 
   if target=='c':
-   y_ = y_.fillna(y_.mode()); print('WARNING: there are missing values in the target class, filled with the mode.'); #fill all missing values in y_ with 0
+   y_ = y_.fillna(y_.mode()); 
+   print('WARNING: missing values in the target class, filled with the mode.'); 
 
 
 if 't_' in locals():
@@ -601,16 +632,21 @@ if 't_' in locals():
 
 #---data preprocessing 
 if '-p.ir' in o:
- x_=SK.utils.shuffle(x_, random_state=1); print('apply instance position randomization'); #
+ x_=SK.utils.shuffle(x_, random_state=1); 
+ print('apply instance position randomization'); #
 
 #if '-p.stnd' in o: *TO REMOVE*
-# x_scaled=SK.preprocessing.StandardScaler().fit_transform(x_.values); x_=PD.DataFrame(x_scaled, columns=x_.columns); print('apply feature standardization')
+# x_scaled=SK.preprocessing.StandardScaler().fit_transform(x_.values); 
+#x_=PD.DataFrame(x_scaled, columns=x_.columns); 
+#print('apply feature standardization')
 
 if '-p.tl' in o: 
- t_=t_.str.lower(); print('apply text to lowercase filter'); #string to lowercase 
+ t_=t_.str.lower(); print('apply text to lowercase filter'); 
 
 if '-p.tc' in o:
- t_=t_.str.replace("\W", ' ', regex=True); t_=t_.str.replace(" {2,30}", ' ', regex=True); print('cleaning string from nonword characters and multiple spaces');
+ t_=t_.str.replace("\W", ' ', regex=True); 
+ t_=t_.str.replace(" {2,30}", ' ', regex=True); 
+ print('cleaning string from nonword characters and multiple spaces');
 
 if '-p.trs' in o:
  stopw=r'\b.{1,3}\b';
@@ -625,7 +661,7 @@ if '-p.tsw=' in o:
  #t_ = t_.str.replace(r'\s+', ' ')
  print(f'remove stopwords: {swlist}');
 
-ncols=len(x_._get_numeric_data().columns); cols=len(x_.columns); #count of label and numeric columns in dataset
+ncols=len(x_._get_numeric_data().columns); cols=len(x_.columns); 
 
 
 
@@ -637,7 +673,8 @@ else:
  svdim=int(1+(cols/2)); o=f"-r.svd={svdim}"+o;
 
 if '-r.lsa=' in o: #define dimensions for LSA
- r_=re.findall(r'-r.lsa=(.+?) ',o); lsadim=int(r_[0]); print(f'apply lsadim={lsadim}.');
+ r_=re.findall(r'-r.lsa=(.+?) ',o); lsadim=int(r_[0]); 
+ print(f'apply lsadim={lsadim}.');
 else:
  lsadim=50; o=f"-r.lsa={lsadim}"+o;
 
@@ -645,20 +682,25 @@ else:
 #---feature extraction
 fx=0; #define flag for feature extraction
 
-#one-hot
-if not x_.empty and not 'zip' in datatype and cols >= ncols: #if data not empty, .csv and with label columns then extract features from labels, apply SVD
- x_=PD.get_dummies(x_); x_=x_.reset_index(drop=True); #get one-hot values and restart row index from 0
- print('async sparse one-hot matrix from labels:\n',x_) if '-d.data' in o else print('apply one-hot binarization of labels by default, obtain sparse async matrix'); #print(x_.describe()); 
+#one-hot (if data not empty, extract features from labels, apply SVD)
+if not x_.empty and not 'zip' in datatype and cols >= ncols: 
+ x_=PD.get_dummies(x_); x_=x_.reset_index(drop=True); 
+ if '-d.data' in o:
+  print('async sparse one-hot matrix from labels:\n',x_)  
+ else:
+  print('apply one-hot binarization of labels. sparse matrix'); 
 #SVD feature reduction
- if not '-d.r=0' in o and not '-u.cor' in o: #check whether to run feature reduction or leave data as it is
+ if not '-d.r=0' in o and not '-u.cor' in o: 
   if len(x_.columns) >2:
-   svd=SK.decomposition.TruncatedSVD(svdim, random_state=1); x_=PD.DataFrame(svd.fit_transform(x_)); 
-   print('sync dense SVD matrix from one-hot labels:\n',x_) if '-d.data' in o else print('apply Singular Value Decomposition of data by default, obtain dense sync matrix');
+   svd=SK.decomposition.TruncatedSVD(svdim, random_state=1); 
+   x_=PD.DataFrame(svd.fit_transform(x_)); 
+   if '-d.data' in o:
+    print('sync dense SVD matrix from one-hot labels:\n',x_)  
+   else: 
+    print('apply Singular Value Decomposition. obtain dense matrix');
    print('theory: https://en.wikipedia.org/wiki/Singular_value_decomposition');
   else:
    x_=x_; print('tabular data is small, SVD not applied');
-
-
 
 
 if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
@@ -667,84 +709,116 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
  if '-x.tm=' in o: #one hot token matrix
   orig_t_ = t_; #keep text for wordcloud
   r_=re.findall(r'-x.tm=(.+?) ', o); wu=int(r_[0]); 
-  t = TF.keras.preprocessing.text.Tokenizer(num_words=wu, lower=True, char_level=False, oov_token=wu)
-  t.fit_on_texts(t_); seq=t.texts_to_sequences(t_); wv_=t.sequences_to_matrix(seq, mode='freq');  t_=PD.DataFrame(wv_);
+  t=TF.keras.preprocessing.text.Tokenizer(num_words=wu, lower=True, oov_token=wu)
+  t.fit_on_texts(t_); seq=t.texts_to_sequences(t_); 
+  wv_=t.sequences_to_matrix(seq, mode='freq');  t_=PD.DataFrame(wv_);
   print('word indexes:\n',t.index_word);
-  fx=1; print('token freq matrix:\n',t_) if '-d.data' in o else print(f'extracting {wu} token frequence features from text');
+  if '-d.data' in o:
+   fx=1; print('token freq matrix:\n',t_);
+  else:
+   print(f'extracting {wu} features from text');
 
  if '-x.cm=' in o: #one hot char matrix
   orig_t_ = t_; #keep text for wordcloud
   r_=re.findall(r'-x.cm=(.+?) ', o); wu=int(r_[0]); 
-  t = TF.keras.preprocessing.text.Tokenizer(num_words=wu, lower=True, char_level=True, oov_token=wu)
-  t.fit_on_texts(t_); seq=t.texts_to_sequences(t_); wv_=t.sequences_to_matrix(seq, mode='freq');  t_=PD.DataFrame(wv_);
+  t=TF.keras.preprocessing.text.Tokenizer(num_words=wu, char_level=True, oov_token=wu)
+  t.fit_on_texts(t_); seq=t.texts_to_sequences(t_); 
+  wv_=t.sequences_to_matrix(seq, mode='freq');  
+  t_=PD.DataFrame(wv_);
   print('word indexes:\n',t.index_word);
-  fx=1; print('token freq matrix:\n',t_) if '-d.data' in o else print(f'extracting {wu} chars frequence features from text');
+  if '-d.data' in o:
+   fx=1; print('charachters matrix:\n',t_);
+  else:
+   print(f'extracting {wu} features from text');
 
  if '-x.ts=' in o: #one hot sequence matrix
   orig_t_ = t_; #keep text for wordcloud
-  x_=PD.DataFrame(); print('tabular data dropped to prevent mixing tabular data and sequence text'); #empty x_ data to avoid mixing text and tabular data
+  x_=PD.DataFrame(); 
+  print('tabular data dropped to prevent mixing tabular data and sequence text'); 
   r_=re.findall(r'-x.ts=(.+?) ', o); wu=int(r_[0]); 
-  t = TF.keras.preprocessing.text.Tokenizer(num_words=1000, lower=True, char_level=False, oov_token=0); t.fit_on_texts(t_);
-  seq = t.texts_to_sequences(t_); seq=TF.keras.preprocessing.sequence.pad_sequences(seq, maxlen=wu); print('word indexes:\n',t.index_word); 
+  t = TF.keras.preprocessing.text.Tokenizer(num_words=1000, lower=True, oov_token=0); 
+  t.fit_on_texts(t_);
+  seq = t.texts_to_sequences(t_); 
+  seq=TF.keras.preprocessing.sequence.pad_sequences(seq, maxlen=wu); 
+  print('word indexes:\n',t.index_word); 
   t_=PD.DataFrame(seq);  #print(t_[0]);
-  #t_=TF.one_hot(seq,wu); print('one hot seq:', t_);  dshape=(t_.shape[1],t_.shape[2]); t_=t_.numpy(); ft_=[]; [ft_.append(i.flatten()) for i in t_]; t_=PD.DataFrame(ft_);
-  fx=1; print('token index sequences:\n',t_) if '-d.data' in o else print(f'extracting {wu} token indices sequence features from text');
-  
+  #t_=TF.one_hot(seq,wu); print('one hot seq:', t_);  
+  #dshape=(t_.shape[1],t_.shape[2]); t_=t_.numpy(); 
+  #ft_=[]; [ft_.append(i.flatten()) for i in t_]; t_=PD.DataFrame(ft_);
+  if '-d.data' in o:
+   fx=1; print('token sequence matrix:\n',t_);
+  else:
+   print(f'extracting {wu} features from text');
 
  if '-x.ng=' in o:
   orig_t_ = t_; #keep text for wordcloud
-  r_=re.findall(r'-x.ng=(.+?) ',o); mi=int(r_[0][0]); ma=int(r_[0][1]); ty=(r_[0][2]); mo=(r_[0][3]); 
+  r_=re.findall(r'-x.ng=(.+?) ',o); 
+  mi=int(r_[0][0]); ma=int(r_[0][1]); ty=(r_[0][2]); mo=(r_[0][3]); 
   if len(r_[0]) ==5:
    mxf=int(r_[0][4])*100;
   else:
    mxf=1000;
   if ty=='c' and mo=='f':
-   w=SK.feature_extraction.text.CountVectorizer(ngram_range=(mi,ma),analyzer='char_wb',max_features=mxf); wv_=w.fit_transform(t_); fx=1;
-   fn_=[]; [fn_.append(i) for i in w.get_feature_names_out()]; t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
-   print('async sparse char ngram matrix:\n',t_) if '-d.data' in o else print(f'extract {mi}-{ma} char ngram from text'); print(fn_);
+   w=SK.feature_extraction.text.CountVectorizer(ngram_range=(mi,ma),analyzer='char_wb',max_features=mxf); 
+   wv_=w.fit_transform(t_); fx=1;
+   fn_=[]; [fn_.append(i) for i in w.get_feature_names_out()]; 
+   t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
+   if '-d.data' in o:
+    print('sparse char ngram matrix:\n',t_) 
+   else:
+    print(f'extract {mi}-{ma} char ngram from text'); print(fn_);
   if ty=='w' and mo=='f':
-   w=SK.feature_extraction.text.CountVectorizer(ngram_range=(mi,ma),analyzer='word',max_features=mxf); wv_=w.fit_transform(t_); fx=1;
-   fn_=[]; [fn_.append(i) for i in w.get_feature_names_out()]; t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
-   print('async sparse word ngram matrix:\n',t_) if '-d.data' in o else print(f'extract word {mi}-{ma}gram from text'); print(fn_);
+   w=SK.feature_extraction.text.CountVectorizer(ngram_range=(mi,ma),analyzer='word',max_features=mxf); 
+   wv_=w.fit_transform(t_); fx=1;
+   fn_=[]; [fn_.append(i) for i in w.get_feature_names_out()]; 
+   t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
+   if '-d.data' in o:
+    print('sparse word ngram matrix:\n',t_) 
+   else:
+    print(f'extract {mi}-{ma} word ngram from text'); print(fn_);  
   if ty=='c' and mo=='t':
-   w=SK.feature_extraction.text.TfidfVectorizer(ngram_range=(mi,ma),analyzer='char_wb',max_features=mxf); wv_=w.fit_transform(t_); fx=1;
-   fn_=[]; [fn_.append(i) for i in w.get_feature_names_out()]; t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
-   print('async sparse char ngram matrix:\n',t_) if '-d.data' in o else print(f'extract tf-idf {mi}-{ma} char ngram from text'); print(fn_);
+   w=SK.feature_extraction.text.TfidfVectorizer(ngram_range=(mi,ma),analyzer='char_wb',max_features=mxf); 
+   wv_=w.fit_transform(t_); fx=1;
+   fn_=[]; [fn_.append(i) for i in w.get_feature_names_out()]; 
+   t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
+   if '-d.data' in o:
+    print('async sparse char ngram matrix:\n',t_) 
+   else:
+    print(f'extract {mi}-{ma} char ngram from text'); print(fn_);
   if ty=='w' and mo=='t':
-   w=SK.feature_extraction.text.TfidfVectorizer(ngram_range=(mi,ma),analyzer='word',max_features=mxf); wv_=w.fit_transform(t_); fx=1;
-   fn_=[]; [fn_.append(i) for i in w.get_feature_names_out()]; t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
-   print('async sparse word ngram matrix:\n',t_) if '-d.data' in o else print(f'extract tf-idf word {mi}-{ma}grams from text'); print(fn_);
+   w=SK.feature_extraction.text.TfidfVectorizer(ngram_range=(mi,ma),analyzer='word',max_features=mxf); 
+   wv_=w.fit_transform(t_); fx=1;
+   fn_=[]; [fn_.append(i) for i in w.get_feature_names_out()]; 
+   t_=PD.DataFrame(wv_.toarray(), columns=fn_); 
+   if '-d.data' in o:
+    print('sparse word ngram matrix:\n',t_) 
+   else:
+    print(f'extract {mi}-{ma} word ngram from text'); print(fn_);
+
   #lsadim=int(len(fn_)/2);
   if not '-d.r=0' in o:
-   svd=SK.decomposition.TruncatedSVD(lsadim, random_state=1); t_=PD.DataFrame(svd.fit_transform(t_));
-   print('sync dense LSA ngram matrix:\n',t_) if '-d.data' in o else print('apply LSA to ngrams by default, obtain dense sync matrix');
+   svd=SK.decomposition.TruncatedSVD(lsadim, random_state=1); 
+   t_=PD.DataFrame(svd.fit_transform(t_));
+   if '-d.data' in o:
+    print('sync dense LSA ngram matrix:\n',t_) 
+   else:
+    print('apply LSA to ngrams by default, obtain dense sync matrix');
    print('theory: https://en.wikipedia.org/wiki/Latent_semantic_analysis');
   if '-d.save ' in o:
-   print(f"WARNING: the test set must contain at least {lsadim} instances for compatibility with the model"); 
-
-
-#REMOVED v0.8
-#if '-x.d2v=' in o: #doc2vec
-# print('apply doc2vec (will be removed in the next version) \ntheory: https://en.wikipedia.org/wiki/Word2vec#Extensions');
-# orig_t_ = t_; #keep text for wordcloud
-# r_=re.findall(r'-x.d2v=(.+?) ', o); size=int(r_[0]);  fx=1;
-# t_=[TaggedDocument(words=word_tokenize(_d.lower()), tags=[str(i)]) for i, _d in enumerate(t_)]; 
-# wmodel=Doc2Vec(vector_size=size); wmodel.build_vocab(t_); wmodel.train(t_, total_examples=len(t_), epochs=1); 
-# t_=PD.DataFrame(wmodel.docvecs.vectors_docs); #turn to doc2vec vectors
-# print('sync dense doc2vec matrix:\n',t_) if '-d.data' in o else print(f'extracting {size} doc2vec features from text');
+   print(f"WARNING: test set must contain more than {lsadim} instances for compatibility"); 
 
 
 
  if '-x.bert ' in o: #bert uncased multi language (contributor: Cristiano Casadei)
-  batch_size=32; print(f'extracting 768 features with bert multilanguage cased'); fx=1;
-
+  batch_size=32; print(f'extracting 768 features with bert multilanguage cased'); 
+  fx=1;
   os.system('pip install -U tensorflow_text'); 
   import tensorflow_text as text;
-  text_input = TF.keras.layers.Input(shape=(), dtype=TF.string); 
-  preprocessor = TH.KerasLayer("https://tfhub.dev/tensorflow/bert_multi_cased_preprocess/3")
-  encoder_inputs = preprocessor(text_input);
-  encoder = TH.KerasLayer("https://tfhub.dev/tensorflow/bert_multi_cased_L-12_H-768_A-12/4", trainable=True)
-  outputs = encoder(encoder_inputs); 
+  text_input=TF.keras.layers.Input(shape=(), dtype=TF.string); 
+  preprocessor=TH.KerasLayer("https://tfhub.dev/tensorflow/bert_multi_cased_preprocess/3")
+  encoder_inputs=preprocessor(text_input);
+  encoder=TH.KerasLayer("https://tfhub.dev/tensorflow/bert_multi_cased_L-12_H-768_A-12/4", trainable=True)
+  outputs=encoder(encoder_inputs); 
   del(preprocessor); del(encoder);
   pooled_output = outputs["pooled_output"]     
   sequence_output = outputs["sequence_output"] 
@@ -759,12 +833,16 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
     df = df.append(PD.DataFrame(bert.numpy()));
   orig_t_ = t_;
   t_ = df.reset_index(drop=True);
-  print('sync dense bert matrix:\n',t_) if '-d.data' in o else print(f'extracted 768 features');
+  if '-d.data' in o:
+   print('sync dense bert matrix:\n',t_)  
+  else:
+   print(f'extracted 768 features');
   print('theory: https://en.wikipedia.org/wiki/BERT_(language_model)');
 
 
  if '-x.mobert ' in o: #bert uncased multi language (contributor: Cristiano Casadei)
-  batch_size=32; print(f'extracting 512 features with mobilebert multilanguage cased');
+  batch_size=32;
+  print(f'extracting 512 features with mobilebert multilanguage cased');
   os.system('pip install -U tensorflow_text'); fx=1;
   import tensorflow_text as text;
   text_input = TF.keras.layers.Input(shape=(), dtype=TF.string); 
@@ -786,14 +864,18 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
     df = df.append(PD.DataFrame(bert.numpy()));
   orig_t_ = t_;
   t_ = df.reset_index(drop=True);
-  print('sync dense bert matrix:\n',t_) if '-d.data' in o else print(f'extracted 512 features');
+  if '-d.data' in o:
+   print('sync dense bert matrix:\n',t_)
+  else:
+   print(f'extracted 512 features');
   print('theory: https://en.wikipedia.org/wiki/BERT_(language_model)');
 
 
  if '-x.d=' in o: #user defined lexical resources
   fx=1; 
   orig_t_ = t_; #keep text for wordcloud
-  r_=re.findall(r'-x.d=(.+?) ', o); l=r_[0]; print('extracting features from dictionary');
+  r_=re.findall(r'-x.d=(.+?) ', o); 
+  l=r_[0]; print('extracting features from dictionary');
   if l=='p':
    print('using psy.dic'); 
    l_=urllib.request.urlopen('https://raw.githubusercontent.com/facells/learnipy/main/resources/psy.dic').read().decode('utf-8').splitlines();
@@ -818,7 +900,10 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
    i_=[j/c for j in i_];
    t2_.append(i_);
   t_=PD.DataFrame(t2_,columns=h_); del(t2_);
-  print('sync sparse matrix from lexicon:\n',t_) if '-d.data' in o else print(f'extracted {hf} features with {l}');
+  if '-d.data' in o:
+   print('sync sparse matrix from lexicon:\n',t_)
+  else:
+   print(f'extracted {hf} features with {l}');
 
  
 #---data aggregation
@@ -829,23 +914,31 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
   if feat==0: #x_.empty:
    print('no features. prcess stopped'); sys.exit();
 
-inst=len(x_.index); feat=len(x_.columns); print(f'dataset shape: {inst} instances, {feat} features');
+inst=len(x_.index); feat=len(x_.columns); 
+print(f'dataset shape: {inst} instances, {feat} features');
 
 
 #---class statistics and correlation complexity (only supervised learning)
 if not '-u.' in o:
  if '-d.viz' in o and not '-t.' in o:
   if task=='s':
-   MP.hist(y_, color='black', edgecolor='black', linewidth=0);  MP.ylabel('frequency'); MP.title('class distribution');  MP.savefig(fname='class-dist'); MP.show(); MP.clf(); #class dist
+   MP.hist(y_, color='black', edgecolor='black', linewidth=0);  
+   MP.ylabel('frequency'); MP.title('class distribution');  
+   MP.savefig(fname='class-dist'); MP.show(); MP.clf(); #class dist
  if target=='r':
-  mu=y_.mean(); mi=y_.min(); ma=y_.max(); sd=y_.std(); me=y_.median(); print(f"min={mi:.1f} max={ma:.1f} avg={mu:.3f} sd={sd:.3f} med={me:.3f} numeric target distribution"); 
+  mu=y_.mean(); mi=y_.min(); ma=y_.max(); sd=y_.std(); me=y_.median(); 
+  print(f"min={mi:.1f} max={ma:.1f} avg={mu:.3f} sd={sd:.3f} med={me:.3f} numeric target"); 
   nclass=1;
  if target=='c':
   print(f"class freq"); print(y_.value_counts()); 
-  ynp_=y_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nclass=len(classes); print(f"num classes= {nclass}")
+  ynp_=y_.to_numpy(); 
+  classes, counts=NP.unique(ynp_, return_counts=True); 
+  nclass=len(classes); print(f"num classes= {nclass}")
  
- xc_=PD.concat([y_, x_], axis=1); xcc=xc_.corr(); xcc=PD.Series(xcc.iloc[0]); xcc=xcc.iloc[1:]; 
- complexity=1-(xcc.abs().max()); print(f"corr. complexity= {complexity:.3f}"); #compute correlation complexity
+ xc_=PD.concat([y_, x_], axis=1); xcc=xc_.corr(); 
+ xcc=PD.Series(xcc.iloc[0]); xcc=xcc.iloc[1:]; 
+ complexity=1-(xcc.abs().max()); 
+ print(f"corr. complexity= {complexity:.3f}"); #compute correlation complexity
 
 
 #---processed features unsupervised learning: corr, w2v and clustering
@@ -857,9 +950,11 @@ if '-u.corm' in o: #correlation matrix
   cort='pearson'
  if 'y_' in locals():
   x_=PD.concat([x_, y_], axis=1)
- x_=PD.get_dummies(x_); #x_=x_.reset_index(drop=True); #get one-hot values and restart row index from 0
- print("pearson correlation matrix (label values are one-hot encoded):\n"+x_.corr(method=cort).to_string()+"\n");
- af= open('log.txt', 'a'); af.write(f"correlation matrix on one-hot values:\n{o}\n"+x_.corr(method=cort).to_string()+"\n\n"); af.close();
+ x_=PD.get_dummies(x_); #x_=x_.reset_index(drop=True); 
+ print("pearson correlation matrix:\n"+x_.corr(method=cort).to_string()+"\n");
+ af= open('log.txt', 'a'); 
+ af.write(f"correlation matrix:\n{o}\n"+x_.corr(method=cort).to_string()+"\n\n"); 
+ af.close();
  print('theory: https://en.wikipedia.org/wiki/Correlation_coefficient');
  timestamp=DT.datetime.now(); print(f"-u.corm stops other tasks\ntime:{timestamp}"); 
  sys.exit();
@@ -867,7 +962,7 @@ if '-u.corm' in o: #correlation matrix
 if '-u.corr' in o: #correlation list
  #if 'y_' in locals():
  # x_=PD.concat([x_, y_], axis=1)
- x_=PD.get_dummies(x_); #x_=x_.reset_index(drop=True); #get one-hot values and restart row index from 0
+ x_=PD.get_dummies(x_); #x_=x_.reset_index(drop=True); 
  print("correlation ranks (label values are one-hot encoded):\n");
  #corfound=f'dimensions,rho,pval\n';
  corfound=f"dimensions,rho,pval\n";
@@ -879,16 +974,16 @@ if '-u.corr' in o: #correlation list
     corr,pval=ST.spearmanr(xicol, xjcol); #print(f'{corr},{pval}') #run correlation
    else:
     corr,pval=ST.pearsonr(xicol, xjcol);
-   if corr < 0.99 and corr > -0.99 and pval < 0.005 :#and tgtcol in x_.columns and tgtcol==xicol.name: #filter best correlations and remove self correlations
+   if corr < 0.99 and corr > -0.99 and pval < 0.005 :
     corr=f'{corr:.6f}'; pval=f'{pval:.6f}'; 
-    #cf2_ = PD.DataFrame({"dimensions": [f"{xicol.name} and {xjcol.name}"],"rho":[f'{corr:.3f}'],"pval":[f'{pval:.3f}']});
-    #print(cf2_);
     corfound=corfound+f"{xicol.name} and {xjcol.name},{corr},{pval}\n";
  import io; iofile = io.StringIO(corfound);
  cf_ = PD.read_csv(iofile, sep=',');
  cf_=cf_.sort_values(by=['rho'], ascending=False).reset_index(drop=True); 
  print(cf_);
- af= open('log.txt', 'a'); af.write(f"correlation rankings on one-hot values:\n{o}\n"+cf_.to_string()+"\n\n"); af.close();
+ af= open('log.txt', 'a'); 
+ af.write(f"correlation rankings on one-hot values:\n{o}\n"+cf_.to_string()+"\n\n"); 
+ af.close();
  print('theory: https://en.wikipedia.org/wiki/Correlation_coefficient');
  timestamp=DT.datetime.now(); print(f"-u.corr stops other tasks\ntime:{timestamp}"); 
  sys.exit();
@@ -913,34 +1008,50 @@ if '-u.corr' in o: #correlation list
 
 if '-u.km=' in o: #kmeans clustering
  r_=re.findall(r'-u.km=(.+?) ',o); nk=int(r_[0]);
- clust = SK.cluster.KMeans(n_clusters=nk, random_state=0).fit(x_.values); l_=PD.DataFrame(clust.labels_); l_.columns=['kmeans']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('kmeans').mean(); print('applied kmeans clustering. added 1 feature'); 
+ clust = SK.cluster.KMeans(n_clusters=nk, random_state=0).fit(x_.values); 
+ l_=PD.DataFrame(clust.labels_); l_.columns=['kmeans']; 
+ x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('kmeans').mean(); 
+ print('applied kmeans clustering. added 1 feature'); 
  print('theory: https://en.wikipedia.org/wiki/K-means_clustering');
  af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
- print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
+ print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  
+ print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
  if '-d.viz' in o:
-  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
-  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space kmeans clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
+  projected=pca.fit_transform(x_.values); 
+  MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
+  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); 
+  MP.title('2D PCA data space kmeans clusters'); 
+  MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
 
 if '-u.kmpp=' in o: #kmeans++ clustering
  r_=re.findall(r'-u.kmpp=(.+?) ',o); nk=int(r_[0]);
- clust = SK.cluster.MiniBatchKMeans(n_clusters=nk, random_state=0, init='k-means++').fit(x_.values); l_=PD.DataFrame(clust.labels_); l_.columns=['kmeans++']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('kmeans++').mean(); print('applied kmeans++ clustering. added 1 feature'); 
+ clust = SK.cluster.MiniBatchKMeans(n_clusters=nk, random_state=0, init='k-means++').fit(x_.values); 
+ l_=PD.DataFrame(clust.labels_); l_.columns=['kmeans++']; x_=PD.concat([x_,l_], axis=1); 
+ g_=x_.groupby('kmeans++').mean(); print('applied kmeans++ clustering. added 1 feature'); 
  print('theory: https://en.wikipedia.org/wiki/K-means_clustering');
  af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
- print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
+ print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  
+ print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
  if '-d.viz' in o:
-  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
-  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space kmeans clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
+  projected=pca.fit_transform(x_.values); 
+  MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
+  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); 
+  MP.title('2D data space clusters'); 
+  MP.savefig(fname='2d-cluster-space.png'); MP.show(); MP.clf(); #pca space
 
 if '-u.sc=' in o: #spectral clustering
  r_=re.findall(r'-u.sc=(.+?) ',o); nk=int(r_[0]);
  clust = SK.cluster.SpectralClustering(n_clusters=nk, random_state=0, assign_labels='cluster_qr',).fit(x_.values); l_=PD.DataFrame(clust.labels_); l_.columns=['spectral']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('spectral').mean(); print('applied spectral clustering. added 1 feature'); 
  print('theory: https://en.wikipedia.org/wiki/Spectral_clustering');
  af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
- print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
+ print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  
+ print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
  if '-d.viz' in o:
-  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
-  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space kmeans clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
-
+  projected=pca.fit_transform(x_.values); 
+  MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
+  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); 
+  MP.title('2D data space clusters'); 
+  MP.savefig(fname='2d-cluster-space.png'); MP.show(); MP.clf(); #pca space
 
 if '-u.optics' in o: #optics clustering
  clust = SK.cluster.OPTICS(min_cluster_size=None).fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['optics']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('optics').mean(); print('applied optics clustering. added 1 feature');
@@ -948,8 +1059,11 @@ if '-u.optics' in o: #optics clustering
  af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); 
  print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
  if '-d.viz' in o:
-  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
-  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space optics clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
+  projected=pca.fit_transform(x_.values); 
+  MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
+  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); 
+  MP.title('2D data space clusters'); 
+  MP.savefig(fname='2d-cluster-space.png'); MP.show(); MP.clf(); #pca space
 
 if '-u.msh' in o: #meanshift clustering
  clust = SK.cluster.MeanShift().fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['mshift']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('mshift').mean(); print('applied mshift clustering. added 1 feature');
@@ -957,8 +1071,12 @@ if '-u.msh' in o: #meanshift clustering
  af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); 
  print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
  if '-d.viz' in o:
-  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
-  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space meanshift clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
+  projected=pca.fit_transform(x_.values); 
+  MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
+  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); 
+  MP.title('2D data space clusters'); 
+  MP.savefig(fname='2d-cluster-space.png'); MP.show(); MP.clf(); #pca space
+
 
 if '-u.som' in o: #self organising map clustering (contributor: Fabio Celli)
  os.system('pip install minisom'); from minisom import MiniSom; #library
@@ -979,11 +1097,11 @@ if '-u.som' in o: #self organising map clustering (contributor: Fabio Celli)
  ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); 
  nk=len(classes);  print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
  if '-d.viz' in o:
-  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); 
-  MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(col_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
-  MP.xlabel('component 1'); MP.ylabel('component 2'); 
-  MP.colorbar(); MP.title('2D PCA data space som clusters'); 
-  MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
+  projected=pca.fit_transform(x_.values); 
+  MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
+  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); 
+  MP.title('2D data space clusters'); 
+  MP.savefig(fname='2d-cluster-space.png'); MP.show(); MP.clf(); #pca space
 
 if '-u.ap' in o: #affinity propagation clustering
  clust = SK.cluster.AffinityPropagation(damping=0.5).fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['affinity']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('affinity').mean(); print('applied affinity propagation clustering. added 1 feature');
@@ -1119,7 +1237,7 @@ if '.h5' in f: #apply deep learning saved model
  sys.exit();
 
 #---stop unsupervised learning
-if not '-s.' in o or not '-t.' in o:
+if task=='u':
  print('no supervised or timeseries algorithms to run'); sys.exit();
 
 #---train and test split
