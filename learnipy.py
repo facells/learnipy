@@ -662,8 +662,6 @@ if '-p.tsw=' in o:
 ncols=len(x_._get_numeric_data().columns); cols=len(x_.columns); 
 
 
-
-
 #---feature reduction (applied in saved models)
 if '-r.svd=' in o: #define dimensions for SVD
  r_=re.findall(r'-r.svd=(.+?) ',o); svdim=int(r_[0]);
@@ -1672,12 +1670,8 @@ if 'model' in locals() and '-t.' in o:
   joblib.dump(model, f"{filename}{opt}.h4");print(f"model saved as {filename}{opt}.h4");
   #af= open(f"{filename}-format4model.csv", 'w'); af.write(x_test.to_csv()); af.close();  
 
-
-
-
 if not 'y_pred' in locals():
- print('no supervised model trained. algorithm not found.'); sys.exit();
-
+ print('no test data to evaluate'); sys.exit();
 
 #---model details
 if '-d.md' in o and not '-s.base' in o:
@@ -1796,3 +1790,4 @@ if '-d.viz' in o:
 
 timestamp=DT.datetime.now(); print(timestamp); 
 
+print('---END PROCESS---')
