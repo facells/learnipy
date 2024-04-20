@@ -906,12 +906,12 @@ inst=len(x_.index); feat=len(x_.columns);
 print(f'dataset shape: {inst} instances, {feat} features');
  
 #---data aggregation
- if fx==1: #if feature extraction performed concat x_ and t_, else drop t_
-  x_=PD.concat([x_, t_], axis=1);
- else:
-  print('no text feature extraction. text column dropped');
-  if feat==0: #x_.empty:
-   print('no features. prcess stopped'); inst=len(x_.index); feat=len(x_.columns); sys.exit('---END PROCESS---');
+if fx==1: #if feature extraction performed concat x_ and t_, else drop t_
+ x_=PD.concat([x_, t_], axis=1);
+else:
+ print('no text feature extraction. text column dropped');
+ if feat==0: #x_.empty:
+  print('no features. prcess stopped'); inst=len(x_.index); feat=len(x_.columns); sys.exit('---END PROCESS---');
 
 
 
