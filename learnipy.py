@@ -6,8 +6,10 @@ documentation='''
 * email: fabio.celli.phd@gmail.com
 * twitter: @facells
 * tested in Google colab
-* License: MIT (Commercial use,  Modification, Distribution, Private use are permitted, Liability is yours, No software warranty)
-* Conditions: Report the following license and copyright notice with code.
+* license: MIT (Commercial use,  Modification, Distribution permitted)
+* conditions: Report the following license and copyright notice with code.
+* warranty: Liability is yours, No software warranty
+
 
 "Copyright (c) 2021 Fabio Celli.
 Permission is hereby granted, free of charge, to any person obtaining
@@ -28,14 +30,14 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 
 ### 1) AIM 
-* we want to make machine learning accesible and easy to use for everyone. 
-* We want a system that is self-contained (one file), portable, 100% written in Python.
+* we want to make machine learning accesible and easy to use for learners. 
+* design a system that is self-contained (one file), portable, 100% written in Python.
 
 ### 2) DATA FORMATTING
 * data.csv must be a comma-separated file (,)
 * the target column can be named 'class' in the .csv file or defined with -d.c= option
 * the text column can be named 'text' in the .csv file or defined with -d.s= option
-* data.zip must contain .png or .jpg files. the files names must be comma-separated. example: imgID,class,.jpg
+* data.zip must contain .png or .jpg files. named like the example: imgID,class,.jpg
 
 ### 4) USAGE 
 * to train a model: %run learnipy.py 'options' traindata [testdata], for example
@@ -58,12 +60,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -d.x=n,m,o  *define the columns to exclude. n,m,o=names of columns to exclude*
 * -d.k=n,m,o  *define the columns to keep. n,m,o=names of columns to keep*
 * -d.s=n      *define the string column treated as text. n=name of text column
-* -d.c=n      *define the column of the target class. n=name (for .csv) or index (for .zip) of class column*
-* -d.r=0      *do not use feature reduction, keep original features (not applicable with -d.save)*
+* -d.c=n      *define the column of the target class. n=name (for .csv) or index (for .zip)* 
+* -d.r=0      *do not use feature reduction (not applicable with -d.save)*
 * -d.f=c_v    *filter. keep only rows of column c with value v*
-* -d.b=0.5    *resample rows. if value <1 subsamples % of rows without duplicates. if >1 bootstrapping with duplication *
-* -d.m=1      *fill class missing values. 1=replace all missing values in class with mean/mode (otherwise are deleted by default)*
-* -d.g=c_a|s  *group rows by column c (must be nominal). keeps only numeric columns aggregated as a=average or s=sum*
+* -d.b=0.5    *resample rows. if <1 subsample. if >1 bootstrapping with duplication *
+* -d.m=1      *fill class missing values with mean/mode (otherwise are deleted by default)*
+* -d.g=c_a|s  *group rows by column c as a=average or s=sum*
 * -d.viz      *print pca-projected 2d data scatterplot and other visualizations*
 * -d.md       *model details. prints info on algorithm parameters and data modeling*
 * -d.fdst     *print info on feature distribution*
@@ -72,59 +74,59 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -d.pred     *use model to make predictions on new data*
 * -d.export=f *export processed data in csv. f=filename.csv*
 #### data generation
-* -g.d=132    *generate dataset, create gen.csv. 1=num instances x1000, 3=num features x10, 2=num informative features x10*
+* -g.d=132    *generate data. 1=instances x1000, 3=features x10, 2=informative features x10*
 #### preprocessing
-* -p.ir       *instance position randomization, applies to the training set*
+* -p.ir       *instance position randomization*
 * -p.cn       *class normalize. turn numeric class to range 0-1*
-* -p.fn       *feature normalize, turn features to range 0-1 (applied by default with some nn, sgd and nb)*
+* -p.fn       *feature normalize range 0-1 (applied by default with some nn, sgd and nb)*
 * -p.tl       *text to lowercase*
 * -p.tc       *text cleaning. removes non alphanum char and multiple spaces*
 * -p.trs      *text regex stopwords. removes words from length 1 to length 3*
 * -p.tsw=a,b  *text stopwords. removes stopwords, a,b=stopwords list, no spaces allowed.*
 #### feature reduction
-* -r.svd=5    *singular value decomposition. turn sparse label matrix to dense and sync. 5=number of features*
-* -r.lsa=5    *latent semantic analysis. turn sparse word/char matrix to dense and sync. 5=number of features*
+* -r.svd=5    *turn sparse label matrix to dense and sync. 5=number of features*
+* -r.lsa=5    *turn sparse word/char matrix to dense and sync. 5=number of features*
 #### feature extraction
-* -x.ng=23cf4 *ngrams. turn text ngrams matrix and apply lsa. 2=min, 3=max, c=chars|w=words, f=freq|t=tfidf, 4=num x 100*
-* -x.tm=5     *text token matrix. turn text into word frequency matrix. 5=number of features*
-* -x.ts=5     *text token sequences. columns are padded sequences of words. 5=number of features* 
-* -x.cm=5     *text char matrix. turn text into character frequency matrix. 5=number of features*
-* -x.bert     *text extraction. 768 features from text to a dense matrix with multi-language bert transformer model*
-* -x.mobert   *text extraction. 512 features from text to a dense matrix with multi-language mobile bert transformer model*
-* -x.d=e      *text extraction from custom dictionary. e=dictionary. check https://github.com/facells/learnipy/tree/main/resources
-* -x.rsz[=32] *image resize custom feature extraction. 32=size 32x32, default 16x16 (768 features)*
-* -x.resnet   *image extraction. 2048 features from pre-trained imagenet model
-* -x.vgg      *image extraction. 512 sparse features from pre-trained imagenet model
-* -x.effnet   *image extraction. 1408 dense features from pre-trained imagenet model
+* -x.ng=23cf4 *text ngrams. 2=min, 3=max, c=chars|w=words, f=freq|t=tfidf, 4=num x 100*
+* -x.tm=5     *text token matrix. 5=number of features*
+* -x.ts=5     *text token sequences. 5=number of features* 
+* -x.cm=5     *text char matrix. 5=number of features*
+* -x.bert     *text multilang BERT. 768 features*
+* -x.mobert   *text multilang mobile BERT 512 features*
+* -x.d=e      *text featurs from custom dictionary.check learnipy/resources*
+* -x.rsz[=32] *image resize. 32=size 32x32, default 16x16 (768 features)*
+* -x.resnet   *image resnet model. 2048 features from pre-trained model*
+* -x.vgg      *image vgg model. 512 sparse features from pre-trained model*
+* -x.effnet   *image effnet model. 1408 dense features from pre-trained model*
 #### unsupervised learning
-* -u.km=2     *kmeans, centroid clustering. add a new colum to dataset. results in log.txt. 2=num clusters*
-* -u.kmpp=2   *kmeans++, centroid clustering. add a new colum to dataset. results in log.txt. 2=num clusters*
-* -u.sc=2     *spectral clustering. add a new colum to dataset. results in log.txt. 2=num clusters*
-* -u.optics   *optics, density clustering. add a new colum to dataset. results in log.txt*
-* -u.msh      *mshift, density clustering. add a new colum to dataset. results in log.txt*
-* -u.ap       *affinity propagation exemplar clustering. add a new colum to dataset. results in log.txt*
-* -u.som      *self organising map, neural network clustering. add a new colum to dataset. results in log.txt*
-* -u.arl      *association rule learning with apriori. prints results in log.txt*
-* -u.corr=s|p *correlation rankings and p-values. s=spearman (monotone+linear), p=pearson (linear). prints results in log.txt*
-* -u.corm=s|p *correlation matrix. s=spearman (monotone+linear), p=pearson (linear). prints results in log.txt*
+* -u.km=2     *kmeans centroid clustering. add 1 column. 2=num clusters*
+* -u.kmpp=2   *kmeans++ centroid clustering. add 1 column. 2=num clusters*
+* -u.sc=2     *spectral clustering. add 1 column. 2=num clusters*
+* -u.optics   *optics density clustering. one cluster for noise add 1 column*
+* -u.msh      *mshift, density clustering. add 1 column*
+* -u.ap       *affinity propagation exemplar clustering.add 1 column.*
+* -u.som      *self organising map, neural network clustering. add 1 column.*
+* -u.arl      *association rule learning with apriori.*
+* -u.corr=s|p *correlation rankings. s=spearman (monotone+linear), p=pearson (linear)*
+* -u.corm=s|p *correlation matrix. s=spearman (monotone+linear), p=pearson (linear)*
 #### outlier detection
-* -o.if       *isolation forest. find and remove outliers using random forest regions*
-* -o.mcd      *minimum covariance determinant with ellipsis envelope. find and remove outliers using gaussian distribution*
-* -o.lof      *local outlier factor. find and remove outliers using optics less dense regions*
+* -o.if       *isolation forest. remove outlier rows random forest regions*
+* -o.mcd      *minimum covariance determinant. remove outlier rows with gaussian distr*
+* -o.lof      *local outlier factor. remove outlier rows with optics less dense regions*
 #### supervised learning
 * -s.base     *majority baseline for classification and regression*
-* -s.nb       *probabilistic models. complement naive bayes for classification, bayes ridge for regression*
+* -s.nb       *probability models. naive bayes, bayesian ridge*
 * -s.lr       *linear regression and logistic regression*
-* -s.lcm      *linear combination models, linear discriminant classifiction and partial least squares regression*
+* -s.lcm      *linear combination models. linear discriminant classif, partial least squares*
 * -s.sgd      *linear modeling with stochastic gradient descent*
 * -s.knn      *k nearest neighbors classification and regression*
 * -s.dt       *decision trees and regression trees*
 * -s.mlp      *multi layer perceptron*
-* -s.svm[=p3] *svm (rbf kernel by default). p=polynomial kernel|r=rbf kernel (default), 3=kernel degrees*
+* -s.svm[=p3] *svm. p=polynomial kernel|r=rbf kernel (default), 3=kernel degrees*
 * -s.rf       *ensemble learning, random forest*
 * -s.ada      *ensemble learning, adaboost based on samme.r algorithm*
 * -s.xgb      *ensemble learning, xgboost*
-* -s.nn=f[51] *deep learning. f=feedfwd|i=imbalance|r=rnn|l=lstm|b=bilstm|g=gru|c=cnn. 5= x10 units, 1=num layers*
+* -s.nn=f     *neural nets. f=feedfwd|i=imbalance|r=rnn|l=lstm|b=bilstm|g=gru|c=cnn*
 #### time series forecasting
 * -t.arma     *auto regression moving average*
 * -t.arima    *auto regression integrated moving average*
@@ -136,14 +138,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 ### 5) CHANGELOG
 * v0.0: developed the main features
 * v0.1: added -u.corr, -u.arl, -x.w2v, -x.d2v, -s.sgd, -s.xgb, .zip input, -s.nn=c
-* v0.2: added -x.bert, -x.tm, -x.ts, improved -s.nn, removed -e.cv (cross validation), fixed bug on text reading
-* v0.3: improved -x.bert, -x.d and -d.viz, added -d.c, -d.s, -d.m, -d.r, -d.d, changed -d.gen to -g.d
-* v0.4: added -d.export -g.mct, -u.som, -d.md, included -s.psvm in -s.svm, added wiki links, moved -u.w2v
-* v0.5: added -p.trs, -p.tsw, -o.if, -o.mcd, -o.lof, -u.ap, fixed bug on .zip reading, improved -u.corr
+* v0.2: added -x.bert, -x.tm, -x.ts, improved -s.nn, removed -e.cv (cross validation)
+* v0.3: improved -x.bert, -x.d and -d.viz, added -d.c, -d.s, -d.m, changed -d.gen to -g.d
+* v0.4: added -d.export -g.mct, -u.som, -d.md, included -s.psvm in -s.svm, moved -u.w2v
+* v0.5: added -p.trs, -p.tsw, -o.if, -o.mcd, -o.lof, -u.ap, fixed bug on .zip reading
 * v0.6: improved anomaly detection evaluation, added -t., -x.mobert
-* v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng, fixed bug on -d.c with .zip indexes
-* v0.8: added/improved -u.corr and -u.corm, fixed -x.bert, removed w2v and d2v, added -d.f, -d.g, -d.k, -d.b
-* v0.9: added -u.kmpp, -u.sc
+* v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng
+* v0.8: added/improved -u.corr and -u.corm, fixed -x.bert, removed w2v and d2v
+* v0.9: added -u.kmpp, -u.sc, added -d.f, -d.g, -d.k, -d.b
 
 ### 6) TO DO LIST
 * -g.mct (markov chains generated text)
@@ -169,7 +171,8 @@ import pandas as PD;
 import numpy as NP;
 import tensorflow as TF;
 import zipfile as ZF;
-import sklearn as SK; from sklearn import *; from skimage.io import imread; from skimage.transform import resize;
+import sklearn as SK; from sklearn import *; 
+from skimage.io import imread; from skimage.transform import resize;
 import matplotlib.pyplot as MP; MP.rcParams["figure.figsize"]=(5,4);
 import gensim as W2V; from gensim.models.doc2vec import Doc2Vec, TaggedDocument;
 import nltk; from nltk.tokenize import word_tokenize; nltk.download('punkt', quiet=True);
@@ -250,32 +253,36 @@ if '-x.effnet' in o:
 try:
  f=sys.argv[2]; #take dataset or model
 except:
- print('no file loaded'); sys.exit();
-
-
+ print('no file loaded. generating gen.csv'); #sys.exit();
+ if not '-g.d=' in o:
+  o=o+' -g.d=123'; 
+#---generate data
+ if '-g.d=' in o: #generate data with a normal distribution filled with random noise
+  r_=re.findall(r'-g.d=(.+?) ',o); 
+  ns=int(r_[0][0]); nf=int(r_[0][1]); ni=int(r_[0][2]); 
+  ns=ns*1000; nf=nf*10; ni=ni*10; nr=nf-ni; f='gen.csv';
+  print(f'generating dataset with {ns} samples and {nf} features, {ni} informative');
+  x_, y_ = SK.datasets.make_classification(n_samples=ns, n_features=nf); 
+  x_=PD.DataFrame(x_); y_=PD.DataFrame(y_, columns=['class']); 
+  g_=PD.concat([x_, y_], axis=1); g_.to_csv('gen.csv', sep=',', encoding='utf-8'); 
+  
 try:
  f2=sys.argv[3]; #take testset or newdataset
 except:
  print('using training set');
 
 
-#---generate data
-if '-g.d=' in o: #generate data with a normal distribution filled with random noise
- r_=re.findall(r'-g.d=(.+?) ',o); 
- ns=int(r_[0][0]);nf=int(r_[0][1]);ni=int(r_[0][2]); ns=ns*1000; nf=nf*10; ni=ni*10; nr=nf-ni; 
- print(f'generating dataset with {ns} samples and {nf} features, {ni} informative');
- x_, y_ = SK.datasets.make_classification(n_samples=ns, n_features=nf, n_informative=15, n_redundant=5, random_state=1); 
- x_=PD.DataFrame(x_); y_=PD.DataFrame(y_, columns=[tgtcol]); 
- g_=PD.concat([x_, y_], axis=1); g_.to_csv('gen.csv', sep=',', encoding='utf-8'); #generate a dummy dataset
 
-if '-g.mct' in o: #markov chains to generate text with next word probability 
- print('generating sentence from training data:');
- os.system('pip install markovify'); import markovify;
- ft=open(f, encoding='utf8').read();
- #text_model = markovify.NewlineText(ft, state_size = 2); # for poetry (d.headline_text= pandas serie of newline text)
- text_model = markovify.Text(ft, state_size=3); #for long well punctuated text (f=string of text)
- print(text_model.make_sentence()); sys.exit();
- #print(text_model.make_short_sentence(280));
+
+#if '-g.mct' in o: #markov chains to generate text with next word probability 
+# print('generating sentence from training data:');
+# os.system('pip install markovify'); import markovify;
+# ft=open(f, encoding='utf8').read();
+# #text_model = markovify.NewlineText(ft, state_size = 2); 
+# #for poetry (d.headline_text= pandas serie of newline text)
+# text_model = markovify.Text(ft, state_size=3); 
+# print(text_model.make_sentence()); sys.exit();
+# #print(text_model.make_short_sentence(280));
 
 
 datatype='';
@@ -289,25 +296,30 @@ if 'f2' in locals() and '.zip' in f2:
  datatype='zip';
 
 if '-x.rsz' in o:#extract features from image with resize
- r_=re.findall(r'-x.rsz=(.+?) ',o); size=int(r_[0]); imgfeats=(size*size)*3; print(f"using image size {size}x{size}, extract {imgfeats} features");  
+ r_=re.findall(r'-x.rsz=(.+?) ',o); size=int(r_[0]); imgfeats=(size*size)*3; 
+ print(f"using image size {size}x{size}, extract {imgfeats} features");  
 else:#otherwise apply default size 28x28
- size=16; imgfeats=(size*size)*3; #print(f"using default image size {size}x{size}, extract {imgfeats} features"); 
+ size=16; imgfeats=(size*size)*3;  
 
 if '-d.ts=' in o:#get name of timestamp column
- r_=re.findall(r'-d.ts=(.+?) ',o); tscol=(r_[0]); print(f"using '{tscol}' as timestamp column");
+ r_=re.findall(r'-d.ts=(.+?) ',o); tscol=(r_[0]); 
+ print(f"using '{tscol}' as timestamp column");
 else:#otherwise apply default name
  tscol='date'; print('extract "date" as timestamp column'); 
 
 if '-d.s=' in o:#get name of string column
- r_=re.findall(r'-d.s=(.+?) ',o); txtcol=(r_[0]); print(f"using '{txtcol}' as string column");
+ r_=re.findall(r'-d.s=(.+?) ',o); txtcol=(r_[0]); 
+ print(f"using '{txtcol}' as string column");
 else:#otherwise apply default name
  txtcol='text'; print('extract "text" as string column'); 
 
 if '-d.c=' in o:#get name of class column
  if re.search(r'-d.c=[a-zA-Z]', o):
-  r_=re.findall(r'-d.c=(.+?) ',o); tgtcol=(r_[0]); print(f"'{tgtcol}' is the target class column"); 
+  r_=re.findall(r'-d.c=(.+?) ',o); tgtcol=(r_[0]); 
+  print(f"'{tgtcol}' is the target class column"); 
  if re.search(r'-d.c=[0-9]', o):
-  r_=re.findall(r'-d.c=(.+?) ',o); tgtcol=int(r_[0]); print(f"'{tgtcol}' is the target class index"); 
+  r_=re.findall(r'-d.c=(.+?) ',o); tgtcol=int(r_[0]); 
+  print(f"'{tgtcol}' is the target class index"); 
 else:#otherwise apply default name
  if '.csv' in f or datatype=='csv':
   tgtcol='class'; print('extract "class" as target class'); 
@@ -982,7 +994,7 @@ if '-u.ap' in o: #affinity propagation clustering
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space affinity propagation clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
 
-to_implement='''
+
 if '-u.gxm' in o: #gaussian models expectation maximisation
  r_=re.findall(r'-u.gxm=(.+?) ',o); nk=int(r_[0]);
  clust = SK.mixture.GaussianMixture(n_components=nk).fit(x_); l_=PD.DataFrame(clust.predict); l_.columns=['expectmax']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('expectmax').mean(); print('applied expectation maximisation clustering. added 1 feature');
@@ -991,7 +1003,7 @@ if '-u.gxm' in o: #gaussian models expectation maximisation
  if '-d.viz' in o:
   pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space expectation maximisation clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
-'''
+
 
 
 #---exporting
@@ -1108,7 +1120,7 @@ if '.h5' in f: #apply deep learning saved model
 
 #---stop unsupervised learning
 if not '-s.' in o or not '-t.' in o:
- sys.exit();
+ print('no supervised or timeseries algorithms to run'); sys.exit();
 
 #---train and test split
 #if '-e.cv=' in o: # cross validation *TO REMOVE*
