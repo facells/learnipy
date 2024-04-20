@@ -159,11 +159,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 
 '''
 
+print("\n\n");
+print('---START PROCESS---');
+print('import and install libraries')
 
 import os;
-
-#os.system('pip install -U tensorflow==2.9.0')
-
+os.system('pip install -U tensorflow==2.8.0')
+os.system('pip install --upgrade tensorflow-hub')
 
 import warnings; warnings.filterwarnings('ignore'); 
 import datetime as DT;
@@ -192,15 +194,14 @@ NP.random.seed(1); TF.random.set_seed(2);
 TF.compat.v1.logging.set_verbosity(TF.compat.v1.logging.ERROR);
 MP.clf();
 
-print("\n\n");
-print('---START PROCESS---');
+
 timestamp=DT.datetime.now(); print(f"time:{timestamp}");
 
 #---system option reading
 o=sys.argv[1]+' ';
 
 if '-h' in o: 
- print(documentation); inst=len(x_.index); feat=len(x_.columns); sys.exit('---END PROCESS---');
+ print(documentation); inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
 
 #import image pretrained models
 if '-x.resnet' in o:
@@ -253,7 +254,7 @@ if '-x.effnet' in o:
 try:
  f=sys.argv[2]; #take dataset or model
 except:
- print('no file loaded. generating gen.csv'); #inst=len(x_.index); feat=len(x_.columns); sys.exit('---END PROCESS---');
+ print('no file loaded. generating gen.csv'); #inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
  if not '-g.d=' in o:
   o=o+' -g.d=123'; 
 #---generate data
@@ -281,7 +282,7 @@ except:
 # #text_model = markovify.NewlineText(ft, state_size = 2); 
 # #for poetry (d.headline_text= pandas serie of newline text)
 # text_model = markovify.Text(ft, state_size=3); 
-# print(text_model.make_sentence()); inst=len(x_.index); feat=len(x_.columns); sys.exit('---END PROCESS---');
+# print(text_model.make_sentence()); inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
 # #print(text_model.make_short_sentence(280));
 
 
@@ -553,7 +554,7 @@ if '.zip' in f: #extract data from .zip, loading in memory
 
 
 if not '.zip' in f and not '.csv' in f and not '.zip' in f2 and not '.csv' in f2:
- print('please input a .csv or .zip dataset'); inst=len(x_.index); feat=len(x_.columns); sys.exit('---END PROCESS---');
+ print('please input a .csv or .zip dataset'); inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
 
 
 #---drop selected columns
@@ -592,7 +593,7 @@ if '-u.arl' in o: #association rule mining
  print(results);
  print('results printed in log.txt file'); timestamp=DT.datetime.now(); 
  print(f"-u.arl stops other tasks\ntime:{timestamp}");
- inst=len(x_.index); feat=len(x_.columns); sys.exit('---END PROCESS---');
+ inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
 
 
 #---automatically detect target class type
@@ -704,26 +705,26 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
 
  if '-x.tm=' in o: #one hot token matrix
   orig_t_ = t_; #keep text for wordcloud
-  r_=re.findall(r'-x.tm=(.+?) ', o); wu=int(r_[0]); 
+  r_=re.findall(r'-x.tm=(.+?) ', o); wu=int(r_[0]); fx=1;
   t=TF.keras.preprocessing.text.Tokenizer(num_words=wu, lower=True, oov_token=wu)
   t.fit_on_texts(t_); seq=t.texts_to_sequences(t_); 
   wv_=t.sequences_to_matrix(seq, mode='freq');  t_=PD.DataFrame(wv_);
   print('word indexes:\n',t.index_word);
   if '-d.data' in o:
-   fx=1; print('token freq matrix:\n',t_);
+   print('token freq matrix:\n',t_);
   else:
    print(f'extracting {wu} features from text');
 
  if '-x.cm=' in o: #one hot char matrix
   orig_t_ = t_; #keep text for wordcloud
-  r_=re.findall(r'-x.cm=(.+?) ', o); wu=int(r_[0]); 
+  r_=re.findall(r'-x.cm=(.+?) ', o); wu=int(r_[0]); fx=1;
   t=TF.keras.preprocessing.text.Tokenizer(num_words=wu, char_level=True, oov_token=wu)
   t.fit_on_texts(t_); seq=t.texts_to_sequences(t_); 
   wv_=t.sequences_to_matrix(seq, mode='freq');  
   t_=PD.DataFrame(wv_);
   print('word indexes:\n',t.index_word);
   if '-d.data' in o:
-   fx=1; print('charachters matrix:\n',t_);
+   print('charachters matrix:\n',t_);
   else:
    print(f'extracting {wu} features from text');
 
@@ -731,7 +732,7 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
   orig_t_ = t_; #keep text for wordcloud
   x_=PD.DataFrame(); 
   print('tabular data dropped to prevent mixing tabular data and sequence text'); 
-  r_=re.findall(r'-x.ts=(.+?) ', o); wu=int(r_[0]); 
+  r_=re.findall(r'-x.ts=(.+?) ', o); wu=int(r_[0]); fx=1;
   t = TF.keras.preprocessing.text.Tokenizer(num_words=1000, lower=True, oov_token=0); 
   t.fit_on_texts(t_);
   seq = t.texts_to_sequences(t_); 
@@ -742,7 +743,7 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
   #dshape=(t_.shape[1],t_.shape[2]); t_=t_.numpy(); 
   #ft_=[]; [ft_.append(i.flatten()) for i in t_]; t_=PD.DataFrame(ft_);
   if '-d.data' in o:
-   fx=1; print('token sequence matrix:\n',t_);
+   print('token sequence matrix:\n',t_);
   else:
    print(f'extracting {wu} features from text');
 
@@ -911,7 +912,7 @@ if fx==1: #if feature extraction performed concat x_ and t_, else drop t_
 else:
  print('no text feature extraction. text column dropped');
  if feat==0: #x_.empty:
-  print('no features. prcess stopped'); inst=len(x_.index); feat=len(x_.columns); sys.exit('---END PROCESS---');
+  print('no features. prcess stopped'); inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
 
 
 
@@ -954,7 +955,7 @@ if '-u.corm' in o: #correlation matrix
  af.close();
  print('theory: https://en.wikipedia.org/wiki/Correlation_coefficient');
  timestamp=DT.datetime.now(); print(f"-u.corm stops other tasks\ntime:{timestamp}"); 
- inst=len(x_.index); feat=len(x_.columns); sys.exit('---END PROCESS---');
+ inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
 
 if '-u.corr' in o: #correlation list
  #if 'y_' in locals():
@@ -983,7 +984,7 @@ if '-u.corr' in o: #correlation list
  af.close();
  print('theory: https://en.wikipedia.org/wiki/Correlation_coefficient');
  timestamp=DT.datetime.now(); print(f"-u.corr stops other tasks\ntime:{timestamp}"); 
- inst=len(x_.index); feat=len(x_.columns); sys.exit('---END PROCESS---');
+ inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
 
 #REMOVED v0.8
 #if '-u.w2v' in o and 't_' in locals(): #word2vec
@@ -1000,7 +1001,7 @@ if '-u.corr' in o: #correlation list
 # [MP.annotate(word, xy=(result[i, 0], result[i, 1])) for i, word in enumerate(words_)]; 
 # MP.title('w2v 2d space'); MP.savefig(fname='w2v-space'); MP.show(); MP.clf(); #visualize w2v-space and save it
 # print('extracted word2vec dictionary from text. save w2v.txt, w2v.bin and w2v-space.png');
-# timestamp=DT.datetime.now(); print(f"-u.w2v stops other tasks\ntime:{timestamp}"); inst=len(x_.index); feat=len(x_.columns); sys.exit('---END PROCESS---');
+# timestamp=DT.datetime.now(); print(f"-u.w2v stops other tasks\ntime:{timestamp}"); inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
 
 
 if '-u.km=' in o: #kmeans clustering
@@ -1146,7 +1147,7 @@ if '-d.export' in o:
  n_=PD.concat([x_,y_], axis=1); print('exporting processed dataset'); 
  af= open(f"{xfn}", 'w'); af.write(n_.to_csv()); af.close();  
  print(f"data saved as {xfn}");
- #inst=len(x_.index); feat=len(x_.columns); sys.exit('---END PROCESS---');
+ #inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
 
 #---preprocessing features
 if not '-x.ts=' in o or not 't_' in locals():
@@ -1226,14 +1227,14 @@ if '.h4' in f: #apply machine learning saved model
   af= open(f"{testname}-predictions.csv", 'w'); 
   af.write(n_.to_csv()); af.close();  
   print(f"data with predictions saved as {testname}-predictions.csv");
-  inst=len(x_.index); feat=len(x_.columns); sys.exit('---END PROCESS---');  
+  inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();  
  else:
   y2_pred=loadmodel.predict(x_); y2_pred=PD.DataFrame(y2_pred); #print(type())
   n_=PD.concat([x2_,y2_pred], axis=1); 
   print('applied saved model on supplied dataset. results:\n'); print(n_);
   af= open(f"{testname}-predictions.csv", 'w'); af.write(n_.to_csv()); af.close();  
   print(f"data with predictions saved as {testname}-predictions.csv");
-  inst=len(x_.index); feat=len(x_.columns); sys.exit('---END PROCESS---');
+  inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
 
 if '.h5' in f: #apply deep learning saved model
  if '-t.' in o: #in case of timeseries
@@ -1258,11 +1259,11 @@ if '.h5' in f: #apply deep learning saved model
  n_=PD.concat([x2_,y2_pred], axis=1); print('applied saved model on supplied test set'); 
  af= open(f"{testname}-predictions.csv", 'w'); af.write(n_.to_csv()); af.close(); 
  print(f"data with predictions saved as {testname}-predictions.csv");
- inst=len(x_.index); feat=len(x_.columns); sys.exit('---END PROCESS---');
+ inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
 
 #---stop unsupervised learning
 if task=='u':
- print('no supervised or timeseries algorithms to run'); inst=len(x_.index); feat=len(x_.columns); sys.exit('---END PROCESS---');
+ print('no supervised or timeseries algorithms to run'); inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
 
 #---train and test split
 #if '-e.cv=' in o: # cross validation *TO REMOVE*
@@ -1672,7 +1673,7 @@ if 'model' in locals() and '-t.' in o:
   #af= open(f"{filename}-format4model.csv", 'w'); af.write(x_test.to_csv()); af.close();  
 
 if not 'y_pred' in locals():
- print('no test data to evaluate'); inst=len(x_.index); feat=len(x_.columns); sys.exit('---END PROCESS---');
+ print('no test data to evaluate'); inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
 
 #---model details
 if '-d.md' in o and not '-s.base' in o:
@@ -1790,4 +1791,4 @@ if '-d.viz' in o:
    MP.savefig('wordcloud_%s.png' % k); MP.show(); MP.clf();
 
 timestamp=DT.datetime.now(); print(timestamp); 
-sys.exit('---END PROCESS---');
+print('---END PROCESS---'); sys.exit();
