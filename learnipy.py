@@ -1,6 +1,6 @@
 documentation='''
 # LEARNIPY
-* version 0.8
+* version 0.9
 * making machine learning easy for everyone
 * written with ♥ by Fabio Celli, 
 * email: fabio.celli.phd@gmail.com
@@ -145,7 +145,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.6: improved anomaly detection evaluation, added -t., -x.mobert
 * v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng
 * v0.8: added/improved -u.corr and -u.corm, fixed -x.bert, removed w2v and d2v
-* v0.9: added -u.kmpp, -u.sc, added -d.f, -d.g, -d.k, -d.b
+* v0.9: added -u.kmpp, -u.sc, -d.f, -d.g, -d.k, -d.b, PaCMAp reduction in -d.viz
 
 ### 6) TO DO LIST
 * -g.mct (markov chains generated text)
@@ -566,20 +566,18 @@ if '-d.k=' in o:
 
 #---info on visualizations
 if '-d.viz' in o:
- os.system('pip install pacmap');
+ print('installing dim. reduction for visualization');
+ os.system('pip install pacmap'); 
  import pacmap;
  pca=pacmap.PaCMAP(n_components=2, n_neighbors=None, MN_ratio=0.5, FP_ratio=2.0); 
  #pca=SK.decomposition.PCA(2);
- print('''all scatterplots are 2D-PaCMAp reduced spaces
- theory: https://en.wikipedia.org/wiki/Dimensionality_reduction#PaCMAp''');
+ print('all scatterplots are 2D PaCMAp-reduced spaces\\ntheory: https://en.wikipedia.org/wiki/Dimensionality_reduction#PaCMAp');
 
 #---unsupervised learning on unprocessed data
 
 if '-u.arl' in o: #association rule mining
  xn_=x_.to_numpy(); xn_=xn_.flatten(); xn_=NP.array(xn_, dtype=str)
- print('''apply association rule learning (market basket analysis).
- theory: https://en.wikipedia.org/wiki/Association_rule_learning 
- docs: https://github.com/rasbt/mlxtend''');
+ print('apply association rule learning (market basket analysis).\ntheory: https://en.wikipedia.org/wiki/Association_rule_learning\ndocs: https://github.com/rasbt/mlxtend');
  xn_=NP.char.split(xn_,sep=' '); 
  from mlxtend.preprocessing import TransactionEncoder;
  import mlxtend;
@@ -1009,8 +1007,10 @@ if '-u.corr' in o: #correlation list
 if '-u.km=' in o: #kmeans clustering
  r_=re.findall(r'-u.km=(.+?) ',o); nk=int(r_[0]);
  clust = SK.cluster.KMeans(n_clusters=nk, random_state=0).fit(x_.values); 
- l_=PD.DataFrame(clust.labels_); l_.columns=['kmeans']; 
- x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('kmeans').mean(); 
+ l_=PD.DataFrame(clust.labels_); 
+ l_.columns=['kmeans']; 
+ x_=PD.concat([x_,l_], axis=1); 
+ g_=x_.groupby('kmeans').mean(); 
  print('applied kmeans clustering. added 1 feature'); 
  print('theory: https://en.wikipedia.org/wiki/K-means_clustering');
  af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
@@ -1020,15 +1020,18 @@ if '-u.km=' in o: #kmeans clustering
   projected=pca.fit_transform(x_.values); 
   MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
   MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); 
-  MP.title('2D PCA data space kmeans clusters'); 
-  MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
+  MP.title('2D data space clusters'); 
+  MP.savefig(fname='cluster-space.png'); MP.show(); MP.clf(); #pca space
 
 if '-u.kmpp=' in o: #kmeans++ clustering
  r_=re.findall(r'-u.kmpp=(.+?) ',o); nk=int(r_[0]);
  clust = SK.cluster.MiniBatchKMeans(n_clusters=nk, random_state=0, init='k-means++').fit(x_.values); 
- l_=PD.DataFrame(clust.labels_); l_.columns=['kmeans++']; x_=PD.concat([x_,l_], axis=1); 
- g_=x_.groupby('kmeans++').mean(); print('applied kmeans++ clustering. added 1 feature'); 
- print('theory: https://en.wikipedia.org/wiki/K-means_clustering');
+ l_=PD.DataFrame(clust.labels_); 
+ l_.columns=['kmeans++']; 
+ x_=PD.concat([x_,l_], axis=1); 
+ g_=x_.groupby('kmeans++').mean(); 
+ print('applied kmeans++ clustering. added 1 feature'); 
+ print('theory: https://en.wikipedia.org/wiki/K-means%2B%2B');
  af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
  print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  
  print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
@@ -1054,10 +1057,17 @@ if '-u.sc=' in o: #spectral clustering
   MP.savefig(fname='2d-cluster-space.png'); MP.show(); MP.clf(); #pca space
 
 if '-u.optics' in o: #optics clustering
- clust = SK.cluster.OPTICS(min_cluster_size=None).fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['optics']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('optics').mean(); print('applied optics clustering. added 1 feature');
+ clust = SK.cluster.OPTICS(min_cluster_size=None).fit(x_); 
+ l_=PD.DataFrame(clust.labels_); 
+ l_.columns=['optics']; x_=PD.concat([x_,l_], axis=1); 
+ g_=x_.groupby('optics').mean(); 
+ print('applied optics clustering. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/OPTICS_algorithm');
- af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); 
- print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
+ af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
+ ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); 
+ nk=len(classes); 
+ print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n"); 
+ print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
  if '-d.viz' in o:
   projected=pca.fit_transform(x_.values); 
   MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
@@ -1066,10 +1076,16 @@ if '-u.optics' in o: #optics clustering
   MP.savefig(fname='2d-cluster-space.png'); MP.show(); MP.clf(); #pca space
 
 if '-u.msh' in o: #meanshift clustering
- clust = SK.cluster.MeanShift().fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['mshift']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('mshift').mean(); print('applied mshift clustering. added 1 feature');
+ clust = SK.cluster.MeanShift().fit(x_); l_=PD.DataFrame(clust.labels_); 
+ l_.columns=['mshift']; x_=PD.concat([x_,l_], axis=1); 
+ g_=x_.groupby('mshift').mean(); 
+ print('applied mshift clustering. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/Mean_shift');
- af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); 
- print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
+ af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
+ ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); 
+ nk=len(classes); 
+ print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  
+ print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
  if '-d.viz' in o:
   projected=pca.fit_transform(x_.values); 
   MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
@@ -1082,7 +1098,7 @@ if '-u.som' in o: #self organising map clustering (contributor: Fabio Celli)
  os.system('pip install minisom'); from minisom import MiniSom; #library
  xn_=x_.to_numpy(); #change dataset x_ format to numpy to  use minisom
  nodes=int(4*math.sqrt(len(xn_))); #compute nodes of the matrix based on instances
- clust = MiniSom(nodes, nodes, feat, sigma=0.3, learning_rate=0.5, random_seed=2) # initialize SOM
+ clust = MiniSom(nodes, nodes, feat, sigma=0.3, learning_rate=0.5, random_seed=2) 
  clust.train(xn_, 100) #train SOM with 100 iterations
  l_=[]; col_=[]; #new column with som results
  for i in xn_:
@@ -1091,11 +1107,13 @@ if '-u.som' in o: #self organising map clustering (contributor: Fabio Celli)
   col=int(w[0]+w[1]);col_.append(col); #compute int for colors, put in col_
  l_=PD.DataFrame(l_); l_.columns=['som']; x_=PD.concat([x_,l_], axis=1); #print(l_)
  g_=x_.groupby('som').mean(); 
- print(f'apply self organizing maps clustering with {nodes} x {nodes} matrix. added 1 feature');
+ print(f'apply self organizing maps with {nodes} x {nodes} matrix. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/Self-organizing_map');
  af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
  ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); 
- nk=len(classes);  print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
+ nk=len(classes);  print(f"num clusters= {nk}. cluster values:"); 
+ print(g_.to_string()+"\n");  print("cluster coverage: "); 
+ print(+l_.applymap(str).value_counts(normalize=True));
  if '-d.viz' in o:
   projected=pca.fit_transform(x_.values); 
   MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
@@ -1104,24 +1122,22 @@ if '-u.som' in o: #self organising map clustering (contributor: Fabio Celli)
   MP.savefig(fname='2d-cluster-space.png'); MP.show(); MP.clf(); #pca space
 
 if '-u.ap' in o: #affinity propagation clustering
- clust = SK.cluster.AffinityPropagation(damping=0.5).fit(x_); l_=PD.DataFrame(clust.labels_); l_.columns=['affinity']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('affinity').mean(); print('applied affinity propagation clustering. added 1 feature');
+ clust = SK.cluster.AffinityPropagation(damping=0.5).fit(x_); 
+ l_=PD.DataFrame(clust.labels_); l_.columns=['affinity']; 
+ x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('affinity').mean(); 
+ print('applied affinity propagation clustering. added 1 feature');
  print('theory: https://en.wikipedia.org/wiki/Affinity_propagation');
- af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); 
- print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
+ af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); 
+ ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); 
+ nk=len(classes); 
+ print(f"num clusters= {nk}. cluster values:"); print(g_.to_string()+"\n");  
+ print("cluster coverage: "); print(+l_.applymap(str).value_counts(normalize=True));
  if '-d.viz' in o:
-  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_.values); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
-  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space affinity propagation clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
-
-
-if '-u.gxm' in o: #gaussian models expectation maximisation
- r_=re.findall(r'-u.gxm=(.+?) ',o); nk=int(r_[0]);
- clust = SK.mixture.GaussianMixture(n_components=nk).fit(x_); l_=PD.DataFrame(clust.predict); l_.columns=['expectmax']; x_=PD.concat([x_,l_], axis=1); g_=x_.groupby('expectmax').mean(); print('applied expectation maximisation clustering. added 1 feature');
- print('theory: https://en.wikipedia.org/wiki/Expectation-maximization_algorithm');
- af= open('log.txt', 'a'); af.write(g_.to_string()+"\n\n"); af.close(); ynp_=l_.to_numpy(); classes, counts=NP.unique(ynp_, return_counts=True); nk=len(classes); print(f"num clusters= {nk}");
- if '-d.viz' in o:
-  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
-  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA data space expectation maximisation clusters'); MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
-
+  projected=pca.fit_transform(x_.values); 
+  MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
+  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); 
+  MP.title('2D data space clusters'); 
+  MP.savefig(fname='2d-cluster-space.png'); MP.show(); MP.clf(); #pca space
 
 
 #---exporting
@@ -1129,17 +1145,23 @@ if '-d.export' in o:
  r_=re.findall(r'-d.export=(.+?) ',o); xfn=r_[0];
  y_=y_.rename('class');
  n_=PD.concat([x_,y_], axis=1); print('exporting processed dataset'); 
- af= open(f"{xfn}", 'w'); af.write(n_.to_csv()); af.close();  print(f"data saved as {xfn}");
+ af= open(f"{xfn}", 'w'); af.write(n_.to_csv()); af.close();  
+ print(f"data saved as {xfn}");
  #sys.exit();
 
 #---preprocessing features
 if not '-x.ts=' in o or not 't_' in locals():
  maxval=2;
- if '-p.fn' in o or '-s.sgd' in o or '-s.nb' in o or '-s.nn' in o: #column normalization range 0-1 (required for sgd and nb)
-  x_scaled=SK.preprocessing.MinMaxScaler().fit_transform(x_.values); x_=PD.DataFrame(x_scaled, columns=x_.columns); print('apply feature normalization'); #normalization by column
+#column normalization range 0-1 (required for sgd and nb)
+ if '-p.fn' in o or '-s.sgd' in o or '-s.nb' in o or '-s.nn' in o: 
+  x_scaled=SK.preprocessing.MinMaxScaler().fit_transform(x_.values); 
+  x_=PD.DataFrame(x_scaled, columns=x_.columns); 
+  print('apply feature normalization as needed'); #normalization by column
 if '-x.ts=' in o:
  #x_=x_.div(x_.sum(axis=1), axis=0); print('apply instance normalization'); #normalize by row
- #x_scaled=SK.preprocessing.MinMaxScaler().fit_transform(x_.values); x_=PD.DataFrame(x_scaled, columns=x_.columns); print('apply feature normalization'); #normalization by column
+ #x_scaled=SK.preprocessing.MinMaxScaler().fit_transform(x_.values); 
+ #x_=PD.DataFrame(x_scaled, columns=x_.columns); 
+ #print('apply feature normalization as needed'); #normalization by column
  maxval=1000;
 
 print(f"max value for neural network embedding= {maxval}");
@@ -1165,9 +1187,11 @@ print(f"max value for neural network embedding= {maxval}");
 
 
 #---feature summary
-x_=PD.DataFrame(x_.values.astype(NP.float64), columns=x_.columns); print('turn all features to float numbers.'); #print(x_);
+x_=PD.DataFrame(x_.values.astype(NP.float64), columns=x_.columns); 
+print('turn all features to float numbers.'); #print(x_);
 #print(list(x_)); #print(x_.dtypes);
-sparseness=0; sparsemsg=''; sparse = sum((x_ == 0).astype(int).sum())/x_.size; #initialize sparseness check
+sparseness=0; sparsemsg=''; 
+sparse = sum((x_ == 0).astype(int).sum())/x_.size; #initialize sparseness check
 if sparse>=0.9:
  sparseness=1; sparsemsg='WARNING: high data sparseness, better to apply feature reduction. ';
 print(f"sparseness= {sparse:.3f}");
@@ -1179,20 +1203,13 @@ x_.columns = range(x_.shape[1]); #make columns unique
 if '-d.fdist' in o:
  #print(x_.dtypes); print(y_.dtypes);
  for col in x_:
-  mu=x_[col].mean(); mi=x_[col].min(); ma=x_[col].max(); me=x_[col].median(); sd=x_[col].std(); print(f"min={mi:.1f} max={ma:.1f} avg={mu:.3f} sd={sd:.3f} med={me:.3f}  distribution of feature {col}"); 
+  mu=x_[col].mean(); 
+  mi=x_[col].min(); 
+  ma=x_[col].max(); 
+  me=x_[col].median(); 
+  sd=x_[col].std(); 
+  print(f"min={mi:.1f} max={ma:.1f} avg={mu:.3f} sd={sd:.3f} med={me:.3f} for {col}"); 
 
-viz_deprecated='''
-if '-d.viz' in o:
- if task=='s':
-  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=y_, edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('copper_r', nclass));
-  MP.xlabel('component 1'); MP.ylabel('component 2');
-  if target=='c':
-   MP.colorbar(); 
-  MP.title('2D PCA data space and classes'); MP.savefig(fname='pca-data-space.png'); MP.show(); MP.clf(); #pca space
- else:
-  pca=SK.decomposition.PCA(2); projected=pca.fit_transform(x_); MP.scatter(projected[:, 0], projected[:, 1], c=y_, edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('copper_r', 1));
-  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); MP.title('2D PCA unsupervised data space'); MP.savefig(fname='pca-data-space.png'); MP.show(); MP.clf(); #pca space
-'''
 
 
 
@@ -1205,21 +1222,28 @@ if '.h4' in f: #apply machine learning saved model
   else:
    y2_pred=loadmodel.forecast(steps=100);
   y2_pred=PD.DataFrame(y2_pred); print(y2_pred)
-  n_=PD.concat([y_,y2_pred], axis=0).reset_index(); print('applied saved model on supplied dataset. results:\n'); print(n_);
-  af= open(f"{testname}-predictions.csv", 'w'); af.write(n_.to_csv()); af.close();  print(f"data with predictions saved as {testname}-predictions.csv");
+  n_=PD.concat([y_,y2_pred], axis=0).reset_index(); 
+  print('applied saved model on supplied dataset. results:\n'); print(n_);
+  af= open(f"{testname}-predictions.csv", 'w'); 
+  af.write(n_.to_csv()); af.close();  
+  print(f"data with predictions saved as {testname}-predictions.csv");
   sys.exit();  
  else:
   y2_pred=loadmodel.predict(x_); y2_pred=PD.DataFrame(y2_pred); #print(type())
-  n_=PD.concat([x2_,y2_pred], axis=1); print('applied saved model on supplied dataset. results:\n'); print(n_);
-  af= open(f"{testname}-predictions.csv", 'w'); af.write(n_.to_csv()); af.close();  print(f"data with predictions saved as {testname}-predictions.csv");
+  n_=PD.concat([x2_,y2_pred], axis=1); 
+  print('applied saved model on supplied dataset. results:\n'); print(n_);
+  af= open(f"{testname}-predictions.csv", 'w'); af.write(n_.to_csv()); af.close();  
+  print(f"data with predictions saved as {testname}-predictions.csv");
   sys.exit();
 
 if '.h5' in f: #apply deep learning saved model
  if '-t.' in o: #in case of timeseries
   d_=PD.to_datetime(d_); y_=PD.DataFrame(y_); 
-  y_=PD.concat([y_,d_], axis=1); y_['date']=d_; y_.sort_values(by="date"); # sort x_ in date order
+  y_=PD.concat([y_,d_], axis=1); y_['date']=d_; 
+  y_.sort_values(by="date"); # sort x_ in date order
   y_=y_.drop(columns=['date']); y_['date']=y_.index;  #substitute date with integer index
-  scaler = SK.preprocessing.MinMaxScaler(feature_range=(0, 1)); y_=y_.drop(columns=['date']); y_ = scaler.fit_transform(y_)
+  scaler = SK.preprocessing.MinMaxScaler(feature_range=(0, 1)); 
+  y_=y_.drop(columns=['date']); y_ = scaler.fit_transform(y_)
   y_ = NP.reshape(y_, (y_.shape[0], y_.shape[1], 1));
   y2_pred=loadmodel.predict(y_); 
   y2_pred = scaler.inverse_transform(y2_pred);
@@ -1233,7 +1257,8 @@ if '.h5' in f: #apply deep learning saved model
  if target=='r':
   y2_pred=PD.DataFrame(y2_pred);
  n_=PD.concat([x2_,y2_pred], axis=1); print('applied saved model on supplied test set'); 
- af= open(f"{testname}-predictions.csv", 'w'); af.write(n_.to_csv()); af.close();  print(f"data with predictions saved as {testname}-predictions.csv");
+ af= open(f"{testname}-predictions.csv", 'w'); af.write(n_.to_csv()); af.close(); 
+ print(f"data with predictions saved as {testname}-predictions.csv");
  sys.exit();
 
 #---stop unsupervised learning
@@ -1257,11 +1282,13 @@ if 'split' in locals(): #if split percentage is defined, then split train and te
   x_['date']=d_; x_.sort_values(by="date"); # sort x_ in date order
   y_['date']=d_; y_.sort_values(by="date"); # sort x_ in date order
   tscol='date';
-  x_train, x_test, y_train, y_test = SK.model_selection.train_test_split(x_, y_, test_size=split, shuffle=False) # prepare train test eval 
+  x_train, x_test, y_train, y_test=SK.model_selection.train_test_split(x_, y_, test_size=split, shuffle=False) # prepare train test eval 
  else:
-  x_train, x_test, y_train, y_test = SK.model_selection.train_test_split(x_, y_, test_size=split, shuffle=True, random_state=1) # prepare train test eval 
- xtrain_inst=len(x_train.index); feat=len(x_train.columns); print(f'training set shape: {xtrain_inst} instances, {feat} features');
- xtest_inst=len(x_test.index); feat=len(x_test.columns); print(f'test set shape: {xtest_inst} instances, {feat} features');
+  x_train, x_test, y_train, y_test=SK.model_selection.train_test_split(x_, y_, test_size=split, shuffle=True, random_state=1) # prepare train test eval 
+ xtrain_inst=len(x_train.index); feat=len(x_train.columns); 
+ print(f'training set shape: {xtrain_inst} instances, {feat} features');
+ xtest_inst=len(x_test.index); feat=len(x_test.columns); 
+ print(f'test set shape: {xtest_inst} instances, {feat} features');
  x_test2=x_test; #create a copy of x_test for evaluation in case of shape change
 
 if '-d.data' in o:
@@ -1309,11 +1336,13 @@ if '-o.' in o:
 
  #evaluate
  if target=='c':
-  model=SK.dummy.DummyClassifier(strategy='prior'); model.fit(x_train, y_train); y_pred=model.predict(x_test);
+  model=SK.dummy.DummyClassifier(strategy='prior'); 
+  model.fit(x_train, y_train); y_pred=model.predict(x_test);
   acc=SK.metrics.f1_score(y_test, y_pred); 
   print(f"baseline after outlier detection: F1= {acc:.3f}"); 
  if target=='r':
-  model=SK.linear_model.LinearRegression(); model.fit(x_train, y_train); y_pred=model.predict(x_test);
+  model=SK.linear_model.LinearRegression(); 
+  model.fit(x_train, y_train); y_pred=model.predict(x_test);
   r2=SK.metrics.r2_score(y_test, y_pred);
   print(f"baseline after outlier detection: R2= {r2:.3f}");
 
@@ -1321,103 +1350,145 @@ if '-o.' in o:
 
 #---supervised learning
 if '-s.base' in o and target=='c':
- model=SK.dummy.DummyClassifier(strategy='prior', random_state=3,); print('evaluate with baseline dummy classifier'); 
+ model=SK.dummy.DummyClassifier(strategy='prior', random_state=3,); 
+ print('evaluate with baseline dummy classifier'); 
  model.fit(x_train, y_train); y_pred=model.predict(x_test); 
 if '-s.base' in o and target=='r':
- model=SK.dummy.DummyRegressor(strategy='mean', random_state=3,); print('evaluate with mean baseline');
+ model=SK.dummy.DummyRegressor(strategy='mean', random_state=3,); 
+ print('evaluate with mean baseline');
  model.fit(x_train, y_train); y_pred=model.predict(x_test);  #'mean', 'median',
 
 if '-s.nb' in o and target=='c':
- model=SK.naive_bayes.ComplementNB();model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ model=SK.naive_bayes.ComplementNB();model.fit(x_train, y_train); 
+ y_pred=model.predict(x_test); 
  print('apply complement naive bayes classification (on normalized space)\ntheory: https://en.wikipedia.org/wiki/Naive_Bayes_classifier');
 if '-s.nb' in o and target=='r':
- model=SK.linear_model.BayesianRidge();model.fit(x_train, y_train); y_pred=model.predict(x_test); y_pred=y_pred.flatten(); 
+ model=SK.linear_model.BayesianRidge();model.fit(x_train, y_train); 
+ y_pred=model.predict(x_test); y_pred=y_pred.flatten(); 
  print('apply bayesian ridge regression (on normalized space)\ntheory: https://en.wikipedia.org/wiki/Bayesian_linear_regression');
 
 if '-s.lcm' in o and target=='c':
- model=SK.discriminant_analysis.LinearDiscriminantAnalysis(); model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ model=SK.discriminant_analysis.LinearDiscriminantAnalysis();
+ model.fit(x_train, y_train); y_pred=model.predict(x_test); 
  print('apply LinearDiscriminantAnalysis classification \ntheory: https://en.wikipedia.org/wiki/Linear_discriminant_analysis');
 if '-s.lcm' in o and target=='r':
- model=SK.cross_decomposition.PLSRegression(max_iter=500);model.fit(x_train, y_train); y_pred=model.predict(x_test); y_pred=y_pred.flatten(); 
+ model=SK.cross_decomposition.PLSRegression(max_iter=500);
+ model.fit(x_train, y_train); 
+ y_pred=model.predict(x_test); y_pred=y_pred.flatten(); 
  print('apply PartialLeastSquare regression \ntheory: https://en.wikipedia.org/wiki/Partial_least_squares_regression');
 
 if '-s.lr' in o and target=='c':
- model=SK.linear_model.LogisticRegression(max_iter=5000);model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ model=SK.linear_model.LogisticRegression(max_iter=5000);
+ model.fit(x_train, y_train); y_pred=model.predict(x_test); 
  print('apply logistic regression classification \ntheory:https://en.wikipedia.org/wiki/Logistic_regression');
 if '-s.lr' in o and target=='r':
- model=SK.linear_model.LinearRegression();model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ model=SK.linear_model.LinearRegression();
+ model.fit(x_train, y_train); y_pred=model.predict(x_test); 
  print('apply linear regression \ntheory: https://en.wikipedia.org/wiki/Linear_regression');
 
 if '-s.sgd' in o and target=='c':
- model=SK.linear_model.SGDClassifier(shuffle=False);model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ model=SK.linear_model.SGDClassifier(shuffle=False);
+ model.fit(x_train, y_train); y_pred=model.predict(x_test); 
  print('apply stochastic gradient descent classification (on normalized space) \ntheory: https://en.wikipedia.org/wiki/Stochastic_gradient_descent');
 if '-s.sgd' in o and target=='r':
- model=SK.linear_model.SGDRegressor(shuffle=False);model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ model=SK.linear_model.SGDRegressor(shuffle=False);
+ model.fit(x_train, y_train); y_pred=model.predict(x_test); 
  print('apply sochastic gradient descent regression (on normalized space) \ntheory: https://en.wikipedia.org/wiki/Stochastic_gradient_descent');
 
 if '-s.knn' in o and target=='c':
- model=SK.neighbors.KNeighborsClassifier();model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ model=SK.neighbors.KNeighborsClassifier();model.fit(x_train, y_train); 
+ y_pred=model.predict(x_test); 
  print('apply k nearest neighbors classification \ntheory: https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm');
 if '-s.knn' in o and target=='r':
- model=SK.neighbors.KNeighborsRegressor();model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ model=SK.neighbors.KNeighborsRegressor();model.fit(x_train, y_train); 
+ y_pred=model.predict(x_test); 
  print('apply k nearest neighbors regression \ntheory: https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm');
 
 if '-s.mlp' in o and target=='c':
- model=SK.neural_network.MLPClassifier(random_state=1);model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ model=SK.neural_network.MLPClassifier(random_state=1);
+ model.fit(x_train, y_train); 
+ y_pred=model.predict(x_test); 
  print('apply multi layer perceptron classification \ntheory: https://en.wikipedia.org/wiki/Multilayer_perceptron');
 if '-s.mlp' in o and target=='r':
- model=SK.neural_network.MLPRegressor(random_state=1);model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ model=SK.neural_network.MLPRegressor(random_state=1);
+ model.fit(x_train, y_train); 
+ y_pred=model.predict(x_test); 
  print('apply multi layer perceprtron regression \ntheory: https://en.wikipedia.org/wiki/Multilayer_perceptron');
 
 if '-s.svm' in o and target=='c':
  print('apply support vector machines\ntheory: https://en.wikipedia.org/wiki/Support-vector_machine');
  kern='r'; mi=5;
  if '-s.svm=' in o:
-  r_=re.findall(r'-s.svm=(.+?) ',o); kern=r_[0][0]; mi=int(r_[0][1]);
+  r_=re.findall(r'-s.svm=(.+?) ',o);
+  kern=r_[0][0]; mi=int(r_[0][1]);
  if kern=='p':
-  model=SK.svm.NuSVC(kernel='poly', degree=mi);model.fit(x_train, y_train); y_pred=model.predict(x_test);
+  model=SK.svm.NuSVC(kernel='poly', degree=mi);
+  model.fit(x_train, y_train); y_pred=model.predict(x_test);
   print('using polynomial kernel\ntheory: https://en.wikipedia.org/wiki/Polynomial_kernel')
  if kern=='r':
-  model=SK.svm.NuSVC(kernel='rbf', nu=mi/10);model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+  model=SK.svm.NuSVC(kernel='rbf', nu=mi/10);
+  model.fit(x_train, y_train);
+  y_pred=model.predict(x_test); 
   print('using rbf kernel\ntheory: https://en.wikipedia.org/wiki/Radial_basis_function_kernel')
 if '-s.svm' in o and target=='r':
  print('apply support vector machines\ntheory: https://en.wikipedia.org/wiki/Support-vector_machine');
  kern='r'; mi=5;
  if '-s.svm=' in o:
-  r_=re.findall(r'-s.svm=(.+?) ',o); kern=r_[0][0]; mi=int(r_[0][1]);
+  r_=re.findall(r'-s.svm=(.+?) ',o); 
+  kern=r_[0][0]; mi=int(r_[0][1]);
  if kern=='p':
-  model=SK.svm.NuSVR(kernel='poly', degree=mi);model.fit(x_train, y_train); y_pred=model.predict(x_test);
+  model=SK.svm.NuSVR(kernel='poly', degree=mi);
+  model.fit(x_train, y_train); 
+  y_pred=model.predict(x_test);
   print(f"using polynomial kernel={mi}\ntheory: https://en.wikipedia.org/wiki/Polynomial_kernel")
  if kern=='r':
-  model=SK.svm.NuSVR(kernel='rbf', nu=mi/10);model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+  model=SK.svm.NuSVR(kernel='rbf', nu=mi/10);
+  model.fit(x_train, y_train);
+  y_pred=model.predict(x_test); 
   print(f"using rbf kernel={mi/10}\ntheory: https://en.wikipedia.org/wiki/Radial_basis_function_kernel")
 
 if '-s.rf' in o and target=='c':
- model=SK.ensemble.RandomForestClassifier(random_state=1);model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ model=SK.ensemble.RandomForestClassifier(random_state=1);
+ model.fit(x_train, y_train); 
+ y_pred=model.predict(x_test); 
  print('apply random forest classification\ntheory: https://en.wikipedia.org/wiki/Random_forest');
 if '-s.rf' in o and target=='r':
- model=SK.ensemble.RandomForestRegressor(random_state=1);model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ model=SK.ensemble.RandomForestRegressor(random_state=1);
+ model.fit(x_train, y_train); 
+ y_pred=model.predict(x_test); 
  print('apply random forest regression\ntheory: https://en.wikipedia.org/wiki/Random_forest');
 
 if '-s.ada' in o and target=='r':
- model=SK.ensemble.AdaBoostRegressor(random_state=1);model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ model=SK.ensemble.AdaBoostRegressor(random_state=1);
+ model.fit(x_train, y_train); 
+ y_pred=model.predict(x_test); 
  print('apply adaboost regression\ntheory: https://en.wikipedia.org/wiki/AdaBoost')
 if '-s.ada' in o and target=='c':
- model=SK.ensemble.AdaBoostClassifier(random_state=1);model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ model=SK.ensemble.AdaBoostClassifier(random_state=1);
+ model.fit(x_train, y_train);
+ y_pred=model.predict(x_test); 
  print('apply adaboost classification\ntheory: https://en.wikipedia.org/wiki/AdaBoost');
 
 if '-s.dt' in o and target=='c':
- model=SK.tree.DecisionTreeClassifier();model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ model=SK.tree.DecisionTreeClassifier();
+ model.fit(x_train, y_train); 
+ y_pred=model.predict(x_test); 
  print('apply decision trees classification\ntheory https://en.wikipedia.org/wiki/Decision_tree_learning'); 
 if '-s.dt' in o and target=='r':
- model=SK.tree.DecisionTreeRegressor();model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ model=SK.tree.DecisionTreeRegressor();
+ model.fit(x_train, y_train); 
+ y_pred=model.predict(x_test); 
  print('apply decision trees regression\ntheory https://en.wikipedia.org/wiki/Decision_tree_learning'); 
 
 if '-s.xgb' in o and target=='c':
- import xgboost; model=xgboost.XGBClassifier();model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ import xgboost; model=xgboost.XGBClassifier();
+ model.fit(x_train, y_train); 
+ y_pred=model.predict(x_test); 
  print('apply gradient boosting classification\ntheory: https://en.wikipedia.org/wiki/Gradient_boosting');
 if '-s.xgb' in o and target=='r':
- import xgboost; model=xgboost.XGBRegressor();model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ import xgboost; model=xgboost.XGBRegressor();
+ model.fit(x_train, y_train); 
+ y_pred=model.predict(x_test); 
  print('apply gradient boosting regression\ntheory: https://en.wikipedia.org/wiki/Gradient_boosting');
 
 
@@ -1430,13 +1501,15 @@ if 'model' in locals() and '-s.' in o:
    opt='-d.t=c'+opt;
   else:
    opt='-d.t=r'+opt;
-  joblib.dump(model, f"{filename}{opt}.h4");print(f"model saved as {filename}{opt}.h4");
+  joblib.dump(model, f"{filename}{opt}.h4");
+  print(f"model saved as {filename}{opt}.h4");
   #af= open(f"{filename}-format4model.csv", 'w'); af.write(x_test.to_csv()); af.close();  
 
 
 
 if '-s.nn' in o:
- x_train=x_train.to_numpy(); x_test=x_test.to_numpy(); y_train=y_train.to_numpy(); y_test=y_test.to_numpy(); #turn dataframe to numpy
+ x_train=x_train.to_numpy(); x_test=x_test.to_numpy(); 
+ y_train=y_train.to_numpy(); y_test=y_test.to_numpy(); #turn dataframe to numpy
  print('apply deep learning neural networks\ntheory: https://en.wikipedia.org/wiki/Deep_learning');
  #l2=2; nu=5; 
  nl=int((complexity/2)*10); nu=int(math.sqrt(feat * nclass)); #automatic selection of num. layers and nodes
@@ -1645,23 +1718,34 @@ if '-d.md' in o and not '-s.base' in o:
 if '-s.' in o or '-t.' in o: #if the task is supervised run evaluation
  x_test=x_test2; #restore x_test in its dataframe form
  if target=='c': 
-  #scores=model.fit(x_train, y_train);  y_pred = model.predict_classes(x_test); print(scores); #print(y_test); print(y_pred);
+  #scores=model.fit(x_train, y_train);  
+  #y_pred = model.predict_classes(x_test); print(scores); #print(y_test); print(y_pred);
   acc=SK.metrics.balanced_accuracy_score(y_test, y_pred); 
   print(f"eval predictions on test set. BAL ACC= {acc:.3f}"); 
   rr=SK.metrics.classification_report(y_test, y_pred); print(rr);
-  cm=SK.metrics.confusion_matrix(y_test, y_pred, labels=classes); cm=PD.DataFrame(cm); print("confusion matrix:\n",cm);
-  af= open('log.txt', 'a'); af.write(f"\n\n{f}, {o} -->BAL ACC= {acc:.3f}\n{rr}\nconfusion matrix:\n{cm}"); af.close(); 
+  cm=SK.metrics.confusion_matrix(y_test, y_pred, labels=classes); 
+  cm=PD.DataFrame(cm); print("confusion matrix:\n",cm);
+  af= open('log.txt', 'a'); 
+  af.write(f"\n\n{f}, {o} -->BAL ACC= {acc:.3f}\n{rr}\nconfusion matrix:\n{cm}"); 
+  af.close(); 
  if target=='r': 
   #scores=model.fit(x_train, y_train); y_pred=model.predict(x_test); 
   mae=SK.metrics.mean_absolute_error(y_test, y_pred); 
-  y_scaled=SK.preprocessing.MinMaxScaler().fit_transform(y_test.to_numpy().reshape(-1,1)); ys_=PD.DataFrame(y_scaled); #normalize ground truth
-  p_scaled=SK.preprocessing.MinMaxScaler().fit_transform(y_pred.reshape(-1,1)); ps_=PD.DataFrame(p_scaled); #normalize predictions
+  y_scaled=SK.preprocessing.MinMaxScaler().fit_transform(y_test.to_numpy().reshape(-1,1)); 
+  ys_=PD.DataFrame(y_scaled); #normalize ground truth
+  p_scaled=SK.preprocessing.MinMaxScaler().fit_transform(y_pred.reshape(-1,1)); 
+  ps_=PD.DataFrame(p_scaled); #normalize predictions
   r2=SK.metrics.r2_score(y_test, y_pred); #nmae=mean_absolute_percentage_error(y_test, y_pred); 
   print(f'eval on test set. R2= {r2:.3f}, MAE= {mae:.3f}'); #eval with train-test split. balanced_accuracy_score, accuracy_score, f1_score, roc_auc_score, mean_absolute_percentage_error
   NP.set_printoptions(precision=2); 
   if '-d.data' in o:
-   print('predictions:'); print(y_pred.flatten()); print('ground truth:'); print(y_test.to_numpy().flatten()); 
-  af= open('log.txt', 'a'); af.write(f"\n\n{f}, {o} --> R2= {r2:.3f}, MAE= {mae:.3f}\n"); af.close();
+   print('predictions:'); 
+   print(y_pred.flatten()); 
+   print('ground truth:'); 
+   print(y_test.to_numpy().flatten()); 
+  af= open('log.txt', 'a'); 
+  af.write(f"\n\n{f}, {o} --> R2= {r2:.3f}, MAE= {mae:.3f}\n"); 
+  af.close();
   
 
 #---visualizations
@@ -1669,16 +1753,17 @@ if '-s.' in o or '-t.' in o: #if the task is supervised run evaluation
 if '-d.viz' in o:
  if '-s.' in o: #supervised scatterplots
   if task=='s' and target=='c': 
-   pca = SK.decomposition.PCA(2); projected = pca.fit_transform(x_test);
+   projected = pca.fit_transform(x_test);
    MP.scatter(projected[:, 0], projected[:, 1], c=y_test, edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('copper_r', nclass))
    MP.xlabel('component 1');  MP.ylabel('component 2');  MP.colorbar();
-   MP.title('2D PCA ground truth test set'); MP.savefig(fname='pca-test-space.png'); MP.show(); MP.clf();
-   pca = SK.decomposition.PCA(2); projected = pca.fit_transform(x_test);
+   MP.title('2D ground truth test set'); MP.savefig(fname='test-space.png'); MP.show(); MP.clf();
+   projected = pca.fit_transform(x_test);
    MP.scatter(projected[:, 0], projected[:, 1], c=y_pred, edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('copper_r', nclass))
    MP.xlabel('component 1');  MP.ylabel('component 2');  MP.colorbar();
-   MP.title('2D PCA predictions on test set'); MP.savefig(fname='pca-testpred-space.png'); MP.show(); MP.clf();
+   MP.title('2D predictions on test set'); MP.savefig(fname='testpred-space.png'); MP.show(); MP.clf();
   if task=='s' and target=='r':
-   MP.scatter(ys_, ps_, alpha=0.8); MP.xlabel('ground truth (norm)');  MP.ylabel('predictions (norm)'); #MP.show(); MP.clf();
+   MP.scatter(ys_, ps_, alpha=0.8); MP.xlabel('ground truth (norm)');  
+   MP.ylabel('predictions (norm)'); #MP.show(); MP.clf();
    MP.scatter(ys_, ys_, alpha=0.2); #MP.legend(handles=['ys_', 'ps_'], title='title', bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='xx-small');
    MP.title('predictions-truth scatterplot'); MP.savefig(fname='target-pred-fit-space.png'); MP.show(); MP.clf();
 
@@ -1687,7 +1772,8 @@ if '-d.viz' in o:
   #print(dy_);print(y_test);print(y_pred);  print(len(dy_));print(len(y_test));print(len(y_pred));
   MP.plot(dy_, y_test, marker='', color='orange', linewidth=2, label='ground truth')
   MP.plot(dy_, y_pred, marker='', color='blue', linestyle='dashed', linewidth=2, label='predictions')
-  MP.title('test set linechart'); MP.legend(); MP.xticks(rotation=45, ha="right"); MP.show(); MP.clf();
+  MP.title('test set linechart'); MP.legend(); 
+  MP.xticks(rotation=45, ha="right"); MP.show(); MP.clf();
 
  if '-x.' in o and 't_' in locals() and target=='c':#wordclouds
   print('terms most associated to each class')
