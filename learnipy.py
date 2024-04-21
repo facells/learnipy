@@ -92,7 +92,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -x.ts=5     *text token sequences. 5=number of features* 
 * -x.cm=5     *text char matrix. 5=number of features*
 * -x.bert     *text multilang BERT. 768 features*
-* -x.mobert   *text multilang mobile BERT 512 features*
+* -x.tinybert *text multilang tiny BERT. 128 features*
 * -x.d=e      *text featurs from custom dictionary.check learnipy/resources*
 * -x.rsz[=32] *image resize. 32=size 32x32, default 16x16 (768 features)*
 * -x.resnet   *image resnet model. 2048 features from pre-trained model*
@@ -145,7 +145,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.6: improved anomaly detection evaluation, added -t., -x.mobert
 * v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng
 * v0.8: added/improved -u.corr and -u.corm, fixed -x.bert, removed w2v and d2v
-* v0.9: added -u.kmpp, -u.sc, -d.f, -d.g, -d.k, -d.b, PaCMAp reduction in -d.viz
+* v0.9: added -u.kmpp, -u.sc, -d.f, -d.g, -d.k, -d.b, -tinybert PaCMAp reduction in -d.viz
 
 ### 6) TO DO LIST
 * -g.mct (markov chains generated text)
@@ -164,8 +164,8 @@ print('---START PROCESS---');
 print('import and install libraries')
 
 import os;
-os.system('pip install -U tensorflow==2.8.0')
-os.system('pip install --upgrade tensorflow-hub')
+#os.system('pip install -U tensorflow==2.8.0')
+#os.system('pip install --upgrade tensorflow-hub')
 
 import warnings; warnings.filterwarnings('ignore'); 
 import datetime as DT;
@@ -806,65 +806,55 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
 
 
 
- if '-x.bert ' in o: #bert uncased multi language (contributor: Cristiano Casadei)
-  batch_size=32; print(f'extracting 768 features with bert multilanguage cased'); 
-  fx=1;
-  os.system('pip install -U tensorflow_text'); 
-  import tensorflow_text as text;
-  text_input=TF.keras.layers.Input(shape=(), dtype=TF.string); 
-  preprocessor=TH.KerasLayer("https://tfhub.dev/tensorflow/bert_multi_cased_preprocess/3")
-  encoder_inputs=preprocessor(text_input);
-  encoder=TH.KerasLayer("https://tfhub.dev/tensorflow/bert_multi_cased_L-12_H-768_A-12/4", trainable=True)
-  outputs=encoder(encoder_inputs); 
-  del(preprocessor); del(encoder);
-  pooled_output = outputs["pooled_output"]     
-  sequence_output = outputs["sequence_output"] 
-  embedding_model = TF.keras.Model(text_input, [pooled_output, encoder_inputs]);
-  df = None
-  for batch in tqdm(range(math.ceil(len(t_) / batch_size))):
-   sentences = TF.constant(t_[batch*batch_size:(batch+1)*batch_size]);
-   bert, enc_inps=embedding_model(sentences);
-   if df is None:
-    df=PD.DataFrame(bert.numpy());
-   else:
-    df = df.append(PD.DataFrame(bert.numpy()));
-  orig_t_ = t_;
-  t_ = df.reset_index(drop=True);
+ if '-x.bert ' in o: #models: https://huggingface.co/models?sort=downloads
+  print(f'extracting features with google-bert/bert-base-multilingual-uncased'); 
+  import torch  
+  from transformers import BertTokenizer,BertModel
+  fx=1; orig_t_ = t_;
+  tokenizer = BertTokenizer.from_pretrained('google-bert/bert-base-multilingual-uncased') 
+  model = BertModel.from_pretrained("google-bert/bert-base-multilingual-uncased")
+  df =NP.array([]);
+  for i in tqdm(range(len(t_))):
+   sentence=t_[i]; 
+   tokens = tokenizer.encode(sentence, padding=True, truncation=True,max_length=50, add_special_tokens=True, return_tensors="pt")
+   output = model(tokens)
+   hiddenstates, features = output[0], output[1]
+   df=NP.append(df,features.detach().numpy());
+  print(''); #format output after tqdm
+  df=NP.reshape(df,(x_.shape[0],features.shape[1]));
+  t_=PD.DataFrame(df)
+  t_ = t_.reset_index(drop=True);
   if '-d.data' in o:
    print('sync dense bert matrix:\n',t_)  
   else:
-   print(f'extracted 768 features');
+   print(f"extracted {features.shape[1]} features");
   print('theory: https://en.wikipedia.org/wiki/BERT_(language_model)');
 
+#add zero shot classification facebook/bart-large-mnli
+#saghar/TinyBERT_L-4_H-312_v2-finetuned-wikitext103
 
- if '-x.mobert ' in o: #bert uncased multi language (contributor: Cristiano Casadei)
-  batch_size=32;
-  print(f'extracting 512 features with mobilebert multilanguage cased');
-  os.system('pip install -U tensorflow_text'); fx=1;
-  import tensorflow_text as text;
-  text_input = TF.keras.layers.Input(shape=(), dtype=TF.string); 
-  preprocessor = TH.KerasLayer("https://tfhub.dev/tensorflow/bert_multi_cased_preprocess/3")
-  encoder_inputs = preprocessor(text_input);
-  encoder = TH.KerasLayer("https://hub.tensorflow.google.cn/tensorflow/mobilebert_multi_cased_L-24_H-128_B-512_A-4_F-4_OPT/1", trainable=True)
-  outputs = encoder(encoder_inputs); 
-  del(preprocessor); del(encoder);
-  pooled_output = outputs["pooled_output"]     
-  sequence_output = outputs["sequence_output"] 
-  embedding_model = TF.keras.Model(text_input, [pooled_output, encoder_inputs]);
-  df = None
-  for batch in tqdm(range(math.ceil(len(t_) / batch_size))):
-   sentences = TF.constant(t_[batch*batch_size:(batch+1)*batch_size]);
-   bert, enc_inps=embedding_model(sentences);
-   if df is None:
-    df=PD.DataFrame(bert.numpy());
-   else:
-    df = df.append(PD.DataFrame(bert.numpy()));
-  orig_t_ = t_;
-  t_ = df.reset_index(drop=True);
+ if '-x.tinybert ' in o: #bert uncased multi language (contributor: Cristiano Casadei)
+  print(f'extracting features with gaunernst/bert-tiny-uncased'); 
+  import torch  
+  from transformers import BertTokenizer,BertModel
+  fx=1; orig_t_ = t_;
+  tokenizer = BertTokenizer.from_pretrained('gaunernst/bert-tiny-uncased') 
+  model = BertModel.from_pretrained("gaunernst/bert-tiny-uncased")
+  df =NP.array([]);
+  for i in tqdm(range(len(t_))):
+   sentence=t_[i]; 
+   tokens = tokenizer.encode(sentence, padding=True, truncation=True,max_length=50, add_special_tokens=True, return_tensors="pt")
+   output = model(tokens)
+   hiddenstates, features = output[0], output[1]
+   df=NP.append(df,features.detach().numpy());
+  print(''); #format output after tqdm
+  df=NP.reshape(df,(x_.shape[0],features.shape[1]));
+  t_=PD.DataFrame(df)
+  t_ = t_.reset_index(drop=True);
   if '-d.data' in o:
-   print('sync dense bert matrix:\n',t_)
+   print('sync dense bert matrix:\n',t_)  
   else:
-   print(f'extracted 512 features');
+   print(f"extracted {features.shape[1]} features");
   print('theory: https://en.wikipedia.org/wiki/BERT_(language_model)');
 
 
@@ -902,19 +892,20 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
   else:
    print(f'extracted {hf} features with {l}');
 
-#---check data shape
-inst=len(x_.index); feat=len(x_.columns); 
-print(f'dataset shape: {inst} instances, {feat} features');
- 
+
 #---data aggregation
 if fx==1: #if feature extraction performed concat x_ and t_, else drop t_
  x_=PD.concat([x_, t_], axis=1);
 else:
  print('no text feature extraction. text column dropped');
  if feat==0: #x_.empty:
-  print('no features. prcess stopped'); inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
+  print('no features. prcess stopped'); inst=len(x_.index); feat=len(x_.columns); 
+  print('---END PROCESS---'); sys.exit();
 
-
+#---check data shape
+inst=len(x_.index); feat=len(x_.columns); 
+print(f'dataset shape: {inst} instances, {feat} features');
+ 
 
 #---class statistics and correlation complexity (only supervised learning)
 if not '-u.' in o:
