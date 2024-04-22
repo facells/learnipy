@@ -573,7 +573,7 @@ if '-d.viz' in o:
  import pacmap;
  pca=pacmap.PaCMAP(n_components=2, n_neighbors=None, MN_ratio=0.5, FP_ratio=2.0); 
  #pca=SK.decomposition.PCA(2);
- print('all scatterplots are 2D PaCMAp-reduced spaces\\ntheory: https://en.wikipedia.org/wiki/Dimensionality_reduction#PaCMAp');
+ print('all scatterplots are 2D PaCMAp-reduced spaces\ntheory: https://en.wikipedia.org/wiki/Dimensionality_reduction#PaCMAp');
 
 #---unsupervised learning on unprocessed data
 
@@ -949,7 +949,8 @@ if '-u.corm' in o: #correlation matrix
  af.close();
  print('theory: https://en.wikipedia.org/wiki/Correlation_coefficient');
  timestamp=DT.datetime.now(); print(f"-u.corm stops other tasks\ntime:{timestamp}"); 
- inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
+ inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); 
+ sys.exit();
 
 if '-u.corr' in o: #correlation list
  #if 'y_' in locals():
@@ -987,15 +988,21 @@ if '-u.corr' in o: #correlation list
 # else:
 #  nw=20;
 # print(f'apply word2vec, extract dictionary of most freq. words from rank {fw} to {nw}\ntheory: https://en.wikipedia.org/wiki/Word2vec');
-# t_=t_.str.split(pat=" "); wmodel=W2V.models.Word2Vec(t_, min_count=2); words=list(wmodel.wv.vocab);  
-# wmodel.wv.save_word2vec_format('w2v.txt', binary=False); wmodel.save('w2v.bin'); #save word2vec dictionary
+# t_=t_.str.split(pat=" "); 
+# wmodel=W2V.models.Word2Vec(t_, min_count=2); words=list(wmodel.wv.vocab);  
+# wmodel.wv.save_word2vec_format('w2v.txt', binary=False); 
+# wmodel.save('w2v.bin'); #save word2vec dictionary
 # X = wmodel[wmodel.wv.index2entity[fw:nw]]; 
-# pca=SK.decomposition.PCA(n_components=2); result=pca.fit_transform(X); MP.scatter(result[:, 0], result[:, 1]); 
+# result=pca.fit_transform(X); MP.scatter(result[:, 0], result[:, 1]); 
 # words_=list(wmodel.wv.index2entity[fw:nw]); #print(words_); # fit a 2d PCA model to the w2v vectors
 # [MP.annotate(word, xy=(result[i, 0], result[i, 1])) for i, word in enumerate(words_)]; 
-# MP.title('w2v 2d space'); MP.savefig(fname='w2v-space'); MP.show(); MP.clf(); #visualize w2v-space and save it
+# MP.title('w2v 2d space'); 
+# MP.savefig(fname='w2v-space'); MP.show(); MP.clf(); #visualize w2v-space and save it
 # print('extracted word2vec dictionary from text. save w2v.txt, w2v.bin and w2v-space.png');
-# timestamp=DT.datetime.now(); print(f"-u.w2v stops other tasks\ntime:{timestamp}"); inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
+# timestamp=DT.datetime.now(); 
+# print(f"-u.w2v stops other tasks\ntime:{timestamp}"); 
+# inst=len(x_.index); feat=len(x_.columns); 
+# print('---END PROCESS---'); sys.exit();
 
 
 if '-u.km=' in o: #kmeans clustering
@@ -1110,10 +1117,10 @@ if '-u.som' in o: #self organising map clustering (contributor: Fabio Celli)
  print(+l_.applymap(str).value_counts(normalize=True));
  if '-d.viz' in o:
   projected=pca.fit_transform(x_.values); 
-  MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(clust.labels_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
-  MP.xlabel('component 1'); MP.ylabel('component 2'); MP.colorbar(); 
-  MP.title('2D data space clusters'); 
-  MP.savefig(fname='2d-cluster-space.png'); MP.show(); MP.clf(); #pca space
+  MP.scatter(projected[:, 0], projected[:, 1], c=PD.DataFrame(col_), edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('brg', nk));
+  MP.xlabel('component 1'); MP.ylabel('component 2'); 
+  MP.colorbar(); MP.title('2D PCA data space som clusters'); 
+  MP.savefig(fname='pca-cluster-space.png'); MP.show(); MP.clf(); #pca space
 
 if '-u.ap' in o: #affinity propagation clustering
  clust = SK.cluster.AffinityPropagation(damping=0.5).fit(x_); 
@@ -1215,7 +1222,7 @@ if '.h4' in f: #apply machine learning saved model
    y2_pred=loadmodel.forecast(steps=100)[0];
   else:
    y2_pred=loadmodel.forecast(steps=100);
-  y2_pred=PD.DataFrame(y2_pred); print(y2_pred)
+  y2_pred=PD.DataFrame(eval(y2_pred)); print(y2_pred)
   n_=PD.concat([y_,y2_pred], axis=0).reset_index(); 
   print('applied saved model on supplied dataset. results:\n'); print(n_);
   af= open(f"{testname}-predictions.csv", 'w'); 
@@ -1253,11 +1260,15 @@ if '.h5' in f: #apply deep learning saved model
  n_=PD.concat([x2_,y2_pred], axis=1); print('applied saved model on supplied test set'); 
  af= open(f"{testname}-predictions.csv", 'w'); af.write(n_.to_csv()); af.close(); 
  print(f"data with predictions saved as {testname}-predictions.csv");
- inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
+ x_=PD.DataFrame(x_); 
+ inst=len(x_.index); feat=len(x_.columns); 
+ print('---END PROCESS---'); sys.exit();
 
 #---stop unsupervised learning
 if task=='u':
- print('no supervised or timeseries algorithms to run'); inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
+ print('no supervised or timeseries algorithms to run'); 
+ inst=len(x_.index); feat=len(x_.columns); 
+ print('---END PROCESS---'); sys.exit();
 
 #---train and test split
 #if '-e.cv=' in o: # cross validation *TO REMOVE*
@@ -1632,11 +1643,11 @@ if '-t.' in o:
  x_test= x_test.set_index(tscol); y_test= y_test.set_index(tscol);  #set date as the instance index
  #print(dir(SM.tsa));
 
-if '-t.arma' in o:
- model=SM.tsa.ARMA(y_train, order=(3, 2, 1)).fit();# fit model
- y_pred=model.predict(len(y_train), len(y_train)+len(y_test)-1)# make prediction
- y_pred=y_pred.to_numpy();
- print(f"using AutoReg Moving Average for time series\ntheory https://en.wikipedia.org/wiki/Autoregressive%E2%80%93moving-average_model")
+#if '-t.arma' in o:
+# model=SM.tsa.ARMA(y_train, order=(3, 2, 1)).fit();# fit model
+# y_pred=model.predict(len(y_train), len(y_train)+len(y_test)-1)# make prediction
+# y_pred=y_pred.to_numpy();
+# print(f"using AutoReg Moving Average for time series\ntheory https://en.wikipedia.org/wiki/Autoregressive%E2%80%93moving-average_model")
 if '-t.arima' in o: 
  model=SM.tsa.ARIMA(y_train, order=(3, 2, 1)).fit();# fit model
  y_pred=model.predict(len(y_train), len(y_train)+len(y_test)-1, typ='levels')# make prediction
@@ -1741,7 +1752,7 @@ if '-s.' in o or '-t.' in o: #if the task is supervised run evaluation
 #---visualizations
 #print("\n");
 if '-d.viz' in o:
- if '-s.' in o: #supervised scatterplots
+ if '-s.' in o and nclass in locals(): #supervised scatterplots
   if task=='s' and target=='c': 
    projected = pca.fit_transform(x_test);
    MP.scatter(projected[:, 0], projected[:, 1], c=y_test, edgecolor='none', alpha=0.8, cmap=MP.cm.get_cmap('copper_r', nclass))
