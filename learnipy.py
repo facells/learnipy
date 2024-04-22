@@ -832,15 +832,15 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
   print('theory: https://en.wikipedia.org/wiki/BERT_(language_model)');
 
 
- if '-x.zsl= ' in o: 
-  r_=re.findall(r'-x.zsl=(.+?) ',o); 
+ if '-x.zsl=' in o: 
+  r_=re.findall(r'-x.zsl=(.+?) ',o); #print(r_)
   print(f'extracting features with zero shot facebook/bart-large-mnli'); 
   import torch; 
   from transformers import pipeline;
   fx=1; orig_t_ = t_;
   classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
-  candidate_labels = r_.split(','); 
-  print("using the following zero-shot labels: {candidate_labels}");
+  candidate_labels = r_[0].split(','); 
+  print(f"using the following zero-shot labels: {candidate_labels}");
   df =f"label,confidence\n";
   for i in tqdm(range(len(t_))):
    sentence=t_[i]; 
