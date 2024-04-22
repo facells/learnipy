@@ -809,6 +809,7 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
 
  if '-x.bert ' in o: #models: https://huggingface.co/models?sort=downloads
   print(f'extracting features with google-bert/bert-base-multilingual-uncased'); 
+  print('theory: https://en.wikipedia.org/wiki/BERT_(language_model)');
   import torch  
   from transformers import BertTokenizer,BertModel
   fx=1; orig_t_ = t_;
@@ -829,16 +830,17 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
    print('sync dense bert matrix:\n',t_)  
   else:
    print(f"extracted {features.shape[1]} features");
-  print('theory: https://en.wikipedia.org/wiki/BERT_(language_model)');
+
 
 
  if '-x.zsl=' in o: 
   r_=re.findall(r'-x.zsl=(.+?) ',o); #print(r_)
-  print(f'extracting features with zero shot facebook/bart-large-mnli'); 
+  print(f'extracting features with zero shot mDeBERTa-v3-base-xnli-multilingual'); 
+  print('theory: https://en.wikipedia.org/wiki/Zero-shot_learning');
   import torch; 
   from transformers import pipeline;
   fx=1; orig_t_ = t_;
-  classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+  classifier = pipeline("zero-shot-classification", model="MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7")
   candidate_labels = r_[0].split(','); 
   print(f"using the following zero-shot labels: {candidate_labels}");
   df =f"label,confidence\n";
@@ -855,7 +857,7 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
   t_ = t_.reset_index(drop=True);
   if '-d.data' in o:
    print('predicted feature matrix:\n',t_)  
-  print('theory: https://en.wikipedia.org/wiki/Zero-shot_learning');
+
 
 
  if '-x.d=' in o: #user defined lexical resources
