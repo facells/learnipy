@@ -982,28 +982,29 @@ if '-u.corr' in o: #correlation list
  inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
 
 #REMOVED v0.8
-if '-u.w2v' in o and 't_' in locals(): #word2vec
- print('using w2v')
- if '-u.w2v=' in o:
-  r_=re.findall(r'-u.w2v=(.+?) ',o); fw=int(r_[0][0]); nw=int(r_[0][1]); fw=fw*10; nw=nw*10;
- else:
-  nw=20;
- print(f'apply word2vec, extract dictionary of most freq. words from rank {fw} to {nw}\ntheory: https://en.wikipedia.org/wiki/Word2vec');
- t_=t_.str.split(pat=" "); 
- wmodel=W2V.models.Word2Vec(t_, min_count=2); words=list(wmodel.wv.vocab);  
- wmodel.wv.save_word2vec_format('w2v.txt', binary=False); 
- wmodel.save('w2v.bin'); #save word2vec dictionary
- X = wmodel[wmodel.wv.index2entity[fw:nw]]; 
- result=pca.fit_transform(X); MP.scatter(result[:, 0], result[:, 1]); 
- words_=list(wmodel.wv.index2entity[fw:nw]); #print(words_); # fit a 2d PCA model to the w2v vectors
- [MP.annotate(word, xy=(result[i, 0], result[i, 1])) for i, word in enumerate(words_)]; 
- MP.title('w2v 2d space'); 
- MP.savefig(fname='w2v-space'); MP.show(); MP.clf(); #visualize w2v-space and save it
- print('extracted word2vec dictionary from text. save w2v.txt, w2v.bin and w2v-space.png');
- timestamp=DT.datetime.now(); 
- print(f"-u.w2v stops other tasks\ntime:{timestamp}"); 
- inst=len(x_.index); feat=len(x_.columns); 
- print('---END PROCESS---'); sys.exit();
+#if '-u.w2v' in o and 't_' in locals(): #word2vec
+# print('using w2v')
+# if '-u.w2v=' in o:
+#  r_=re.findall(r'-u.w2v=(.+?) ',o); fw=int(r_[0][0]); nw=int(r_[0][1]); fw=fw*10; nw=nw*10;
+# else:
+#  nw=20;
+# print(f'apply word2vec, extract dictionary of most freq. words from rank {fw} to {nw}\ntheory: https://en.wikipedia.org/wiki/Word2vec');
+# t_=orig_t_.str.split(pat=" "); 
+# wmodel=W2V.models.Word2Vec(t_, min_count=2); 
+# words=list(wmodel.wv.key_to_index);  
+# wmodel.wv.save_word2vec_format('w2v.txt', binary=False); 
+# wmodel.save('w2v.bin'); #save word2vec dictionary
+# X = wmodel[wmodel.wv.index_to_key[fw:nw]]; 
+# result=pca.fit_transform(X); MP.scatter(result[:, 0], result[:, 1]); 
+# words_=list(wmodel.wv.index_to_key[fw:nw]); #print(words_); # fit a 2d PCA model to the w2v vectors
+# [MP.annotate(word, xy=(result[i, 0], result[i, 1])) for i, word in enumerate(words_)]; 
+# MP.title('w2v 2d space'); 
+# MP.savefig(fname='w2v-space'); MP.show(); MP.clf(); #visualize w2v-space and save it
+# print('extracted word2vec dictionary from text. save w2v.txt, w2v.bin and w2v-space.png');
+# timestamp=DT.datetime.now(); 
+# print(f"-u.w2v stops other tasks\ntime:{timestamp}"); 
+# inst=len(x_.index); feat=len(x_.columns); 
+# print('---END PROCESS---'); sys.exit();
 
 
 if '-u.km=' in o: #kmeans clustering
@@ -1222,8 +1223,9 @@ if '.h4' in f: #apply machine learning saved model
   if '-t.a' in o:
    y2_pred=loadmodel.forecast(steps=100)[0];
   else:
-   y2_pred=loadmodel.forecast(steps=100);
-  y2_pred=PD.DataFrame(y2_pred); print(y2_pred)
+   y2_pred=loadmodel.forecast(steps=100); 
+  #print(y2_pred); print(o)
+  y2_pred=PD.DataFrame(y2_pred); 
   n_=PD.concat([y_,y2_pred], axis=0).reset_index(); 
   print('applied saved model on supplied dataset. results:\n'); print(n_);
   af= open(f"{testname}-predictions.csv", 'w'); 
