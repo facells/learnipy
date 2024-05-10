@@ -202,7 +202,7 @@ timestamp=DT.datetime.now(); print(f"time:{timestamp}");
 o=sys.argv[1]+' ';
 
 if '-h' in o: 
- print(documentation); inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
+ print(documentation); print('---END PROCESS---'); sys.exit();
 
 #import image pretrained models
 if '-x.resnet' in o:
