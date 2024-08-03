@@ -120,7 +120,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -s.lcm      *linear combination models. linear discriminant classif, partial least squares*
 * -s.sgd      *linear modeling with stochastic gradient descent*
 * -s.knn      *k nearest neighbors classification and regression*
-* -s.dt       *decision trees and regression trees*
+* -s.dt[=1]   *decision/regression trees. 1=pruning level*
 * -s.mlp      *multi layer perceptron*
 * -s.svm[=p3] *svm. p=polynomial kernel|r=rbf kernel (default), 3=kernel degrees*
 * -s.rf       *ensemble learning, random forest*
@@ -1199,6 +1199,7 @@ if sparse>=0.9:
  sparseness=1; sparsemsg='WARNING: high data sparseness, better to apply feature reduction. ';
 print(f"sparseness= {sparse:.3f}");
 
+#print(f"columns= {x_.columns}");
 
 x_.columns = range(x_.shape[1]); #make columns unique 
 
@@ -1477,16 +1478,23 @@ if '-s.ada' in o and target=='c':
  y_pred=model.predict(x_test); 
  print('apply adaboost classification\ntheory: https://en.wikipedia.org/wiki/AdaBoost');
 
-if '-s.dt' in o and target=='c':
- model=SK.tree.DecisionTreeClassifier();
- model.fit(x_train, y_train); 
- y_pred=model.predict(x_test); 
- print('apply decision trees classification\ntheory https://en.wikipedia.org/wiki/Decision_tree_learning'); 
-if '-s.dt' in o and target=='r':
- model=SK.tree.DecisionTreeRegressor();
- model.fit(x_train, y_train); 
- y_pred=model.predict(x_test); 
- print('apply decision trees regression\ntheory https://en.wikipedia.org/wiki/Decision_tree_learning'); 
+if '-s.dt' in o:
+ if '-s.dt=' in o: 
+  r_=re.findall(r'-s.dt=(.) ',o); 
+  if int(r_[0])>0:
+   prune=(int(r_[0])/100);
+  else: 
+   prune=0;
+ if target=='c':
+  model=SK.tree.DecisionTreeClassifier(ccp_alpha=prune);
+  model.fit(x_train, y_train); 
+  y_pred=model.predict(x_test); 
+  print('apply decision trees classification\ntheory https://en.wikipedia.org/wiki/Decision_tree_learning'); 
+ if target=='r':
+  model=SK.tree.DecisionTreeRegressor(ccp_alpha=prune);
+  model.fit(x_train, y_train); 
+  y_pred=model.predict(x_test); 
+  print('apply decision trees regression\ntheory https://en.wikipedia.org/wiki/Decision_tree_learning'); 
 
 if '-s.xgb' in o and target=='c':
  import xgboost; model=xgboost.XGBClassifier();
