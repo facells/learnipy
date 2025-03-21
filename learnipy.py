@@ -176,7 +176,7 @@ import zipfile as ZF;
 import sklearn as SK; from sklearn import *; 
 from skimage.io import imread; from skimage.transform import resize;
 import matplotlib.pyplot as MP; MP.rcParams["figure.figsize"]=(5,4);
-import gensim as W2V; from gensim.models.doc2vec import Doc2Vec, TaggedDocument;
+#import gensim as W2V; from gensim.models.doc2vec import Doc2Vec, TaggedDocument;
 import nltk; from nltk.tokenize import word_tokenize; nltk.download('punkt', quiet=True);
 import sys; 
 import re;
