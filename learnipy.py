@@ -73,8 +73,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -d.save     *save model as .h4 (machine learning) or .h5 (deep learning) file*
 * -d.pred     *use model to make predictions on new data*
 * -d.export=f *export processed data in csv. f=filename.csv*
-#### data generation
-* -g.d=132    *generate data. 1=instances x1000, 3=features x10, 2=informative features x10*
+#### process mining
+* -m.pnam     *petri net from alpha miner algorithm*
+* -m.hnas     *heuristic net from A-star pathfinding algorithm*
+* -m.bpmnim   *bpmn from inductive miner algorithm*
 #### preprocessing
 * -p.ir       *instance position randomization*
 * -p.cn       *class normalize. turn numeric class to range 0-1*
@@ -146,12 +148,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng
 * v0.8: added -u.corr and -u.corm, , -d.f, -d.g, -d.k, -d.b, removed w2v and d2v
 * v0.9: added -x.zsl, -u.kmpp, -u.sc, improved -d.viz, removed -x.mobert
+* v0.10: fixed -s.dt, added process mining, dropped generate data
 
 ### 6) TO DO LIST
-* -g.mct (markov chains generated text)
-* -g.gpt (gpt generated from text)
 * add agent based models
-* add process mining
+* explainable AI
 * add network analysis
 * add forecasting with sktime
 * improve test set input
@@ -575,7 +576,33 @@ if '-d.viz' in o:
  #pca=SK.decomposition.PCA(2);
  print('all scatterplots are 2D PaCMAp-reduced spaces\ntheory: https://en.wikipedia.org/wiki/Dimensionality_reduction#PaCMAp');
 
-#---unsupervised learning on unprocessed data
+#---unpreprocessed data ready
+
+
+if '-m.pnam' in o: # *petri net from alpha miner algorithm*
+ print('Extract Petri Net with Alpha Miner https://en.wikipedia.org/wiki/Petri_net \nProcess mining data must contain only 3 columns: timestamp,activity,caseid.\ntheory: https://en.wikipedia.org/wiki/Process_mining');
+ os.system('pip install -U -q pm4py')
+ import pm4py
+ import pandas as pd
+ from pm4py.objects.conversion.log import converter as log_converter
+ from pm4py.objects.log.util import dataframe_utils
+ df = df.rename(columns={'timestamp': 'time:timestamp', 'activity': 'concept:name', 'caseid': 'case:concept:name'}) # Rename columns to match PM4Py's expected names
+ df['time:timestamp'] = pd.to_datetime(df['time:timestamp']) # Ensure the timestamp column is in datetime format
+ df = df.sort_values('time:timestamp') # Sort the DataFrame by timestamp
+ log = log_converter.apply(df)
+ net, im, fm = pm4py.discover_petri_net_alpha(log, activity_key='concept:name', case_id_key='case:concept:name', timestamp_key='time:timestamp'); 
+ pm4py.view_petri_net(net, im, fm, rankdir='TB'); 
+ conform = pm4py.conformance.conformance_diagnostics_alignments(log, net, im, fm, activity_key='concept:name', case_id_key='case:concept:name', timestamp_key='time:timestamp');
+ for i in conform:
+  rf=rf+i['fitness']
+ rf=round(rf/len(conform),3)
+ print(f"replay fitness: {rf}")
+ print('---END PROCESS---'); sys.exit();
+
+
+
+#* -m.hnas     *heuristic net from A-star pathfinding algorithm* https://en.wikipedia.org/wiki/A*_search_algorithm
+#* -m.bpmnim   *bpmn from inductive miner algorithm*
 
 if '-u.arl' in o: #association rule mining
  xn_=x_.to_numpy(); xn_=xn_.flatten(); xn_=NP.array(xn_, dtype=str)
