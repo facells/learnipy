@@ -580,19 +580,76 @@ if '-d.viz' in o:
 
 
 if '-m.pnam' in o: # *petri net from alpha miner algorithm*
+ k=10
+ if '-m.pnam=' in o:
+  r_=re.findall(r'-m.pnam=(.+?) ', o); k=int(r_[0]);
  print('Extract Petri Net with Alpha Miner https://en.wikipedia.org/wiki/Petri_net \nProcess mining data must contain only 3 columns: timestamp,activity,caseid.\ntheory: https://en.wikipedia.org/wiki/Process_mining');
  os.system('pip install -U -q pm4py')
  import pm4py
  import pandas as pd
  from pm4py.objects.conversion.log import converter as log_converter
  from pm4py.objects.log.util import dataframe_utils
- df = df.rename(columns={'timestamp': 'time:timestamp', 'activity': 'concept:name', 'caseid': 'case:concept:name'}) # Rename columns to match PM4Py's expected names
- df['time:timestamp'] = pd.to_datetime(df['time:timestamp']) # Ensure the timestamp column is in datetime format
- df = df.sort_values('time:timestamp') # Sort the DataFrame by timestamp
- log = log_converter.apply(df)
+ x_ = x_.rename(columns={'timestamp': 'time:timestamp', 'activity': 'concept:name', 'caseid': 'case:concept:name'}) # Rename columns to match PM4Py's expected names
+ x_['time:timestamp'] = PD.to_datetime(x_['time:timestamp']) # Ensure the timestamp column is in datetime format
+ x_ = x_.sort_values('time:timestamp') # Sort the DataFrame by timestamp
+ log = log_converter.apply(x_)
+ #filter_variants_by_coverage_percentage
+ log=pm4py.filter_variants_top_k(log, k, activity_key='concept:name', timestamp_key='time:timestamp',  case_id_key='case:concept:name'); #print(f"log={log}")
  net, im, fm = pm4py.discover_petri_net_alpha(log, activity_key='concept:name', case_id_key='case:concept:name', timestamp_key='time:timestamp'); 
  pm4py.view_petri_net(net, im, fm, rankdir='TB'); 
  conform = pm4py.conformance.conformance_diagnostics_alignments(log, net, im, fm, activity_key='concept:name', case_id_key='case:concept:name', timestamp_key='time:timestamp');
+ rf=0
+ for i in conform:
+  rf=rf+i['fitness']
+ rf=round(rf/len(conform),3)
+ print(f"replay fitness: {rf}")
+ print('---END PROCESS---'); sys.exit();
+
+if '-m.hnas' in o: # heuristic miner
+ k=10
+ if '-m.hnas=' in o:
+  r_=re.findall(r'-m.hnas=(.+?) ', o); k=int(r_[0]);
+ print('Extract Heuristic net from A* pathfinding algorithm https://en.wikipedia.org/wiki/A*_search_algorithm \nProcess mining data must contain only 3 columns: timestamp,activity,caseid.\ntheory: https://en.wikipedia.org/wiki/Process_mining');
+ os.system('pip install -U -q pm4py')
+ import pm4py
+ import pandas as pd
+ from pm4py.objects.conversion.log import converter as log_converter
+ from pm4py.objects.log.util import dataframe_utils
+ x_ = x_.rename(columns={'timestamp': 'time:timestamp', 'activity': 'concept:name', 'caseid': 'case:concept:name'}) # Rename columns to match PM4Py's expected names
+ x_['time:timestamp'] = PD.to_datetime(x_['time:timestamp']) # Ensure the timestamp column is in datetime format
+ x_ = x_.sort_values('time:timestamp') # Sort the DataFrame by timestamp
+ log = log_converter.apply(x_)
+ #filter_variants_by_coverage_percentage
+ log=pm4py.filter_variants_top_k(log, k, activity_key='concept:name', timestamp_key='time:timestamp',  case_id_key='case:concept:name'); #print(f"log={log}")
+ net = pm4py.discover_heuristics_net(log, activity_key='concept:name', case_id_key='case:concept:name', timestamp_key='time:timestamp'); 
+ pm4py.view_heuristics_net(net)
+ conform = pm4py.conformance.conformance_diagnostics_alignments(log, net, activity_key='concept:name', case_id_key='case:concept:name', timestamp_key='time:timestamp');
+ rf=0
+ for i in conform:
+  rf=rf+i['fitness']
+ rf=round(rf/len(conform),3)
+ print(f"replay fitness: {rf}")
+ print('---END PROCESS---'); sys.exit();
+
+if '-m.bpmnim' in o: # bpmn inductive miner
+ k=10
+ if '-m.bpmnim=' in o:
+  r_=re.findall(r'-m.bpmnim=(.+?) ', o); k=int(r_[0]);
+ print('Extract BPMN using inductive miner algorithm https://en.wikipedia.org/wiki/Business_Process_Model_and_Notation \nProcess mining data must contain only 3 columns: timestamp,activity,caseid.\ntheory: https://en.wikipedia.org/wiki/Process_mining');
+ os.system('pip install -U -q pm4py')
+ import pm4py
+ import pandas as pd
+ from pm4py.objects.conversion.log import converter as log_converter
+ from pm4py.objects.log.util import dataframe_utils
+ x_ = x_.rename(columns={'timestamp': 'time:timestamp', 'activity': 'concept:name', 'caseid': 'case:concept:name'}) # Rename columns to match PM4Py's expected names
+ x_['time:timestamp'] = PD.to_datetime(x_['time:timestamp']) # Ensure the timestamp column is in datetime format
+ x_ = x_.sort_values('time:timestamp') # Sort the DataFrame by timestamp
+ log = log_converter.apply(x_)
+ log=pm4py.filter_variants_top_k(log, k, activity_key='concept:name', timestamp_key='time:timestamp',  case_id_key='case:concept:name'); #print(f"log={log}")
+ net = pm4py.discover_bpmn_inductive(log); 
+ pm4py.view_bpmn(net, rankdir='TB')
+ conform = pm4py.conformance.conformance_diagnostics_alignments(log, net, activity_key='concept:name', case_id_key='case:concept:name', timestamp_key='time:timestamp');
+ rf=0
  for i in conform:
   rf=rf+i['fitness']
  rf=round(rf/len(conform),3)
@@ -600,9 +657,6 @@ if '-m.pnam' in o: # *petri net from alpha miner algorithm*
  print('---END PROCESS---'); sys.exit();
 
 
-
-#* -m.hnas     *heuristic net from A-star pathfinding algorithm* https://en.wikipedia.org/wiki/A*_search_algorithm
-#* -m.bpmnim   *bpmn from inductive miner algorithm*
 
 if '-u.arl' in o: #association rule mining
  xn_=x_.to_numpy(); xn_=xn_.flatten(); xn_=NP.array(xn_, dtype=str)
