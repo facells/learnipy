@@ -74,9 +74,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -d.pred     *use model to make predictions on new data*
 * -d.export=f *export processed data in csv. f=filename.csv*
 #### process mining
-* -m.pnam     *petri net from alpha miner algorithm*
-* -m.hnas     *heuristic net from A-star pathfinding algorithm*
-* -m.bpmnim   *bpmn from inductive miner algorithm*
+* -m.pnam[=k] *petri net from alpha miner algorithm. k=20 filter top 20 variants*
+* -m.hnas[=k] *heuristic net from A-star pathfinding algorithm. k=20 filter top 20 variants*
+* -m.bpmn[=k] *bpmn from inductive miner algorithm. k=20 filter top 20 variants*
 #### preprocessing
 * -p.ir       *instance position randomization*
 * -p.cn       *class normalize. turn numeric class to range 0-1*
@@ -631,10 +631,10 @@ if '-m.hnas' in o: # heuristic miner
  print(f"replay fitness: {rf}")
  print('---END PROCESS---'); sys.exit();
 
-if '-m.bpmnim' in o: # bpmn inductive miner
+if '-m.bpmn' in o: # bpmn inductive miner
  k=10
- if '-m.bpmnim=' in o:
-  r_=re.findall(r'-m.bpmnim=(.+?) ', o); k=int(r_[0]);
+ if '-m.bpmn=' in o:
+  r_=re.findall(r'-m.bpmn=(.+?) ', o); k=int(r_[0]);
  print('Extract BPMN using inductive miner algorithm https://en.wikipedia.org/wiki/Business_Process_Model_and_Notation \nProcess mining data must contain only 3 columns: timestamp,activity,caseid.\ntheory: https://en.wikipedia.org/wiki/Process_mining');
  os.system('pip install -U -q pm4py')
  import pm4py
