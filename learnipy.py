@@ -1479,12 +1479,12 @@ if '-s.ada' in o and target=='c':
  print('apply adaboost classification\ntheory: https://en.wikipedia.org/wiki/AdaBoost');
 
 if '-s.dt' in o:
+ prune=0
  if '-s.dt=' in o: 
   r_=re.findall(r'-s.dt=(.) ',o); 
   if int(r_[0])>0:
    prune=(int(r_[0])/100);
-  else: 
-   prune=0;
+
  if target=='c':
   model=SK.tree.DecisionTreeClassifier(ccp_alpha=prune);
   model.fit(x_train, y_train); 
