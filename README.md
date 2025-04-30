@@ -1,7 +1,7 @@
 
 # LEARNIPY
-* version 0.9
-* making machine learning easy for everyone
+* version 0.10
+* making data science easier
 * written with ♥ by Fabio Celli, 
 * email: fabio.celli.phd@gmail.com
 * twitter: @facells
