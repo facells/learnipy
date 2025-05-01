@@ -130,7 +130,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -s.xgb      *ensemble learning, xgboost*
 * -s.nn=f     *neural nets. f=feedfwd|i=imbalance|r=rnn|l=lstm|b=bilstm|g=gru|c=cnn*
 #### time series forecasting
-* -t.arma     *auto regression moving average*
 * -t.arima    *auto regression integrated moving average*
 * -t.sarima   *seasonal auto regression integrated moving average*
 * -t.hwes     *Holt-Winters exponential smoothing*
