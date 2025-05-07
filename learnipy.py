@@ -93,7 +93,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -x.tm=5     *text token matrix. 5=number of features*
 * -x.ts=5     *text token sequences. 5=number of features* 
 * -x.cm=5     *text char matrix. 5=number of features*
-* -x.bert     *text multilang BERT. 768 features*
+* -x.trans=b  *text transformers. bm=BERT|bl=BERTlarge|bix=BERTitalian|r=RoBERTa. 768 features*
 * -x.zsl=l,l  *text zero shot LLM label prediction. l,l=labels comma separated*
 * -x.d=e      *text featurs from custom dictionary.check learnipy/resources*
 * -x.rsz[=32] *image resize. 32=size 32x32, default 16x16 (768 features)*
@@ -887,14 +887,32 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
 
 
 
- if '-x.bert ' in o: #models: https://huggingface.co/models?sort=downloads
-  print(f'extracting features with google-bert/bert-base-multilingual-uncased'); 
-  print('theory: https://en.wikipedia.org/wiki/BERT_(language_model)');
+ if '-x.bert ' or '-x.trans=' in o: #models: https://huggingface.co/models?sort=downloads
+  print(f'extracting features with transformer models'); 
+  print('theory: https://en.wikipedia.org/wiki/Transformer_(deep_learning_architecture)');
   import torch  
-  from transformers import BertTokenizer,BertModel
   fx=1; orig_t_ = t_;
-  tokenizer = BertTokenizer.from_pretrained('google-bert/bert-base-multilingual-uncased') 
-  model = BertModel.from_pretrained("google-bert/bert-base-multilingual-uncased")
+  if '-x.trans=bl' in o:
+   print(f'using BERT large uncased for English');
+   from transformers import BertTokenizer,BertModel  
+   tokenizer = BertTokenizer.from_pretrained('bert-large-uncased')
+   model = BertModel.from_pretrained("bert-large-uncased")
+  elif '-x.trans=bix' in o:
+   print(f'using BERT Italian xxl');
+   from transformers import AutoModel, AutoTokenizer
+   tokenizer = AutoTokenizer.from_pretrained('dbmdz/bert-base-italian-xxl-cased')
+   model = AutoModel.from_pretrained('dbmdz/bert-base-italian-xxl-cased')
+  elif '-x.trans=r' in o:
+   print(f'using RoBERTa base');
+   from transformers import RobertaTokenizer, TFRobertaModel
+   tokenizer = RobertaTokenizer.from_pretrained('roberta-base')
+   model = TFRobertaModel.from_pretrained('roberta-base')
+  else:
+   print(f'using BERT multilanguage uncased');
+   from transformers import BertTokenizer,BertModel
+   tokenizer = BertTokenizer.from_pretrained('google-bert/bert-base-multilingual-uncased') 
+   model = BertModel.from_pretrained("google-bert/bert-base-multilingual-uncased")
+
   df =NP.array([]);
   for i in tqdm(range(len(t_))):
    sentence=t_[i]; 
