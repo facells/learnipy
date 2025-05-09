@@ -887,7 +887,7 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
 
 
 
- if '-x.bert ' or '-x.trans=' in o: #models: https://huggingface.co/models?sort=downloads
+ if '-x.trans=' in o: #models: https://huggingface.co/models?sort=downloads
   print(f'extracting features with transformer models'); 
   print('theory: https://en.wikipedia.org/wiki/Transformer_(deep_learning_architecture)');
   import torch  
@@ -907,7 +907,7 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
    from transformers import RobertaTokenizer, TFRobertaModel
    tokenizer = RobertaTokenizer.from_pretrained('roberta-base')
    model = TFRobertaModel.from_pretrained('roberta-base')
-  else:
+  elif '-x.trans=bm' in o:
    print(f'using BERT multilanguage uncased');
    from transformers import BertTokenizer,BertModel
    tokenizer = BertTokenizer.from_pretrained('google-bert/bert-base-multilingual-uncased') 
