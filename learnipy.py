@@ -1652,7 +1652,7 @@ if '-s.nn' in o:
  else:
   activ='selu'
 
- print(f"layer cofig: actv={activ}, nodes={nu}"); 
+ print(f"layer cofig: num={nl}, actv={activ}, nodes={nu}"); 
  print(f"network config: optimizer={opt}, out_actv={outactiv}");
  print(f"validator config: loss={los}, metric={metric},");
  #optimizers: adam(robust) sgd(fast) rmsprop(variable) adadelta(for sparse data)
