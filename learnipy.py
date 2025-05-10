@@ -147,7 +147,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng
 * v0.8: added -u.corr and -u.corm, , -d.f, -d.g, -d.k, -d.b, removed w2v and d2v
 * v0.9: added -x.zsl, -u.kmpp, -u.sc, improved -d.viz, removed -x.mobert
-* v0.10: fixed -s.dt, added process mining, dropped generate data
+* v0.10: fixed -s.dt, added process mining, transformers. removed generate data, shuffle on -e.tts
 
 ### 6) TO DO LIST
 * add agent based models
@@ -1391,12 +1391,15 @@ if 'split' in locals(): #if split percentage is defined, then split train and te
   tscol='date';
   x_train, x_test, y_train, y_test=SK.model_selection.train_test_split(x_, y_, test_size=split, shuffle=False) # prepare train test eval 
  else:
-  x_train, x_test, y_train, y_test=SK.model_selection.train_test_split(x_, y_, test_size=split, shuffle=True, random_state=1) # prepare train test eval 
+  x_train, x_test, y_train, y_test=SK.model_selection.train_test_split(x_, y_, test_size=split, shuffle=False, random_state=1) # prepare train test eval 
  xtrain_inst=len(x_train.index); feat=len(x_train.columns); 
  print(f'training set shape: {xtrain_inst} instances, {feat} features');
  xtest_inst=len(x_test.index); feat=len(x_test.columns); 
  print(f'test set shape: {xtest_inst} instances, {feat} features');
  x_test2=x_test; #create a copy of x_test for evaluation in case of shape change
+ print(f"class freq in training"); print(y_train.value_counts());
+ print(f"class freq in test"); print(y_test.value_counts());
+
 
 if '-d.data' in o:
  if '-t.' in o: #in case of timeseries
