@@ -789,7 +789,7 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
   r_=re.findall(r'-x.tm=(.+?) ', o); wu=int(r_[0]); fx=1;
   t=TF.keras.preprocessing.text.Tokenizer(num_words=wu, lower=True, oov_token=wu)
   t.fit_on_texts(t_); seq=t.texts_to_sequences(t_); 
-  wv_=t.sequences_to_matrix(seq, mode='freq');  t_=PD.DataFrame(wv_);
+  wv_=t.sequences_to_matrix(seq);  t_=PD.DataFrame(wv_);
   print('word indexes:\n',t.index_word);
   if '-d.data' in o:
    print('token freq matrix:\n',t_);
@@ -801,7 +801,7 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
   r_=re.findall(r'-x.cm=(.+?) ', o); wu=int(r_[0]); fx=1;
   t=TF.keras.preprocessing.text.Tokenizer(num_words=wu, char_level=True, oov_token=wu)
   t.fit_on_texts(t_); seq=t.texts_to_sequences(t_); 
-  wv_=t.sequences_to_matrix(seq, mode='freq');  
+  wv_=t.sequences_to_matrix(seq);  
   t_=PD.DataFrame(wv_);
   print('word indexes:\n',t.index_word);
   if '-d.data' in o:
