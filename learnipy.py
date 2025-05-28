@@ -93,7 +93,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -x.tm=5     *text token matrix. 5=number of features*
 * -x.ts=5     *text token sequences. 5=number of features* 
 * -x.cm=5     *text char matrix. 5=number of features*
-* -x.trans=b  *text transformers. bm=BERT|bl=BERTlarge|bix=BERTitalian|r=RoBERTa. 768 features*
+* -x.trans=b  *text transformers. b=BERT|bl=BERTlarge|bix=BERTitalian|r=RoBERTa. 768 features*
 * -x.zsl=l,l  *text zero shot LLM label prediction. l,l=labels comma separated*
 * -x.d=e      *text featurs from custom dictionary.check learnipy/resources*
 * -x.rsz[=32] *image resize. 32=size 32x32, default 16x16 (768 features)*
@@ -128,7 +128,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -s.rf       *ensemble learning, random forest*
 * -s.ada      *ensemble learning, adaboost based on samme.r algorithm*
 * -s.xgb      *ensemble learning, xgboost*
-* -s.nn=f     *neural nets. f=feedfwd|i=imbalance|r=rnn|l=lstm|b=bilstm|g=gru|c=cnn*
+* -s.nn=f     *neural nets. f=feedfwd|i=imbalance|o=output|r=rnn|l=lstm|b=bilstm|g=gru|c=cnn*
 #### time series forecasting
 * -t.arima    *auto regression integrated moving average*
 * -t.sarima   *seasonal auto regression integrated moving average*
@@ -152,6 +152,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 ### 6) TO DO LIST
 * add agent based models
 * explainable AI
+* genetic algorithms
 * add network analysis
 * add forecasting with sktime
 * improve test set input
@@ -887,7 +888,7 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
 
 
 
- if '-x.trans=' in o: #models: https://huggingface.co/models?sort=downloads
+ if '-x.trans' in o: #models: https://huggingface.co/models?sort=downloads
   print(f'extracting features with transformer models'); 
   print('theory: https://en.wikipedia.org/wiki/Transformer_(deep_learning_architecture)');
   import torch  
@@ -896,28 +897,27 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
    print(f'using BERT large uncased for English');
    from transformers import BertTokenizer,BertModel  
    tokenizer = BertTokenizer.from_pretrained('bert-large-uncased')
-   model = BertModel.from_pretrained("bert-large-uncased")
+   transmodel = BertModel.from_pretrained("bert-large-uncased")
   elif '-x.trans=bix' in o:
    print(f'using BERT Italian xxl');
    from transformers import AutoModel, AutoTokenizer
    tokenizer = AutoTokenizer.from_pretrained('dbmdz/bert-base-italian-xxl-cased')
-   model = AutoModel.from_pretrained('dbmdz/bert-base-italian-xxl-cased')
+   transmodel = AutoModel.from_pretrained('dbmdz/bert-base-italian-xxl-cased')
   elif '-x.trans=r' in o:
    print(f'using RoBERTa base');
    from transformers import RobertaTokenizer, TFRobertaModel
    tokenizer = RobertaTokenizer.from_pretrained('roberta-base')
-   model = TFRobertaModel.from_pretrained('roberta-base')
-  elif '-x.trans=bm' in o:
+   transmodel = TFRobertaModel.from_pretrained('roberta-base')
+  else:
    print(f'using BERT multilanguage uncased');
    from transformers import BertTokenizer,BertModel
    tokenizer = BertTokenizer.from_pretrained('google-bert/bert-base-multilingual-uncased') 
-   model = BertModel.from_pretrained("google-bert/bert-base-multilingual-uncased")
-
+   transmodel = BertModel.from_pretrained("google-bert/bert-base-multilingual-uncased")
   df =NP.array([]);
   for i in tqdm(range(len(t_))):
    sentence=t_[i]; 
    tokens = tokenizer.encode(sentence, padding=True, truncation=True,max_length=50, add_special_tokens=True, return_tensors="pt")
-   output = model(tokens)
+   output = transmodel(tokens)
    hiddenstates, features = output[0], output[1]
    df=NP.append(df,features.detach().numpy());
   print(''); #format output after tqdm
@@ -1663,6 +1663,9 @@ if '-s.nn' in o:
  #losses: hinge kld cosine_similarity mse msle huber binary_crossentropy sparse_categorical_crossentropy
  #metrics: mape mae accuracy top_k_categorical_accuracy categorical_accuracy
 
+ if '-s.nn=o' in o: #feedforward
+  model=TF.keras.Sequential();
+  model.add(TF.keras.layers.Dense(nclass, activation=outactiv)); #output nodes are=nclass
  if '-s.nn=f' in o: #feedforward
   model=TF.keras.Sequential();
   model.add(TF.keras.layers.Dense(feat, activation=activ)); #initial nodes are=num features
