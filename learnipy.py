@@ -788,7 +788,7 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
  if '-x.tm=' in o: #one hot token matrix
   orig_t_ = t_; #keep text for wordcloud
   r_=re.findall(r'-x.tm=(.+?) ', o); wu=int(r_[0]); fx=1;
-  t=TF.keras.preprocessing.text.Tokenizer(num_words=wu, lower=True, oov_token=wu)
+  t=TF.keras.preprocessing.text.Tokenizer(num_words=wu, lower=False, oov_token=wu)
   t.fit_on_texts(t_); seq=t.texts_to_sequences(t_); 
   wv_=t.sequences_to_matrix(seq);  t_=PD.DataFrame(wv_);
   print('word indexes:\n',t.index_word);
