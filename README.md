@@ -1,6 +1,5 @@
-
 # LEARNIPY
-* version 0.10
+* version 0.11
 * making data science easier
 * written with ♥ by Fabio Celli, 
 * email: fabio.celli.phd@gmail.com
@@ -83,8 +82,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -p.fn       *feature normalize range 0-1 (applied by default with some nn, sgd and nb)*
 * -p.tl       *text to lowercase*
 * -p.tc       *text cleaning. removes non alphanum char and multiple spaces*
-* -p.trs      *text regex stopwords. removes words from length 1 to length 3*
-* -p.tsw=a,b  *text stopwords. removes stopwords, a,b=stopwords list, no spaces allowed.*
+* -p.trs      *text regex strip. removes words from length 1 to length 3*
+* -p.tsw=a,b  *text stop words. removes stopwords, a,b=stopwords list, no spaces allowed.*
+* -p.lda=5    *keeps only topical words using latent dirichlet allocation. 5=words per topic*
 #### feature reduction
 * -r.svd=5    *turn sparse label matrix to dense and sync. 5=number of features*
 * -r.lsa=5    *turn sparse word/char matrix to dense and sync. 5=number of features*
@@ -93,7 +93,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -x.tm=5     *text token matrix. 5=number of features*
 * -x.ts=5     *text token sequences. 5=number of features* 
 * -x.cm=5     *text char matrix. 5=number of features*
-* -x.bert     *text multilang BERT. 768 features*
+* -x.trans=b  *text transformers. b=BERT|bl=BERTlarge|bix=BERTitalian|r=RoBERTa. 768 features*
 * -x.zsl=l,l  *text zero shot LLM label prediction. l,l=labels comma separated*
 * -x.d=e      *text featurs from custom dictionary.check learnipy/resources*
 * -x.rsz[=32] *image resize. 32=size 32x32, default 16x16 (768 features)*
@@ -109,6 +109,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -u.ap       *affinity propagation exemplar clustering.add 1 column.*
 * -u.som      *self organising map, neural network clustering. add 1 column.*
 * -u.arl      *association rule learning with apriori.*
+* -u.dcs      *document cosine similarity anlysis with word embeddings*
 * -u.corr=s|p *correlation rankings. s=spearman (monotone+linear), p=pearson (linear)*
 * -u.corm=s|p *correlation matrix. s=spearman (monotone+linear), p=pearson (linear)*
 #### outlier detection
@@ -128,9 +129,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -s.rf       *ensemble learning, random forest*
 * -s.ada      *ensemble learning, adaboost based on samme.r algorithm*
 * -s.xgb      *ensemble learning, xgboost*
-* -s.nn=f     *neural nets. f=feedfwd|i=imbalance|r=rnn|l=lstm|b=bilstm|g=gru|c=cnn*
+* -s.nn=f     *neural nets. f=feedfwd|i=imbalance|o=output|r=rnn|l=lstm|b=bilstm|g=gru|c=cnn*
 #### time series forecasting
-* -t.arma     *auto regression moving average*
 * -t.arima    *auto regression integrated moving average*
 * -t.sarima   *seasonal auto regression integrated moving average*
 * -t.hwes     *Holt-Winters exponential smoothing*
@@ -148,14 +148,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.7: added -x.effnet, -x.resnet, -x.vgg, -x.rsz, improved -u.corr, -x.ng
 * v0.8: added -u.corr and -u.corm, , -d.f, -d.g, -d.k, -d.b, removed w2v and d2v
 * v0.9: added -x.zsl, -u.kmpp, -u.sc, improved -d.viz, removed -x.mobert
-* v0.10: fixed -s.dt, added process mining, dropped generate data
+* v0.10: fixed -s.dt, added process mining, transformers. removed generate data, shuffle on -e.tts
+* v0.11: fixed -p.trs, added -p.lda, -u.dcs
 
 ### 6) TO DO LIST
 * add agent based models
 * explainable AI
+* genetic algorithms
 * add network analysis
 * add forecasting with sktime
 * improve test set input
-
-
-
