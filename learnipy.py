@@ -1,6 +1,6 @@
 documentation='''
 # LEARNIPY
-* version 0.10
+* version 0.11
 * making data science easier
 * written with ♥ by Fabio Celli, 
 * email: fabio.celli.phd@gmail.com
@@ -83,8 +83,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -p.fn       *feature normalize range 0-1 (applied by default with some nn, sgd and nb)*
 * -p.tl       *text to lowercase*
 * -p.tc       *text cleaning. removes non alphanum char and multiple spaces*
-* -p.trs      *text regex stopwords. removes words from length 1 to length 3*
-* -p.tsw=a,b  *text stopwords. removes stopwords, a,b=stopwords list, no spaces allowed.*
+* -p.trs      *text regex strip. removes words from length 1 to length 3*
+* -p.tsw=a,b  *text stop words. removes stopwords, a,b=stopwords list, no spaces allowed.*
+* -p.lda=5    *keeps only topical words using latent dirichlet allocation. 5=words per topic*
 #### feature reduction
 * -r.svd=5    *turn sparse label matrix to dense and sync. 5=number of features*
 * -r.lsa=5    *turn sparse word/char matrix to dense and sync. 5=number of features*
@@ -109,6 +110,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -u.ap       *affinity propagation exemplar clustering.add 1 column.*
 * -u.som      *self organising map, neural network clustering. add 1 column.*
 * -u.arl      *association rule learning with apriori.*
+* -u.dcs      *document cosine similarity anlysis with word embeddings*
 * -u.corr=s|p *correlation rankings. s=spearman (monotone+linear), p=pearson (linear)*
 * -u.corm=s|p *correlation matrix. s=spearman (monotone+linear), p=pearson (linear)*
 #### outlier detection
@@ -148,6 +150,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.8: added -u.corr and -u.corm, , -d.f, -d.g, -d.k, -d.b, removed w2v and d2v
 * v0.9: added -x.zsl, -u.kmpp, -u.sc, improved -d.viz, removed -x.mobert
 * v0.10: fixed -s.dt, added process mining, transformers. removed generate data, shuffle on -e.tts
+* v0.11: fixed -p.trs, added -p.lda, -u.dcs
 
 ### 6) TO DO LIST
 * add agent based models
@@ -439,17 +442,20 @@ if '.csv' in f:
 
 #---group rows by one column
  if '-d.g=' in o:
+  gbtype='c'; gbcol='class'
   r_=re.findall(r'-d.g=(.+?)_(.+?) ', o); #print(r_);
   gbcol=r_[0][0]; gbtype=r_[0][1];
   if gbtype=='s':
    x_=x_.groupby(gbcol).sum().reset_index(); gbout='sum'; 
   elif gbtype=='a':
    x_=x_.groupby(gbcol).mean().reset_index(); gbout='mean';
-  else:
-   x_=x_.groupby(gbcol).mean().reset_index(); gbout='mean';
+  elif gbtype=='j':
+   x_=x_.groupby(gbcol)[txtcol].apply(lambda x_: ' '.join(x_)).reset_index(); gbout='join';
+  elif gbtype=='c':
+   x_=x_.groupby(gbcol).count().reset_index(); gbout='count';
   print(f"dataset after grouping instances with {gbout} function:\n\n {x_}\n");
   x_=x_.drop(gbcol, axis=1); 
-  print(f"{gbcol} removed. only numerical columns left. \n\n ");
+  print(f"{gbcol} removed. \n\n ");
 
 #---detect and separate different types of columns
  if 'tgtcol' in locals() and tgtcol in x_.columns: 
@@ -722,27 +728,73 @@ if '-p.ir' in o:
 #print('apply feature standardization')
 
 if '-p.tl' in o: 
- t_=t_.str.lower(); print('apply text to lowercase filter'); 
+ t_=t_.str.lower(); print(f'apply text to lowercase filter:\n{t_}'); 
 
 if '-p.tc' in o:
  t_=t_.str.replace("\W", ' ', regex=True); 
  t_=t_.str.replace(" {2,30}", ' ', regex=True); 
- print('cleaning string from nonword characters and multiple spaces');
+ print(f'text cleaning from nonword characters and multiple spaces:\n{t_}');
 
 if '-p.trs' in o:
- stopw=r'\b.{1,3}\b';
- t_ = t_.str.replace(stopw, ' ')
- t_ = t_.str.replace(r'\s+', ' ')
- print(f'apply regex 1 to 3 lenght word removal');
+ t_ = t_.str.replace(r'\b.{1,3}\b ', ' ',regex=True)
+ t_ = t_.str.replace(r'\s+', ' ',regex=True)
+ print(f'apply text-regex strip, removing words from 1 to 3 characters:\n{t_}');
 
 if '-p.tsw=' in o:
  r_=re.findall(r'-p.tsw=(.+?) ',o); swlist=r_[0];
  swlist = swlist.replace(',',' | '); print(swlist); #get list of stopwords
  t_ = t_.str.replace(swlist, ' ')
  #t_ = t_.str.replace(r'\s+', ' ')
- print(f'remove stopwords: {swlist}');
+ print(f'removing stopwords: {swlist}:\n{t_}');
 
 ncols=len(x_._get_numeric_data().columns); cols=len(x_.columns); 
+
+
+if '-p.lda' in o and 't_' in locals():
+ from sklearn.feature_extraction.text import CountVectorizer
+ from sklearn.decomposition import LatentDirichletAllocation
+ print('apply topic modeling with Latent Dirichlet Allocation.');
+ print('theory: https://en.wikipedia.org/wiki/Latent_Dirichlet_allocation');
+ nwordspertopic=5 #default words per topic
+ if '-p.lda=' in o:
+  r_=re.findall(r'-p.lda=(.+?) ',o); nwordspertopic=int(r_[0])
+ # create vocabulary doc-term matrix (X)
+ vectorizer = CountVectorizer()
+ vec_ = vectorizer.fit_transform(t_); #print(top);
+ #apply LDA
+ lda_model = LatentDirichletAllocation(n_components=1, random_state=2)
+ tl_=[]; #ts='';
+ for v in vec_:
+  lda_model.fit(v)
+  words = vectorizer.get_feature_names_out()
+  for idx, topic in enumerate(lda_model.components_):
+   top=[words[i] for i in topic.argsort()[-nwordspertopic:][::-1]]
+   ts = ' '.join(top); tl_.append(ts);
+ t_=PD.DataFrame(tl_); print(t_)
+ #print('---END PROCESS---');  sys.exit();
+
+
+#---embeddings
+if '-u.dcs' in o and 't_' in locals(): 
+ print('apply cosine similarity from word embeddings with paraphrase-multilingual-MiniLM-L12-v2 model.');
+ print('theory: https://en.wikipedia.org/wiki/Word_embedding');
+ from sentence_transformers import SentenceTransformer, util
+ embedmodel = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+ # Create a DataFrame to store results
+ similar_words = PD.DataFrame(columns=["class1", "class2", "cosine_similarity"])
+ # Loop through each pair of documents
+ for irow in t_:
+  for jrow in t_:
+   pair=f"{irow}\n{jrow}"
+   iembeddings = embedmodel.encode(irow, convert_to_tensor=True)
+   jembeddings = embedmodel.encode(jrow, convert_to_tensor=True)
+   #Compute cosine similarities
+   cosine_similarities = util.cos_sim(iembeddings, jembeddings)
+   similarity = cosine_similarities[0].item()
+   if similarity<1:
+    print(f"{pair}\ncosine similirity={similarity}\n")
+
+ print('---END PROCESS---'); sys.exit();
 
 
 #---feature reduction (applied in saved models)
@@ -756,6 +808,8 @@ if '-r.lsa=' in o: #define dimensions for LSA
  print(f'apply lsadim={lsadim}.');
 else:
  lsadim=50; o=f"-r.lsa={lsadim}"+o;
+
+
 
 
 #---feature extraction
@@ -1079,30 +1133,6 @@ if '-u.corr' in o: #correlation list
  timestamp=DT.datetime.now(); print(f"-u.corr stops other tasks\ntime:{timestamp}"); 
  inst=len(x_.index); feat=len(x_.columns); print('---END PROCESS---'); sys.exit();
 
-#REMOVED v0.8
-#if '-u.w2v' in o and 't_' in locals(): #word2vec
-# print('using w2v')
-# if '-u.w2v=' in o:
-#  r_=re.findall(r'-u.w2v=(.+?) ',o); fw=int(r_[0][0]); nw=int(r_[0][1]); fw=fw*10; nw=nw*10;
-# else:
-#  nw=20;
-# print(f'apply word2vec, extract dictionary of most freq. words from rank {fw} to {nw}\ntheory: https://en.wikipedia.org/wiki/Word2vec');
-# t_=orig_t_.str.split(pat=" "); 
-# wmodel=W2V.models.Word2Vec(t_, min_count=2); 
-# words=list(wmodel.wv.key_to_index);  
-# wmodel.wv.save_word2vec_format('w2v.txt', binary=False); 
-# wmodel.save('w2v.bin'); #save word2vec dictionary
-# X = wmodel[wmodel.wv.index_to_key[fw:nw]]; 
-# result=pca.fit_transform(X); MP.scatter(result[:, 0], result[:, 1]); 
-# words_=list(wmodel.wv.index_to_key[fw:nw]); #print(words_); # fit a 2d PCA model to the w2v vectors
-# [MP.annotate(word, xy=(result[i, 0], result[i, 1])) for i, word in enumerate(words_)]; 
-# MP.title('w2v 2d space'); 
-# MP.savefig(fname='w2v-space'); MP.show(); MP.clf(); #visualize w2v-space and save it
-# print('extracted word2vec dictionary from text. save w2v.txt, w2v.bin and w2v-space.png');
-# timestamp=DT.datetime.now(); 
-# print(f"-u.w2v stops other tasks\ntime:{timestamp}"); 
-# inst=len(x_.index); feat=len(x_.columns); 
-# print('---END PROCESS---'); sys.exit();
 
 
 if '-u.km=' in o: #kmeans clustering
