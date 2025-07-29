@@ -111,6 +111,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -u.som      *self organising map, neural network clustering. add 1 column.*
 * -u.arl      *association rule learning with apriori.*
 * -u.dcs      *document cosine similarity anlysis with word embeddings*
+* -u.irr      *inter-rater reliability scores*
 * -u.corr=s|p *correlation rankings. s=spearman (monotone+linear), p=pearson (linear)*
 * -u.corm=s|p *correlation matrix. s=spearman (monotone+linear), p=pearson (linear)*
 #### outlier detection
@@ -150,7 +151,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.8: added -u.corr and -u.corm, , -d.f, -d.g, -d.k, -d.b, removed w2v and d2v
 * v0.9: added -x.zsl, -u.kmpp, -u.sc, improved -d.viz, removed -x.mobert
 * v0.10: fixed -s.dt, added process mining, transformers. removed generate data, shuffle on -e.tts
-* v0.11: fixed -p.trs, added -p.lda, -u.dcs
+* v0.11: fixed -p.trs, added -p.lda, -u.dcs, -u.irr
 
 ### 6) TO DO LIST
 * add agent based models
@@ -716,6 +717,41 @@ if 'y_' in locals() and '-d.m=1' in o: #replace missing values with mode or mean
 if 't_' in locals():
  t_=t_.astype(str);
 
+
+#---inter annotator ageement
+if '-u.irr' in o:
+ print(f'compute Inter-rater Reliability between {x_.columns}. All columns must be numerical.');
+ print('theory: https://en.wikipedia.org/wiki/Inter-rater_reliability');
+ t= x_.values.tolist()
+ z=[]
+ ts=NP.array(t);
+ tss=ts.shape;
+ v=len(NP.unique(ts)) +1 ; print(f"values {v}");
+ r=tss[1]; print(f"raters {r}");
+ e=tss[0]; print(f"examples {e}");
+ for i in t:
+  y=[];
+  for x in range(v):
+   y.append(i.count(x))
+  z.append(y)
+
+ ra = NP.array(t)
+ t0=ra[:, 0]
+ t1=ra[:, 1]
+ from sklearn.metrics import cohen_kappa_score
+ c=cohen_kappa_score(t1, t0)
+ from statsmodels.stats.inter_rater import fleiss_kappa
+ k=fleiss_kappa(z)
+ os.system('pip install agreement -q')
+ z = NP.array(z)
+ from agreement.metrics import scotts_pi, krippendorffs_alpha
+ pi = scotts_pi(z)
+ alpha = krippendorffs_alpha(z)
+ print(f'c={c}')
+ print(f'k={k}')
+ print(f'a={alpha}')
+ print(f'p={pi}')
+ print('---END PROCESS---');  sys.exit();
 
 #---data preprocessing 
 if '-p.ir' in o:
