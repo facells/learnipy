@@ -1155,9 +1155,9 @@ if '-u.corr' in o: #correlation list
     corr,pval=ST.spearmanr(xicol, xjcol); #print(f'{corr},{pval}') #run correlation
    else:
     corr,pval=ST.pearsonr(xicol, xjcol);
-   if corr < 0.99 and corr > -0.99 and pval < 0.005 :
-    corr=f'{corr:.6f}'; pval=f'{pval:.6f}'; 
-    corfound=corfound+f"{xicol.name} and {xjcol.name},{corr},{pval}\n";
+   #if corr < 0.99 and corr > -0.99 and pval < 0.005 :
+   corr=f'{corr:.6f}'; pval=f'{pval:.6f}'; 
+   corfound=corfound+f"{xicol.name} and {xjcol.name},{corr},{pval}\n";
  import io; iofile = io.StringIO(corfound);
  cf_ = PD.read_csv(iofile, sep=',');
  cf_=cf_.sort_values(by=['rho'], ascending=False).reset_index(drop=True); 
