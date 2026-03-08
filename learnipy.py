@@ -768,7 +768,7 @@ if '-p.tl' in o:
  t_=t_.str.lower(); print(f'apply text to lowercase filter:\n{t_}'); 
 
 if '-p.tc' in o:
- t_=t_.str.replace("\W", ' ', regex=True); 
+ t_=t_.str.replace("[^a-zA-Z0-9]", ' ', regex=True); 
  t_=t_.str.replace(" {2,30}", ' ', regex=True); 
  print(f'text cleaning from nonword characters and multiple spaces:\n{t_}');
 
@@ -1364,7 +1364,7 @@ if sparse>=0.9:
  sparseness=1; sparsemsg='WARNING: high data sparseness, better to apply feature reduction. ';
 print(f"sparseness= {sparse:.3f}");
 
-#print(f"columns= {x_.columns}");
+feature_names = x_.columns;
 
 x_.columns = range(x_.shape[1]); #make columns unique 
 
@@ -1522,8 +1522,6 @@ if '-o.' in o:
   model.fit(x_train, y_train); y_pred=model.predict(x_test);
   r2=SK.metrics.r2_score(y_test, y_pred);
   print(f"baseline after outlier detection: R2= {r2:.3f}");
-
-feature_names = x_train.columns
 
 
 
