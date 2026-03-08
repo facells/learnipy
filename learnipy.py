@@ -1,6 +1,6 @@
 documentation='''
 # LEARNIPY
-* version 0.11
+* version 0.12
 * making data science easier
 * written with ♥ by Fabio Celli, 
 * email: fabio.celli.phd@gmail.com
@@ -152,10 +152,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.9: added -x.zsl, -u.kmpp, -u.sc, improved -d.viz, removed -x.mobert
 * v0.10: fixed -s.dt, added process mining, transformers. removed generate data, shuffle on -e.tts
 * v0.11: fixed -p.trs, added -p.lda, -u.dcs, -u.irr
+* v0.12: added feature importance in -s algorithms
 
 ### 6) TO DO LIST
+* permutation feature importance
 * add agent based models
-* explainable AI
 * genetic algorithms
 * add network analysis
 * add forecasting with sktime
@@ -1522,6 +1523,8 @@ if '-o.' in o:
   r2=SK.metrics.r2_score(y_test, y_pred);
   print(f"baseline after outlier detection: R2= {r2:.3f}");
 
+feature_names = x_train.columns
+
 
 
 #---supervised learning
@@ -1546,29 +1549,35 @@ if '-s.nb' in o and target=='r':
 if '-s.lcm' in o and target=='c':
  model=SK.discriminant_analysis.LinearDiscriminantAnalysis();
  model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ imprank = PD.Series(model.coef_[0], index=feature_names).sort_values(ascending=False); print(f"feature importance:\n{imprank}")
  print('apply LinearDiscriminantAnalysis classification \ntheory: https://en.wikipedia.org/wiki/Linear_discriminant_analysis');
 if '-s.lcm' in o and target=='r':
  model=SK.cross_decomposition.PLSRegression(max_iter=500);
  model.fit(x_train, y_train); 
+ imprank = PD.Series(model.coef_, index=feature_names).sort_values(ascending=False); print(f"feature importance:\n{imprank}")
  y_pred=model.predict(x_test); y_pred=y_pred.flatten(); 
  print('apply PartialLeastSquare regression \ntheory: https://en.wikipedia.org/wiki/Partial_least_squares_regression');
 
 if '-s.lr' in o and target=='c':
  model=SK.linear_model.LogisticRegression(max_iter=5000);
  model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ imprank = PD.Series(model.coef_[0], index=feature_names).sort_values(ascending=False); print(f"feature importance:\n{imprank}")
  print('apply logistic regression classification \ntheory:https://en.wikipedia.org/wiki/Logistic_regression');
 if '-s.lr' in o and target=='r':
  model=SK.linear_model.LinearRegression();
  model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ imprank = PD.Series(model.coef_, index=feature_names).sort_values(ascending=False); print(f"feature importance:\n{imprank}")
  print('apply linear regression \ntheory: https://en.wikipedia.org/wiki/Linear_regression');
 
 if '-s.sgd' in o and target=='c':
  model=SK.linear_model.SGDClassifier(shuffle=False);
  model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ imprank = PD.Series(model.coef_[0], index=feature_names).sort_values(ascending=False); print(f"feature importance:\n{imprank}")
  print('apply stochastic gradient descent classification (on normalized space) \ntheory: https://en.wikipedia.org/wiki/Stochastic_gradient_descent');
 if '-s.sgd' in o and target=='r':
  model=SK.linear_model.SGDRegressor(shuffle=False);
  model.fit(x_train, y_train); y_pred=model.predict(x_test); 
+ imprank = PD.Series(model.coef_, index=feature_names).sort_values(ascending=False); print(f"feature importance:\n{imprank}")
  print('apply sochastic gradient descent regression (on normalized space) \ntheory: https://en.wikipedia.org/wiki/Stochastic_gradient_descent');
 
 if '-s.knn' in o and target=='c':
@@ -1626,22 +1635,26 @@ if '-s.svm' in o and target=='r':
 if '-s.rf' in o and target=='c':
  model=SK.ensemble.RandomForestClassifier(random_state=1);
  model.fit(x_train, y_train); 
+ imprank = PD.Series(model.feature_importances_, index=feature_names).sort_values(ascending=False); print(f"feature importance:\n{imprank}")
  y_pred=model.predict(x_test); 
  print('apply random forest classification\ntheory: https://en.wikipedia.org/wiki/Random_forest');
 if '-s.rf' in o and target=='r':
  model=SK.ensemble.RandomForestRegressor(random_state=1);
- model.fit(x_train, y_train); 
+ model.fit(x_train, y_train);
+ imprank = PD.Series(model.feature_importances_, index=feature_names).sort_values(ascending=False); print(f"feature importance:\n{imprank}")
  y_pred=model.predict(x_test); 
  print('apply random forest regression\ntheory: https://en.wikipedia.org/wiki/Random_forest');
 
 if '-s.ada' in o and target=='r':
  model=SK.ensemble.AdaBoostRegressor(random_state=1);
  model.fit(x_train, y_train); 
+ imprank = PD.Series(model.feature_importances_, index=feature_names).sort_values(ascending=False); print(f"feature importance:\n{imprank}")
  y_pred=model.predict(x_test); 
  print('apply adaboost regression\ntheory: https://en.wikipedia.org/wiki/AdaBoost')
 if '-s.ada' in o and target=='c':
  model=SK.ensemble.AdaBoostClassifier(random_state=1);
  model.fit(x_train, y_train);
+ imprank = PD.Series(model.feature_importances_, index=feature_names).sort_values(ascending=False); print(f"feature importance:\n{imprank}")
  y_pred=model.predict(x_test); 
  print('apply adaboost classification\ntheory: https://en.wikipedia.org/wiki/AdaBoost');
 
@@ -1651,26 +1664,29 @@ if '-s.dt' in o:
   r_=re.findall(r'-s.dt=(.) ',o); 
   if int(r_[0])>0:
    prune=(int(r_[0])/100);
-
  if target=='c':
   model=SK.tree.DecisionTreeClassifier(ccp_alpha=prune);
   model.fit(x_train, y_train); 
+  imprank = PD.Series(model.feature_importances_, index=feature_names).sort_values(ascending=False); print(f"feature importance:\n{imprank}")
   y_pred=model.predict(x_test); 
   print('apply decision trees classification\ntheory https://en.wikipedia.org/wiki/Decision_tree_learning'); 
  if target=='r':
   model=SK.tree.DecisionTreeRegressor(ccp_alpha=prune);
   model.fit(x_train, y_train); 
+  imprank = PD.Series(model.feature_importances_, index=feature_names).sort_values(ascending=False); print(f"feature importance:\n{imprank}")
   y_pred=model.predict(x_test); 
   print('apply decision trees regression\ntheory https://en.wikipedia.org/wiki/Decision_tree_learning'); 
 
 if '-s.xgb' in o and target=='c':
  import xgboost; model=xgboost.XGBClassifier();
  model.fit(x_train, y_train); 
+ imprank = PD.Series(model.feature_importances_, index=feature_names).sort_values(ascending=False); print(f"feature importance:\n{imprank}")
  y_pred=model.predict(x_test); 
  print('apply gradient boosting classification\ntheory: https://en.wikipedia.org/wiki/Gradient_boosting');
 if '-s.xgb' in o and target=='r':
  import xgboost; model=xgboost.XGBRegressor();
  model.fit(x_train, y_train); 
+ imprank = PD.Series(model.feature_importances_, index=feature_names).sort_values(ascending=False); print(f"feature importance:\n{imprank}")
  y_pred=model.predict(x_test); 
  print('apply gradient boosting regression\ntheory: https://en.wikipedia.org/wiki/Gradient_boosting');
 
