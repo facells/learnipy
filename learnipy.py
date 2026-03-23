@@ -1984,7 +1984,7 @@ if '-d.viz' in o:
  # stopwords.extend(["http", "https"])
   for k, v in words_weights.items():
    MP.title('Class \'%s\'' % k);
-   wc = WordCloud(background_color='white', max_words=1000);
+   wc = WordCloud(background_color='white',  max_words=1000, colormap="berlin", contour_color="black");
    wc.generate(" ".join(v))
    MP.imshow(wc, interpolation='bilinear');
    MP.axis('off');
