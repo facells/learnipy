@@ -61,7 +61,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -d.k=n,m,o  *define the columns to keep. n,m,o=names of columns to keep*
 * -d.s=n      *define the string column treated as text. n=name of text column
 * -d.c=n      *define the column of the target class. n=name (for .csv) or index (for .zip)* 
-* -d.r=0      *do not use feature reduction (not applicable with -d.save)*
 * -d.f=c_v    *filter. keep only rows of column c with value v*
 * -d.b=0.5    *resample rows. if <1 subsample. if >1 bootstrapping with duplication *
 * -d.m=1      *fill class missing values with mean/mode (otherwise are deleted by default)*
@@ -87,8 +86,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -p.tsw=a,b  *text stop words. removes stopwords, a,b=stopwords list, no spaces allowed.*
 * -p.lda=5    *keeps only topical words using latent dirichlet allocation. 5=words per topic*
 #### feature reduction
-* -r.svd=5    *turn sparse label matrix to dense and sync. 5=number of features*
-* -r.lsa=5    *turn sparse word/char matrix to dense and sync. 5=number of features*
+* -r.svd=5    *turn sparse label matrix to dense. 5=number of features*
+* -r.lsa=5    *turn sparse word/char matrix to dense. 5=number of features*
 #### feature extraction
 * -x.ng=23cf4 *text ngrams. 2=min, 3=max, c=chars|w=words, f=freq|t=tfidf, 4=num x 100*
 * -x.tm=5     *text token matrix. 5=number of features*
@@ -152,10 +151,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.9: added -x.zsl, -u.kmpp, -u.sc, improved -d.viz, removed -x.mobert
 * v0.10: fixed -s.dt, added process mining, transformers. removed generate data, shuffle on -e.tts
 * v0.11: fixed -p.trs, added -p.lda, -u.dcs, -u.irr
-* v0.12: added feature importance in -s algorithms
+* v0.12: added feature importance in -s algorithms, removed -d.r=0 and reduction by default
 
 ### 6) TO DO LIST
-* permutation feature importance
 * add agent based models
 * genetic algorithms
 * add network analysis
@@ -195,6 +193,7 @@ from io import StringIO;
 import urllib.request; 
 import statsmodels.api as SM
 from scipy import stats as ST
+
 
 
 NP.random.seed(1); TF.random.set_seed(2);
@@ -834,20 +833,6 @@ if '-u.dcs' in o and 't_' in locals():
  print('---END PROCESS---'); sys.exit();
 
 
-#---feature reduction (applied in saved models)
-if '-r.svd=' in o: #define dimensions for SVD
- r_=re.findall(r'-r.svd=(.+?) ',o); svdim=int(r_[0]);
-else:
- svdim=int(1+(cols/2)); o=f"-r.svd={svdim}"+o;
-
-if '-r.lsa=' in o: #define dimensions for LSA
- r_=re.findall(r'-r.lsa=(.+?) ',o); lsadim=int(r_[0]); 
- print(f'apply lsadim={lsadim}.');
-else:
- lsadim=50; o=f"-r.lsa={lsadim}"+o;
-
-
-
 
 #---feature extraction
 fx=0; #define flag for feature extraction
@@ -860,17 +845,17 @@ if not x_.empty and not 'zip' in datatype and cols >= ncols:
  else:
   print('apply one-hot binarization of labels. sparse matrix'); 
 #SVD feature reduction
- if not '-d.r=0' in o and not '-u.cor' in o: 
-  if len(x_.columns) >2:
-   svd=SK.decomposition.TruncatedSVD(svdim, random_state=1); 
-   x_=PD.DataFrame(svd.fit_transform(x_)); 
-   if '-d.data' in o:
-    print('sync dense SVD matrix from one-hot labels:\n',x_)  
-   else: 
-    print('apply Singular Value Decomposition. obtain dense matrix');
-   print('theory: https://en.wikipedia.org/wiki/Singular_value_decomposition');
-  else:
-   x_=x_; print('tabular data is small, SVD not applied');
+# if not '-d.r=0' in o and not '-u.cor' in o: 
+#  if len(x_.columns) >2:
+#   svd=SK.decomposition.TruncatedSVD(svdim, random_state=1); 
+#   x_=PD.DataFrame(svd.fit_transform(x_)); 
+#   if '-d.data' in o:
+#    print('sync dense SVD matrix from one-hot labels:\n',x_)  
+#   else: 
+#    print('apply Singular Value Decomposition. obtain dense matrix\ntheory: https://en.wikipedia.org/wiki/Singular_value_decomposition');
+#   print('theory: https://en.wikipedia.org/wiki/Singular_value_decomposition');
+#  else:
+#   x_=x_; print('tabular data is small, SVD not applied');
 
 
 if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
@@ -966,16 +951,16 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
     print(f'extract {mi}-{ma} word ngram from text'); print(fn_);
 
   #lsadim=int(len(fn_)/2);
-  if not '-d.r=0' in o:
-   svd=SK.decomposition.TruncatedSVD(lsadim, random_state=1); 
-   t_=PD.DataFrame(svd.fit_transform(t_));
-   if '-d.data' in o:
-    print('sync dense LSA ngram matrix:\n',t_) 
-   else:
-    print('apply LSA to ngrams by default, obtain dense sync matrix');
-   print('theory: https://en.wikipedia.org/wiki/Latent_semantic_analysis');
-  if '-d.save ' in o:
-   print(f"WARNING: test set must contain more than {lsadim} instances for compatibility"); 
+#  if not '-d.r=0' in o:
+#   svd=SK.decomposition.TruncatedSVD(lsadim, random_state=1); 
+#   t_=PD.DataFrame(svd.fit_transform(t_));
+#   if '-d.data' in o:
+#    print('sync dense LSA ngram matrix:\n',t_) 
+#   else:
+#    print('apply LSA to ngrams by default, obtain dense sync matrix\ntheory: https://en.wikipedia.org/wiki/Latent_semantic_analysis');
+#   print('theory: https://en.wikipedia.org/wiki/Latent_semantic_analysis');
+#  if '-d.save ' in o:
+#   print(f"WARNING: test set must contain more than {lsadim} instances for compatibility"); 
 
 
 
@@ -1082,6 +1067,27 @@ if 't_' in locals() and '-x.' in o: #extract features from text, apply LSA
    print('sync sparse matrix from lexicon:\n',t_)
   else:
    print(f'extracted {hf} features with {l}');
+
+
+
+
+#---feature reduction 
+if '-r.svd=' in o: #define dimensions for SVD
+ r_=re.findall(r'-r.svd=(.+?) ',o); svdim=int(r_[0]);
+ print(f'apply Singular Value Decomposition. Reduction to {svdim} dimensions to obtain dense matrix')
+ print('theory: https://en.wikipedia.org/wiki/Singular_value_decomposition');
+#else:
+# svdim=int(1+(cols/2)); o=f"-r.svd={svdim}"+o;
+
+if '-r.lsa=' in o: #define dimensions for LSA
+ r_=re.findall(r'-r.lsa=(.+?) ',o); lsadim=int(r_[0]); 
+ print(f'apply Latent Semantic Analysis to reduce to {lsadim} columns dense sync matrix')
+ print('theory: https://en.wikipedia.org/wiki/Latent_semantic_analysis');
+#else:
+# lsadim=50; o=f"-r.lsa={lsadim}"+o;
+
+
+
 
 
 #---data aggregation
@@ -1464,8 +1470,8 @@ if 'split' in locals(): #if split percentage is defined, then split train and te
  xtest_inst=len(x_test.index); feat=len(x_test.columns); 
  print(f'test set shape: {xtest_inst} instances, {feat} features');
  x_test2=x_test; #create a copy of x_test for evaluation in case of shape change
- print(f"class freq in training"); print(y_train.value_counts());
- print(f"class freq in test"); print(y_test.value_counts());
+ print(f"training set stats"); print(y_train.describe());
+ print(f"test set stats"); print(y_test.describe());
 
 
 if '-d.data' in o:
@@ -1523,7 +1529,7 @@ if '-o.' in o:
   r2=SK.metrics.r2_score(y_test, y_pred);
   print(f"baseline after outlier detection: R2= {r2:.3f}");
 
-
+from sklearn.inspection import permutation_importance
 
 #---supervised learning
 if '-s.base' in o and target=='c':
@@ -1538,10 +1544,12 @@ if '-s.base' in o and target=='r':
 if '-s.nb' in o and target=='c':
  model=SK.naive_bayes.ComplementNB();model.fit(x_train, y_train); 
  y_pred=model.predict(x_test); 
+ imprank = permutation_importance(model, x_train, y_train, scoring='accuracy').importances_mean; imprank = PD.Series(imprank, index=feature_names).sort_values(ascending=False); print(f"permutation feature importance:\n{imprank}")
  print('apply complement naive bayes classification (on normalized space)\ntheory: https://en.wikipedia.org/wiki/Naive_Bayes_classifier');
 if '-s.nb' in o and target=='r':
  model=SK.linear_model.BayesianRidge();model.fit(x_train, y_train); 
  y_pred=model.predict(x_test); y_pred=y_pred.flatten(); 
+ imprank = permutation_importance(model, x_train, y_train, scoring='neg_mean_squared_error').importances_mean; imprank = PD.Series(imprank, index=feature_names).sort_values(ascending=False); print(f"permutation feature importance:\n{imprank}")
  print('apply bayesian ridge regression (on normalized space)\ntheory: https://en.wikipedia.org/wiki/Bayesian_linear_regression');
 
 if '-s.lcm' in o and target=='c':
@@ -1581,21 +1589,25 @@ if '-s.sgd' in o and target=='r':
 if '-s.knn' in o and target=='c':
  model=SK.neighbors.KNeighborsClassifier();model.fit(x_train, y_train); 
  y_pred=model.predict(x_test); 
+ imprank = permutation_importance(model, x_train, y_train, scoring='accuracy').importances_mean; imprank = PD.Series(imprank, index=feature_names).sort_values(ascending=False); print(f"permutation feature importance:\n{imprank}")
  print('apply k nearest neighbors classification \ntheory: https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm');
 if '-s.knn' in o and target=='r':
  model=SK.neighbors.KNeighborsRegressor();model.fit(x_train, y_train); 
  y_pred=model.predict(x_test); 
+ imprank = permutation_importance(model, x_train, y_train, scoring='neg_mean_squared_error').importances_mean; imprank = PD.Series(imprank, index=feature_names).sort_values(ascending=False); print(f"permutation feature importance:\n{imprank}")
  print('apply k nearest neighbors regression \ntheory: https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm');
 
 if '-s.mlp' in o and target=='c':
  model=SK.neural_network.MLPClassifier(random_state=1);
  model.fit(x_train, y_train); 
  y_pred=model.predict(x_test); 
+ imprank = permutation_importance(model, x_train, y_train, scoring='accuracy').importances_mean; imprank = PD.Series(imprank, index=feature_names).sort_values(ascending=False); print(f"permutation feature importance:\n{imprank}")
  print('apply multi layer perceptron classification \ntheory: https://en.wikipedia.org/wiki/Multilayer_perceptron');
 if '-s.mlp' in o and target=='r':
  model=SK.neural_network.MLPRegressor(random_state=1);
  model.fit(x_train, y_train); 
  y_pred=model.predict(x_test); 
+ imprank = permutation_importance(model, x_train, y_train, scoring='neg_mean_squared_error').importances_mean; imprank = PD.Series(imprank, index=feature_names).sort_values(ascending=False); print(f"permutation feature importance:\n{imprank}")
  print('apply multi layer perceprtron regression \ntheory: https://en.wikipedia.org/wiki/Multilayer_perceptron');
 
 if '-s.svm' in o and target=='c':
@@ -1607,11 +1619,13 @@ if '-s.svm' in o and target=='c':
  if kern=='p':
   model=SK.svm.NuSVC(kernel='poly', degree=mi);
   model.fit(x_train, y_train); y_pred=model.predict(x_test);
+  imprank = permutation_importance(model, x_train, y_train, scoring='accuracy').importances_mean; imprank = PD.Series(imprank, index=feature_names).sort_values(ascending=False); print(f"permutation feature importance:\n{imprank}")
   print('using polynomial kernel\ntheory: https://en.wikipedia.org/wiki/Polynomial_kernel')
  if kern=='r':
   model=SK.svm.NuSVC(kernel='rbf', nu=mi/10);
   model.fit(x_train, y_train);
   y_pred=model.predict(x_test); 
+  imprank = permutation_importance(model, x_train, y_train, scoring='accuracy').importances_mean; imprank = PD.Series(imprank, index=feature_names).sort_values(ascending=False); print(f"permutation feature importance:\n{imprank}")
   print('using rbf kernel\ntheory: https://en.wikipedia.org/wiki/Radial_basis_function_kernel')
 if '-s.svm' in o and target=='r':
  print('apply support vector machines\ntheory: https://en.wikipedia.org/wiki/Support-vector_machine');
@@ -1623,11 +1637,13 @@ if '-s.svm' in o and target=='r':
   model=SK.svm.NuSVR(kernel='poly', degree=mi);
   model.fit(x_train, y_train); 
   y_pred=model.predict(x_test);
+  imprank = permutation_importance(model, x_train, y_train, scoring='neg_mean_squared_error').importances_mean; imprank = PD.Series(imprank, index=feature_names).sort_values(ascending=False); print(f"permutation feature importance:\n{imprank}")
   print(f"using polynomial kernel={mi}\ntheory: https://en.wikipedia.org/wiki/Polynomial_kernel")
  if kern=='r':
   model=SK.svm.NuSVR(kernel='rbf', nu=mi/10);
   model.fit(x_train, y_train);
   y_pred=model.predict(x_test); 
+  imprank = permutation_importance(model, x_train, y_train, scoring='neg_mean_squared_error').importances_mean; imprank = PD.Series(imprank, index=feature_names).sort_values(ascending=False); print(f"permutation feature importance:\n{imprank}")
   print(f"using rbf kernel={mi/10}\ntheory: https://en.wikipedia.org/wiki/Radial_basis_function_kernel")
 
 if '-s.rf' in o and target=='c':
