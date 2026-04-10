@@ -1,5 +1,5 @@
 # LEARNIPY
-* version 0.11
+* version 0.12
 * making data science easier
 * written with ♥ by Fabio Celli, 
 * email: fabio.celli.phd@gmail.com
@@ -60,7 +60,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -d.k=n,m,o  *define the columns to keep. n,m,o=names of columns to keep*
 * -d.s=n      *define the string column treated as text. n=name of text column
 * -d.c=n      *define the column of the target class. n=name (for .csv) or index (for .zip)* 
-* -d.r=0      *do not use feature reduction (not applicable with -d.save)*
 * -d.f=c_v    *filter. keep only rows of column c with value v*
 * -d.b=0.5    *resample rows. if <1 subsample. if >1 bootstrapping with duplication *
 * -d.m=1      *fill class missing values with mean/mode (otherwise are deleted by default)*
@@ -86,8 +85,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -p.tsw=a,b  *text stop words. removes stopwords, a,b=stopwords list, no spaces allowed.*
 * -p.lda=5    *keeps only topical words using latent dirichlet allocation. 5=words per topic*
 #### feature reduction
-* -r.svd=5    *turn sparse label matrix to dense and sync. 5=number of features*
-* -r.lsa=5    *turn sparse word/char matrix to dense and sync. 5=number of features*
+* -r.svd=5    *turn sparse label matrix to dense. 5=number of features*
+* -r.lsa=5    *turn sparse word/char matrix to dense. 5=number of features*
 #### feature extraction
 * -x.ng=23cf4 *text ngrams. 2=min, 3=max, c=chars|w=words, f=freq|t=tfidf, 4=num x 100*
 * -x.tm=5     *text token matrix. 5=number of features*
@@ -110,6 +109,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -u.som      *self organising map, neural network clustering. add 1 column.*
 * -u.arl      *association rule learning with apriori.*
 * -u.dcs      *document cosine similarity anlysis with word embeddings*
+* -u.irr      *inter-rater reliability scores*
 * -u.corr=s|p *correlation rankings. s=spearman (monotone+linear), p=pearson (linear)*
 * -u.corm=s|p *correlation matrix. s=spearman (monotone+linear), p=pearson (linear)*
 #### outlier detection
@@ -149,11 +149,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.8: added -u.corr and -u.corm, , -d.f, -d.g, -d.k, -d.b, removed w2v and d2v
 * v0.9: added -x.zsl, -u.kmpp, -u.sc, improved -d.viz, removed -x.mobert
 * v0.10: fixed -s.dt, added process mining, transformers. removed generate data, shuffle on -e.tts
-* v0.11: fixed -p.trs, added -p.lda, -u.dcs
+* v0.11: fixed -p.trs, added -p.lda, -u.dcs, -u.irr
+* v0.12: added feature importance in -s algorithms, removed -d.r=0 and reduction by default
 
 ### 6) TO DO LIST
 * add agent based models
-* explainable AI
 * genetic algorithms
 * add network analysis
 * add forecasting with sktime
