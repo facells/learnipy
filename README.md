@@ -68,8 +68,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -d.md       *model details. prints info on algorithm parameters and data modeling*
 * -d.fdst     *print info on feature distribution*
 * -d.data     *show preview of processed data*
-* -d.save     *save model as .h4 (machine learning) or .h5 (deep learning) file*
-* -d.pred     *use model to make predictions on new data*
 * -d.export=f *export processed data in csv. f=filename.csv*
 #### process mining
 * -m.pnam[=k] *petri net from alpha miner algorithm. k=20 filter top 20 variants*
@@ -150,9 +148,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.9: added -x.zsl, -u.kmpp, -u.sc, improved -d.viz, removed -x.mobert
 * v0.10: fixed -s.dt, added process mining, transformers. removed generate data, shuffle on -e.tts
 * v0.11: fixed -p.trs, added -p.lda, -u.dcs, -u.irr
-* v0.12: added feature importance in -s algorithms, removed -d.r=0 and reduction by default
+* v0.12: added feature importance in -s algorithms, removed -d.pred, -d.r=0, reduction by default
 
 ### 6) TO DO LIST
+* permutation feature importance
 * add agent based models
 * genetic algorithms
 * add network analysis
