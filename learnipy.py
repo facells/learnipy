@@ -69,8 +69,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -d.md       *model details. prints info on algorithm parameters and data modeling*
 * -d.fdst     *print info on feature distribution*
 * -d.data     *show preview of processed data*
-* -d.save     *save model as .h4 (machine learning) or .h5 (deep learning) file*
-* -d.pred     *use model to make predictions on new data*
 * -d.export=f *export processed data in csv. f=filename.csv*
 #### process mining
 * -m.pnam[=k] *petri net from alpha miner algorithm. k=20 filter top 20 variants*
@@ -151,9 +149,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.9: added -x.zsl, -u.kmpp, -u.sc, improved -d.viz, removed -x.mobert
 * v0.10: fixed -s.dt, added process mining, transformers. removed generate data, shuffle on -e.tts
 * v0.11: fixed -p.trs, added -p.lda, -u.dcs, -u.irr
-* v0.12: added feature importance in -s algorithms, removed -d.r=0 and reduction by default
+* v0.12: added feature importance in -s algorithms, removed -d.pred, -d.r=0, reduction by default
 
 ### 6) TO DO LIST
+* permutation feature importance
 * add agent based models
 * genetic algorithms
 * add network analysis
@@ -1270,7 +1269,7 @@ if '-u.msh' in o: #meanshift clustering
 
 if '-u.som' in o: #self organising map clustering (contributor: Fabio Celli)
  os.system('pip install minisom'); from minisom import MiniSom; #library
- xn_=x_.to_numpy(); #change dataset x_ format to numpy to  use minisom
+ xn_=x_.to_numpy(); xn_=NP.array(xn_).astype(float); #change dataset x_ format to numpy to  use minisom
  nodes=int(4*math.sqrt(len(xn_))); #compute nodes of the matrix based on instances
  clust = MiniSom(nodes, nodes, feat, sigma=0.3, learning_rate=0.5, random_seed=2) 
  clust.train(xn_, 100) #train SOM with 100 iterations
@@ -1555,12 +1554,12 @@ if '-s.nb' in o and target=='r':
 if '-s.lcm' in o and target=='c':
  model=SK.discriminant_analysis.LinearDiscriminantAnalysis();
  model.fit(x_train, y_train); y_pred=model.predict(x_test); 
- imprank = PD.Series(model.coef_[0], index=feature_names).sort_values(ascending=False); print(f"feature importance:\n{imprank}")
+ imprank = permutation_importance(model, x_train, y_train, scoring='accuracy').importances_mean; imprank = PD.Series(imprank, index=feature_names).sort_values(ascending=False); print(f"permutation feature importance:\n{imprank}")
  print('apply LinearDiscriminantAnalysis classification \ntheory: https://en.wikipedia.org/wiki/Linear_discriminant_analysis');
 if '-s.lcm' in o and target=='r':
  model=SK.cross_decomposition.PLSRegression(max_iter=500);
  model.fit(x_train, y_train); 
- imprank = PD.Series(model.coef_, index=feature_names).sort_values(ascending=False); print(f"feature importance:\n{imprank}")
+ imprank = permutation_importance(model, x_train, y_train, scoring='neg_mean_squared_error').importances_mean; imprank = PD.Series(imprank, index=feature_names).sort_values(ascending=False); print(f"permutation feature importance:\n{imprank}")
  y_pred=model.predict(x_test); y_pred=y_pred.flatten(); 
  print('apply PartialLeastSquare regression \ntheory: https://en.wikipedia.org/wiki/Partial_least_squares_regression');
 
