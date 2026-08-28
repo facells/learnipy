@@ -133,7 +133,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -t.arima    *auto regression integrated moving average*
 * -t.sarima   *seasonal auto regression integrated moving average*
 * -t.hwes     *Holt-Winters exponential smoothing*
-### agent based modeling
+#### agent based modeling
 * -a.ss=g,p,t *shelling segregation simulation. g=grid, p=probability, t=timesteps*
 * -a.wd=n,t   *boltzman wealth distribution (gini index). n=population, t=timesteps*
 * -a.s=g,n,t  *sugarscape life simulation. g=grid, n=agents, t=timesteps*
@@ -160,7 +160,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 
 ### 6) TO DO LIST
 * permutation feature importance
-* add agent based models
 * genetic algorithms
 * add network analysis
 * add forecasting with sktime
