@@ -1,5 +1,5 @@
 # LEARNIPY
-* version 0.12
+* version 0.13
 * making data science easier
 * written with ♥ by Fabio Celli, 
 * email: fabio.celli.phd@gmail.com
@@ -132,6 +132,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -t.arima    *auto regression integrated moving average*
 * -t.sarima   *seasonal auto regression integrated moving average*
 * -t.hwes     *Holt-Winters exponential smoothing*
+### agent based modeling
+* -a.ss=g,p,t *shelling segregation simulation. g=grid, p=probability, t=timesteps*
+* -a.wd=n,t   *boltzman wealth distribution (gini index). n=population, t=timesteps*
+* -a.s=g,n,t  *sugarscape life simulation. g=grid, n=agents, t=timesteps*
+* -a.sir=n,p  *SIR infection spread simulation. n=population, p=probability of infection*
+* -a.mf=n,t,r *Multipath forecasting simulation. n=population, t=time steps, r=social mobility*
 #### evaluation
 * -e.tts=0.2  *train-test split. 0.2=20% test split. ignored if test set is provided*
 
@@ -149,10 +155,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.10: fixed -s.dt, added process mining, transformers. removed generate data, shuffle on -e.tts
 * v0.11: fixed -p.trs, added -p.lda, -u.dcs, -u.irr
 * v0.12: added feature importance in -s algorithms, removed -d.pred, -d.r=0, reduction by default
+* v0.14: added agent based models
 
 ### 6) TO DO LIST
 * permutation feature importance
-* add agent based models
 * genetic algorithms
 * add network analysis
 * add forecasting with sktime
