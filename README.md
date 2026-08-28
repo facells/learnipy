@@ -132,7 +132,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -t.arima    *auto regression integrated moving average*
 * -t.sarima   *seasonal auto regression integrated moving average*
 * -t.hwes     *Holt-Winters exponential smoothing*
-### agent based modeling
+#### agent based modeling
 * -a.ss=g,p,t *shelling segregation simulation. g=grid, p=probability, t=timesteps*
 * -a.wd=n,t   *boltzman wealth distribution (gini index). n=population, t=timesteps*
 * -a.s=g,n,t  *sugarscape life simulation. g=grid, n=agents, t=timesteps*
@@ -155,7 +155,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.10: fixed -s.dt, added process mining, transformers. removed generate data, shuffle on -e.tts
 * v0.11: fixed -p.trs, added -p.lda, -u.dcs, -u.irr
 * v0.12: added feature importance in -s algorithms, removed -d.pred, -d.r=0, reduction by default
-* v0.14: added agent based models
+* v0.13: added agent based models
 
 ### 6) TO DO LIST
 * permutation feature importance
