@@ -1,6 +1,6 @@
 documentation='''
 # LEARNIPY
-* version 0.12
+* version 0.13
 * making data science easier
 * written with ♥ by Fabio Celli, 
 * email: fabio.celli.phd@gmail.com
@@ -133,6 +133,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -t.arima    *auto regression integrated moving average*
 * -t.sarima   *seasonal auto regression integrated moving average*
 * -t.hwes     *Holt-Winters exponential smoothing*
+### agent based modeling
+* -a.ss=g,p,t *shelling segregation simulation. g=grid, p=probability, t=timesteps*
+* -a.wd=n,t   *boltzman wealth distribution (gini index). n=population, t=timesteps*
+* -a.s=g,n,t  *sugarscape life simulation. g=grid, n=agents, t=timesteps*
+* -a.sir=n,p  *SIR infection spread simulation. n=population, p=probability of infection*
+* -a.mf=n,t,r *Multipath forecasting simulation. n=population, t=time steps, r=social mobility*
 #### evaluation
 * -e.tts=0.2  *train-test split. 0.2=20% test split. ignored if test set is provided*
 
@@ -150,6 +156,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.10: fixed -s.dt, added process mining, transformers. removed generate data, shuffle on -e.tts
 * v0.11: fixed -p.trs, added -p.lda, -u.dcs, -u.irr
 * v0.12: added feature importance in -s algorithms, removed -d.pred, -d.r=0, reduction by default
+* v0.14: added agent based models
 
 ### 6) TO DO LIST
 * permutation feature importance
@@ -584,6 +591,1045 @@ if '-d.viz' in o:
 
 #---unpreprocessed data ready
 
+#---agent based models
+
+if '-a.' in o:
+ 
+ 
+ import os
+ os.system('pip install -q agentpy')
+ 
+ import agentpy as AP
+ import networkx as NX
+ import random
+ import IPython
+ from time import sleep
+ from IPython.display import clear_output
+ import matplotlib.pyplot as MP
+ import seaborn as SB #sns
+ import matplotlib as ML #mpl
+ MP.rcParams['lines.linewidth'] = 2.0
+ 
+ 
+ def three_frame(world, n_seq, seed=17):
+     """Draw three timesteps.
+ 
+     world: object with step, loop, and draw
+     n_seq: 3-tuple, number of steps before each draw
+     seed: random see for NumPy
+     """
+     NP.random.seed(seed)
+     plt.figure(figsize=(10, 4))
+ 
+     for i, n in enumerate(n_seq):
+         plt.subplot(1, 3, i+1)
+         world.loop(n)
+         world.draw()
+ 
+     plt.tight_layout()
+ 
+ 
+ def savefig(filename, **options):
+     """Save the current figure.
+ 
+     Keyword arguments are passed along to plt.savefig
+ 
+     https://matplotlib.org/api/_as_gen/matplotlib.pyplot.savefig.html
+ 
+     filename: string
+     """
+     print("Saving figure to file", filename)
+     plt.savefig(filename, **options)
+ 
+ 
+ def underride(d, **options):
+     """Add key-value pairs to d only if key is not in d.
+ 
+     d: dictionary
+     options: keyword args to add to d
+     """
+     for key, val in options.items():
+         d.setdefault(key, val)
+ 
+     return d
+ 
+ 
+ def decorate(**options):
+     """Decorate the current axes.
+ 
+     Call decorate with keyword arguments like
+ 
+     decorate(title='Title',
+              xlabel='x',
+              ylabel='y')
+ 
+     The keyword arguments can be any of the axis properties
+ 
+     https://matplotlib.org/api/axes_api.html
+ 
+     In addition, you can use `legend=False` to suppress the legend.
+ 
+     And you can use `loc` to indicate the location of the legend
+     (the default value is 'best')
+     """
+     loc = options.pop("loc", "best")
+     if options.pop("legend", True):
+         legend(loc=loc)
+ 
+     plt.gca().set(**options)
+     plt.tight_layout()
+ 
+ 
+ def legend(**options):
+     """Draws a legend only if there is at least one labeled item.
+ 
+     options are passed to plt.legend()
+     https://matplotlib.org/api/_as_gen/matplotlib.pyplot.legend.html
+ 
+     """
+     underride(options, loc="best", frameon=False)
+ 
+     ax = plt.gca()
+     handles, labels = ax.get_legend_handles_labels()
+     if handles:
+         ax.legend(handles, labels, **options)
+ 
+ 
+ def set_palette(*args, **kwds):
+     """Set the matplotlib color cycler.
+ 
+     args, kwds: same as for sns.color_palette
+ 
+     Also takes a boolean kwd, `reverse`, to indicate
+     whether the order of the palette should be reversed.
+ 
+     returns: list of colors
+     """
+     reverse = kwds.pop('reverse', False)
+     palette = SB.color_palette(*args, **kwds)
+ 
+     palette = list(palette)
+     if reverse:
+         palette.reverse()
+ 
+     cycler = plt.cycler(color=palette)
+     plt.gca().set_prop_cycle(cycler)
+     return palette
+ 
+ 
+ 
+ 
+ class Cell2D:
+     """Parent class for 2-D cellular automata."""
+ 
+     def __init__(self, n, m=None):
+         """Initializes the attributes.
+ 
+         n: number of rows
+         m: number of columns
+         """
+         m = n if m is None else m
+         self.array = NP.zeros((n, m), NP.uint8)
+ 
+     def add_cells(self, row, col, *strings):
+         """Adds cells at the given location.
+ 
+         row: top row index
+         col: left col index
+         strings: list of strings of 0s and 1s
+         """
+         for i, s in enumerate(strings):
+             self.array[row+i, col:col+len(s)] = NP.array([int(b) for b in s])
+ 
+     def loop(self, iters=1):
+         """Runs the given number of steps."""
+         for i in range(iters):
+             self.step()
+ 
+     def draw(self, **options):
+         """Draws the array.
+         """
+         draw_array(self.array, **options)
+ 
+     def animate(self, frames, interval=None, step=None):
+         """Animate the automaton.
+ 
+         frames: number of frames to draw
+         interval: time between frames in seconds
+         iters: number of steps between frames
+         """
+         if step is None:
+             step = self.step
+ 
+         plt.figure()
+         try:
+             for i in range(frames-1):
+                 self.draw()
+                 plt.show()
+                 if interval:
+                     sleep(interval)
+                 step()
+                 clear_output(wait=True)
+             self.draw()
+             plt.show()
+         except KeyboardInterrupt:
+             pass
+ 
+ 
+ def draw_array(array, **options):
+     """Draws the cells."""
+     n, m = array.shape
+     options = underride(options,
+                         cmap='Greens',
+                         alpha=0.7,
+                         vmin=0, vmax=1,
+                         interpolation='none',
+                         origin='upper',
+                         extent=[0, m, 0, n])
+ 
+     plt.axis([0, m, 0, n])
+     plt.xticks([])
+     plt.yticks([])
+ 
+     return plt.imshow(array, **options)
+
+
+ #SHELLING SEGREGATION (agents simulate residential patters, with a small preference to live near similar individuals)
+ 
+ def locs_where(condition):
+     """Find cells where a logical array is True.
+ 
+     condition: logical array
+ 
+     returns: list of location tuples
+     """
+     return list(zip(*NP.nonzero(condition)))
+ 
+ from matplotlib.colors import LinearSegmentedColormap
+ 
+ # make a custom color map
+ palette = SB.color_palette('muted')
+ colors = 'white', palette[1], palette[0]
+ cmap = LinearSegmentedColormap.from_list('cmap', colors)
+ 
+ from scipy.signal import correlate2d
+ #from Cell2D import Cell2D, draw_array
+ 
+ class Schelling(Cell2D):
+     """Represents a grid of Schelling agents."""
+ 
+     options = dict(mode='same', boundary='wrap')
+ 
+     kernel = NP.array([[1, 1, 1],
+                        [1, 0, 1],
+                        [1, 1, 1]], dtype=NP.int8)
+ 
+     def __init__(self, n, p):
+         """Initializes the attributes.
+ 
+         n: number of rows
+         p: threshold on the fraction of similar neighbors
+         """
+         self.p = p
+         # 0 is empty, 1 is red, 2 is blue
+         choices = NP.array([0, 1, 2], dtype=NP.int8)
+         probs = [0.1, 0.45, 0.45]
+         self.array = NP.random.choice(choices, (n, n), p=probs)
+ 
+     def count_neighbors(self):
+         """Surveys neighboring cells.
+ 
+         returns: tuple of
+             empty: True where cells are empty
+             frac_red: fraction of red neighbors around each cell
+             frac_blue: fraction of blue neighbors around each cell
+             frac_same: fraction of neighbors with the same color
+         """
+         a = self.array
+ 
+         empty = a==0
+         red = a==1
+         blue = a==2
+ 
+         # count red neighbors, blue neighbors, and total
+         num_red = correlate2d(red, self.kernel, **self.options)
+         num_blue = correlate2d(blue, self.kernel, **self.options)
+         num_neighbors = num_red + num_blue
+ 
+         # compute fraction of similar neighbors
+         frac_red = num_red / num_neighbors
+         frac_blue = num_blue / num_neighbors
+ 
+         # no neighbors is considered the same as no similar neighbors
+         # (this is an arbitrary choice for a rare event)
+         frac_red[num_neighbors == 0] = 0
+         frac_blue[num_neighbors == 0] = 0
+ 
+         # for each cell, compute the fraction of neighbors with the same color
+         frac_same = NP.where(red, frac_red, frac_blue)
+ 
+         # for empty cells, frac_same is NaN
+         frac_same[empty] = NP.nan
+ 
+         return empty, frac_red, frac_blue, frac_same
+ 
+     def segregation(self):
+         """Computes the average fraction of similar neighbors.
+ 
+         returns: fraction of similar neighbors, averaged over cells
+         """
+         _, _, _, frac_same = self.count_neighbors()
+         return NP.nanmean(frac_same)
+ 
+     def step(self):
+         """Executes one time step.
+ 
+         returns: fraction of similar neighbors, averaged over cells
+         """
+         a = self.array
+         empty, _, _, frac_same = self.count_neighbors()
+ 
+         # find the unhappy cells (ignore NaN in frac_same)
+         with NP.errstate(invalid='ignore'):
+             unhappy = frac_same < self.p
+         unhappy_locs = locs_where(unhappy)
+ 
+         # find the empty cells
+         empty_locs = locs_where(empty)
+ 
+         # shuffle the unhappy cells
+         if len(unhappy_locs):
+             NP.random.shuffle(unhappy_locs)
+ 
+         # for each unhappy cell, choose a random destination
+         num_empty = NP.sum(empty)
+ 
+         for source in unhappy_locs:
+             i = NP.random.randint(num_empty)
+             dest = empty_locs[i]
+ 
+             # move
+             a[dest] = a[source]
+             a[source] = 0
+             empty_locs[i] = source
+ 
+             # check that the number of empty cells is unchanged
+             num_empty2 = NP.sum(a==0)
+             assert num_empty == num_empty2
+ 
+         # return the average fraction of similar neighbors
+         return NP.nanmean(frac_same)
+ 
+     def draw(self):
+         """Draws the cells."""
+         return draw_array(self.array, cmap=cmap, vmax=2)
+ 
+ #SUGARSCAPE (artificial society where at every step the agents look around, find the closest agent filled with sugar, move and metabolize, they also become old, reproduce or die)
+
+ def make_locs(n, m):
+     """Makes array where each row is an index in an `n` by `m` grid.
+ 
+     n: int number of rows
+     m: int number of cols
+ 
+     returns: NumPy array
+     """
+     t = [(i, j) for i in range(n) for j in range(m)]
+     return NP.array(t)
+ 
+ def make_visible_locs(vision):
+     """Computes the kernel of visible cells.
+ 
+     vision: int distance
+     """
+     def make_array(d):
+         """Generates visible cells with increasing distance."""
+         a = NP.array([[-d, 0], [d, 0], [0, -d], [0, d]])
+         NP.random.shuffle(a)
+         return a
+ 
+     arrays = [make_array(d) for d in range(1, vision+1)]
+     return NP.vstack(arrays)
+ 
+ def distances_from(n, i, j):
+     """Computes an array of distances.
+ 
+     n: size of the array
+     i, j: coordinates to find distance from
+ 
+     returns: array of float
+     """
+     X, Y = NP.indices((n, n))
+     return NP.hypot(X-i, Y-j)
+ 
+ 
+ class Sugarscape(Cell2D):
+     """Represents an Epstein-Axtell Sugarscape."""
+ 
+     def __init__(self, n, **params):
+         """Initializes the attributes.
+ 
+         n: number of rows and columns
+         params: dictionary of parameters
+         """
+         self.n = n
+         self.params = params
+ 
+         # track variables
+         self.agent_count_seq = []
+ 
+         # make the capacity array
+         self.capacity = self.make_capacity()
+ 
+         # initially all cells are at capacity
+         self.array = self.capacity.copy()
+ 
+         # make the agents
+         self.make_agents()
+ 
+     def make_capacity(self):
+         """Makes the capacity array."""
+ 
+         # compute the distance of each cell from the peaks.
+         dist1 = distances_from(self.n, 15, 15)
+         dist2 = distances_from(self.n, 35, 35)
+         dist = NP.minimum(dist1, dist2)
+ 
+         # cells in the capacity array are set according to dist from peak
+         bins = [21, 16, 11, 6]
+         a = NP.digitize(dist, bins)
+         return a
+ 
+     def make_agents(self):
+         """Makes the agents."""
+ 
+         # determine where the agents start and generate locations
+         n, m = self.params.get('starting_box', self.array.shape)
+         locs = make_locs(n, m)
+         NP.random.shuffle(locs)
+ 
+         # make the agents
+         num_agents = self.params.get('num_agents', 400)
+         assert(num_agents <= len(locs))
+         self.agents = [Agent(locs[i], self.params)
+                        for i in range(num_agents)]
+ 
+         # keep track of which cells are occupied
+         self.occupied = set(agent.loc for agent in self.agents)
+ 
+     def grow(self):
+         """Adds sugar to all cells and caps them by capacity."""
+         grow_rate = self.params.get('grow_rate', 1)
+         self.array = NP.minimum(self.array + grow_rate, self.capacity)
+ 
+     def look_and_move(self, center, vision):
+         """Finds the visible cell with the most sugar.
+ 
+         center: tuple, coordinates of the center cell
+         vision: int, maximum visible distance
+ 
+         returns: tuple, coordinates of best cell
+         """
+         # find all visible cells
+         locs = make_visible_locs(vision)
+         locs = (locs + center) % self.n
+ 
+         # convert rows of the array to tuples
+         locs = [tuple(loc) for loc in locs]
+ 
+         # select unoccupied cells
+         empty_locs = [loc for loc in locs if loc not in self.occupied]
+ 
+         # if all visible cells are occupied, stay put
+         if len(empty_locs) == 0:
+             return center
+ 
+         # look up the sugar level in each cell
+         t = [self.array[loc] for loc in empty_locs]
+ 
+         # find the best one and return it
+         # (in case of tie, argmax returns the first, which
+         # is the closest)
+         i = NP.argmax(t)
+         return empty_locs[i]
+ 
+     def harvest(self, loc):
+         """Removes and returns the sugar from `loc`.
+ 
+         loc: tuple coordinates
+         """
+         sugar = self.array[loc]
+         self.array[loc] = 0
+         return sugar
+ 
+     def step(self):
+         """Executes one time step."""
+         replace = self.params.get('replace', False)
+ 
+         # loop through the agents in random order
+         random_order = NP.random.permutation(self.agents)
+         for agent in random_order:
+ 
+             # mark the current cell unoccupied
+             self.occupied.remove(agent.loc)
+ 
+             # execute one step
+             agent.step(self)
+ 
+             # if the agent is dead, remove from the list
+             if agent.is_starving() or agent.is_old():
+                 self.agents.remove(agent)
+                 if replace:
+                     self.add_agent()
+             else:
+                 # otherwise mark its cell occupied
+                 self.occupied.add(agent.loc)
+ 
+         # update the time series
+         self.agent_count_seq.append(len(self.agents))
+ 
+         # grow back some sugar
+         self.grow()
+         return len(self.agents)
+ 
+     def add_agent(self):
+         """Generates a new random agent.
+ 
+         returns: new Agent
+         """
+         new_agent = Agent(self.random_loc(), self.params)
+         self.agents.append(new_agent)
+         self.occupied.add(new_agent.loc)
+         return new_agent
+ 
+     def random_loc(self):
+         """Choose a random unoccupied cell.
+ 
+         returns: tuple coordinates
+         """
+         while True:
+             loc = tuple(NP.random.randint(self.n, size=2))
+             if loc not in self.occupied:
+                 return loc
+ 
+     def draw(self):
+         """Draws the cells."""
+         draw_array(self.array, cmap='YlOrRd', vmax=9, origin='lower')
+ 
+         # draw the agents
+         xs, ys = self.get_coords()
+         self.points = plt.plot(xs, ys, '.', color='red')[0]
+ 
+     def get_coords(self):
+         """Gets the coordinates of the agents.
+ 
+         Transforms from (row, col) to (x, y).
+ 
+         returns: tuple of sequences, (xs, ys)
+         """
+         agents = self.agents
+         rows, cols = NP.transpose([agent.loc for agent in agents])
+         xs = cols + 0.5
+         ys = rows + 0.5
+         return xs, ys
+ 
+  
+ class Agent:
+ 
+     def __init__(self, loc, params):
+         """Creates a new agent at the given location.
+ 
+         loc: tuple coordinates
+         params: dictionary of parameters
+         """
+         self.loc = tuple(loc)
+         self.age = 0
+         self.params = params  # Store input dictionary for later reference
+ 
+         # extract the parameters
+         max_vision = params.get('max_vision', 6) #How many km away an agent can see to search for resources.
+         max_metabolism = params.get('max_metabolism', 4) #The amount of sugar an agent must consume per time step to stay alive.
+         min_lifespan = params.get('min_lifespan', 1)
+         max_lifespan = params.get('max_lifespan', 9)
+         min_sugar = params.get('min_sugar', 0)
+         max_sugar = params.get('max_sugar', 100) #The total amount of accumulated sugar an agent has harvested
+ 
+         # choose attributes
+         self.vision = NP.random.randint(1, max_vision+1)
+         self.metabolism = NP.random.uniform(1, max_metabolism)
+         self.lifespan = NP.random.uniform(min_lifespan, max_lifespan)
+         self.sugar = NP.random.uniform(min_sugar, max_sugar)
+ 
+     def step(self, env):
+         """Look around, move, and harvest.
+ 
+         env: Sugarscape
+         """
+         self.loc = env.look_and_move(self.loc, self.vision)
+         self.sugar += env.harvest(self.loc) - self.metabolism
+         self.age += 1
+ 
+     def is_starving(self):
+         """Checks if sugar has gone negative."""
+         return self.sugar < 0
+ 
+     def is_old(self):
+         """Checks if lifespan is exceeded."""
+         return self.age > self.lifespan
+ 
+
+ #Boltzman wealth distribution (simulate a network of people starting with 1 unit of wealth that During each time-step, each agents with positive wealth randomly selects a trading partner and gives them one unit of their wealth)
+
+ 
+ class WealthAgent(AP.Agent):
+  def setup(self):
+      self.wealth = 1
+  def wealth_transfer(self):
+   if self.wealth > 0:
+    partner = self.model.agents.random()
+    partner.wealth += 1
+    self.wealth -= 1
+ 
+ def gini(x):
+  x = NP.array(x)
+  mad = NP.abs(NP.subtract.outer(x, x)).mean()  # Mean absolute difference
+  rmad = mad / NP.mean(x)  # Relative mean absolute difference
+  return 0.5 * rmad
+ 
+ class boltzman(AP.Model):
+  def setup(self):
+   self.agents = AP.AgentList(self, self.p.agents, WealthAgent)
+  def step(self):
+   self.agents.wealth_transfer()
+  def update(self):
+   self.record('Gini Coefficient', gini(self.agents.wealth))
+  def end(self):
+   self.agents.record('wealth')
+ 
+
+
+ 
+ #SIR virus spread (people, which can be in one of the following three conditions: susceptible to the disease (S), infected (I), or recovered (R). The agents are connected to each other through a small-world network of peers. At every time-step, infected agents can infect their peers or recover from the disease based on random chance.)
+ 
+ class Person(AP.Agent):
+ 
+     def setup(self):
+         """ Initialize a new variable at agent creation. """
+         self.condition = 0  # Susceptible = 0, Infected = 1, Recovered = 2
+ 
+     def being_sick(self):
+         """ Spread disease to peers in the network. """
+         rng = self.model.random
+         for n in self.network.neighbors(self):
+             if n.condition == 0 and self.p.infection_chance > rng.random():
+                 n.condition = 1  # Infect susceptible peer
+         if self.p.recovery_chance > rng.random():
+             self.condition = 2  # Recover from infection
+ 
+ 
+ class VirusModel(AP.Model):
+ 
+     def setup(self):
+         """ Initialize the agents and network of the model. """
+ 
+         # Prepare a small-world network
+         graph = NX.watts_strogatz_graph(
+             self.p.population,
+             self.p.number_of_neighbors,
+             self.p.network_randomness)
+ 
+         # Create agents and network
+         self.agents = AP.AgentList(self, self.p.population, Person)
+         self.network = self.agents.network = AP.Network(self, graph)
+         self.network.add_agents(self.agents, self.network.nodes)
+ 
+         # Infect a random share of the population
+         I0 = int(self.p.initial_infection_share * self.p.population)
+         self.agents.random(I0).condition = 1
+ 
+     def update(self):
+         """ Record variables after setup and each step. """
+ 
+         # Record share of agents with each condition
+         for i, c in enumerate(('S', 'I', 'R')):
+             n_agents = len(self.agents.select(self.agents.condition == i))
+             self[c] = n_agents / self.p.population
+             self.record(c)
+ 
+         # Stop simulation if disease is gone
+         if self.I == 0:
+             self.stop()
+ 
+     def step(self):
+         """ Define the models' events per simulation step. """
+ 
+         # Call 'being_sick' for infected agents
+         self.agents.select(self.agents.condition == 1).being_sick()
+ 
+     def end(self):
+         """ Record evaluation measures at the end of the simulation. """
+ 
+         # Record final evaluation measures
+         self.report('Total share infected', self.I + self.R)
+         self.report('Peak share infected', max(self.log['I']))
+ 
+
+ #TURCHIN Multi-Path Forecasting: a contagion algorithm (variant of the SIR model with  Naive, Radicalized and Moderate individuals, where naive can be infected by radiczlized, and moderate correspond to the recovered ones); a political stress index prediction model (the growing inverse relative income, an average population age around 23 years, and the growth of the elite with respect to the population, increase the probability of radicalization contagion); and an elite dynamics module (if the elites do not differ in their relative income from commoners, the rate of relative elite on the whole populaiton is simply the net rate of social mobility, otherwise the surplus elites, those for whom elite positions are not available, tend to become radicalized, except for those who became moderates)
+ 
+ mpfdoc='''
+ Explanation of the Code:
+ 
+ Individual Class:
+ 
+ Inherits from AP.Agent.
+ condition: Represents the state of the individual (0: Naive, 1: Radicalized, 2: Moderate).
+ relative_income: Stores the individual's relative income.
+ is_elite: A boolean indicating if the individual is part of the elite.
+ contagion(): Implements the radicalization contagion. A naive individual can become radicalized if they have a radicalized neighbor and the political_stress_index is high enough (compared to a random number).
+ recover(): Implements the transition from radicalized to moderate based on a moderation_chance.
+ MPFModel Class:
+ 
+ Inherits from AP.Model.
+ setup():
+ Initializes the population size and elite share.
+ Creates an AP.AgentList of Individual agents.
+ Creates a small-world network using networkx and assigns it to the agents.
+ Randomly selects a fraction of the population to be the initial elite.
+ Sets the initial relative income for all individuals.
+ Initializes a small fraction of the population as initially radicalized.
+ Sets the equilibrium_elite_share.
+ Initializes the political_stress_index.
+ calculate_political_stress():
+ Calculates the average relative income of the population.
+ Computes the immiseration factor (inverse of relative income).
+ Calculates elite_overproduction (current elite share minus the equilibrium share).
+ Implements a simplified youth_bulge_factor based on the average_age parameter.
+ Calculates the political_stress_index using Turchin's formula: α(t)=α 0 +α w (w 0 –w)+α e (e–e 0 )+A 20
+   where:
+ α0 =0.1 (base level)
+ αw =1 (weight for immiseration)
+ αe =0.5 (weight for elite overproduction)
+ w0 is the initial_relative_income
+ w is the current average relative income
+ e is the current elite share
+ e0 is the equilibrium_elite_share
+ A20 is the contribution of the youth bulge.
+ Ensures the political_stress_index is not negative.
+ update_elite_dynamics():
+ Calculates the average income for commoners and elites.
+ Determines if there's a significant relative income difference between elites and commoners.
+ Implements a simplified model of social mobility based on net_social_mobility_rate.
+ If elites do not have a significantly higher relative income, the number of elites adjusts towards an equilibrium based on social mobility.
+ If there's a surplus of elites (more than the equilibrium), a fraction of them (those who are not already radicalized) may become radicalized or moderate.
+ Adjusts the number of elite individuals in the population to move towards the target elite count.
+ update_relative_income():
+ Updates the relative income of all agents based on a provided income_trend function. This is a simplified implementation; a more complex economic model could be integrated here.
+ step():
+ Calls update_relative_income() to update the economic driver.
+ Calls calculate_political_stress() to update the environment.
+ Calls contagion() on all agents to simulate the spread of radicalization.
+ Calls recover() on all agents to simulate the transition to the moderate state.
+ Calls update_elite_dynamics() to adjust the elite population.
+ Records the proportion of Naive, Radicalized, and Moderate individuals, the political_stress_index, the average relative income, and the elite share.
+ end():
+ Records the final and peak shares of radicalized individuals.
+ income_trajectory(t) Function:
+ 
+ A sample function that defines how the average relative income changes over time (t). You can customize this function to simulate different economic scenarios.
+ Parameter Dictionary:
+ 
+ parameters: A dictionary holding all the model parameters, such as population size, initial conditions, network properties, and parameters for the political stress and elite dynamics.
+ Model Instantiation and Running:
+ 
+ An instance of MPFModel is created with the defined parameters.
+ model.run() executes the simulation.
+ '''
+ 
+ class Individual(AP.Agent):
+     """ An individual in the Multi-Path Forecasting model. """
+ 
+     def setup(self):
+         """ Initialize individual attributes. """
+         self.condition = 0  # 0: Naive, 1: Radicalized, 2: Moderate (Recovered)
+         self.relative_income = self.model.p.initial_relative_income
+         self.is_elite = False
+ 
+     def contagion(self):
+         """ Contagion of radicalization based on neighbors' conditions. """
+         if self.condition == 0:  # Naive individual
+             rng = self.model.random
+             for neighbor in self.network.neighbors(self):
+                 if neighbor.condition == 1 and self.model.political_stress_index > rng.random():
+                     self.condition = 1  # Become radicalized
+ 
+     def recover(self):
+         """ Individuals can become moderate (recovered). """
+         if self.condition == 1:  # Radicalized individual
+             rng = self.model.random
+             if self.model.p.moderation_chance > rng.random():
+                 self.condition = 2
+ 
+ class MPFModel(AP.Model):
+     """ An Agent-Based Model implementing Turchin's Multi-Path Forecasting. """
+ 
+     def setup(self):
+         """ Initialize the population, network, and initial conditions. """
+         self.population_size = self.p.population
+         self.initial_elite_share = self.p.initial_elite_share
+         self.agents = AP.AgentList(self, self.population_size, Individual)
+ 
+         # Create a small-world network
+         graph = NX.watts_strogatz_graph(
+             self.population_size,
+             self.p.number_of_neighbors,
+             self.p.network_randomness
+         )
+         self.network = self.agents.network = AP.Network(self, graph)
+         self.network.add_agents(self.agents, self.network.nodes)
+ 
+         # Initialize elite individuals
+         initial_elite_count = int(self.initial_elite_share * self.population_size)
+         elite_indices = self.random.sample(range(self.population_size), initial_elite_count)
+         for i in elite_indices:
+             self.agents[i].is_elite = True
+ 
+         # Initialize relative income for all individuals
+         for agent in self.agents:
+             agent.relative_income = self.p.initial_relative_income
+ 
+         # Initialize a small fraction of the population as initially radicalized
+         initial_radicalized_count = int(self.p.initial_radicalized_share * self.population_size)
+         radicalized_indices = self.random.sample(range(self.population_size), initial_radicalized_count)
+         for i in radicalized_indices:
+             self.agents[i].condition = 1
+ 
+         # Set initial equilibrium elite share
+         self.equilibrium_elite_share = 0.01
+ 
+         # Initialize political stress index
+         self.political_stress_index = 0.0
+ 
+     def calculate_political_stress(self):
+         """ Calculate the political stress index based on immiseration and elite overproduction. """
+         # Immiseration (inverse relative income)
+         average_relative_income = NP.mean([agent.relative_income for agent in self.agents])
+         immiseration = 1 / average_relative_income if average_relative_income > 0 else 0
+ 
+         # Elite overproduction
+         current_elite_share = sum(1 for agent in self.agents if agent.is_elite) / self.population_size
+         elite_overproduction = current_elite_share - self.equilibrium_elite_share
+ 
+         # Age structure (simplified - assuming a constant average age for now)
+         youth_bulge_factor = 1 if 20 <= self.p.average_age <= 26 else 0  # Simplified youth bulge
+ 
+         alpha_0 = 0.1
+         alpha_w = 1
+         alpha_e = 0.5
+         A_20 = youth_bulge_factor * self.p.youth_bulge_weight  # Contribution of youth bulge
+ 
+         self.political_stress_index = alpha_0 + alpha_w * (self.p.initial_relative_income - average_relative_income) + alpha_e * elite_overproduction + A_20
+         self.political_stress_index = max(0, self.political_stress_index) # Ensure it's not negative
+ 
+     def update_elite_dynamics(self):
+         """ Update the elite population based on relative income differences and social mobility. """
+         average_commoner_income = NP.mean([agent.relative_income for agent in self.agents if not agent.is_elite]) if any(not agent.is_elite for agent in self.agents) else self.p.initial_relative_income
+         average_elite_income = NP.mean([agent.relative_income for agent in self.agents if agent.is_elite]) if any(agent.is_elite for agent in self.agents) else self.p.initial_relative_income
+ 
+         relative_income_difference = average_elite_income - average_commoner_income
+ 
+         # Net rate of social mobility (simplified for now)
+         net_social_mobility_rate = self.p.social_mobility_rate
+ 
+         current_elite_count = sum(1 for agent in self.agents if agent.is_elite)
+ 
+         if abs(relative_income_difference) < 1e-6:  # Elites do not differ in relative income
+             target_elite_count = int((self.equilibrium_elite_share + net_social_mobility_rate) * self.population_size)
+         else:
+             # Surplus elites tend to become radicalized or moderate
+             surplus_elites = current_elite_count - int(self.equilibrium_elite_share * self.population_size)
+             if surplus_elites > 0:
+                 non_elite_agents = [agent for agent in self.agents if not agent.is_elite and agent.condition != 1] # Avoid radicalizing already radicalized
+                 if non_elite_agents:
+                     num_to_radicalize = min(surplus_elites, len(non_elite_agents))
+                     radicalize_candidates = self.random.sample(non_elite_agents, num_to_radicalize)
+                     for agent in radicalize_candidates:
+                         if self.random.random() > self.p.moderation_chance: # Some become moderate
+                             agent.condition = 1 # Become radicalized
+                         else:
+                             agent.condition = 2 # Become moderate
+ 
+             target_elite_count = int((self.equilibrium_elite_share + net_social_mobility_rate) * self.population_size)
+ 
+         # Adjust the number of elites towards the target
+         diff_elite = target_elite_count - current_elite_count
+         if diff_elite > 0:
+             non_elite_candidates = [agent for agent in self.agents if not agent.is_elite]
+             if non_elite_candidates:
+                 promote_indices = self.random.sample(range(len(non_elite_candidates)), min(diff_elite, len(non_elite_candidates)))
+                 for index in promote_indices:
+                     non_elite_candidates[index].is_elite = True
+         elif diff_elite < 0:
+             elite_candidates = [agent for agent in self.agents if agent.is_elite]
+             if elite_candidates:
+                 demote_indices = self.random.sample(range(len(elite_candidates)), min(-diff_elite, len(elite_candidates)))
+                 for index in demote_indices:
+                     elite_candidates[index].is_elite = False
+ 
+     def update_relative_income(self):
+         """ Update the relative income distribution (simplified). """
+         # This is a very simplified implementation. A more detailed model would be needed.
+         w_min = 0.15
+         w_max = 0.95
+         self.current_relative_income = max(w_min, min(w_max, self.p.income_trend(self.t)))
+         for agent in self.agents:
+             agent.relative_income = self.current_relative_income
+ 
+     def step(self):
+         """ Define the model's events per step. """
+         self.update_relative_income()
+         self.calculate_political_stress()
+         self.agents.contagion()
+         self.agents.recover()
+         self.update_elite_dynamics()
+ 
+         # Record variables
+         self.record("Naive", len(self.agents.select(self.agents.condition == 0)) / self.population_size)
+         self.record("Radicalized", len(self.agents.select(self.agents.condition == 1)) / self.population_size)
+         self.record("Moderate", len(self.agents.select(self.agents.condition == 2)) / self.population_size)
+         self.record("PSI", self.political_stress_index)
+         self.record("avg Income", NP.mean([agent.relative_income for agent in self.agents]))
+         self.record("Elite Share", sum(1 for agent in self.agents if agent.is_elite) / self.population_size)
+ 
+     def end(self):
+         """ Record evaluation measures at the end of the simulation. """
+         self.report("Final Radicalized Share", self.log["Radicalized"][-1])
+         self.report("Peak Radicalized Share", max(self.log["Radicalized"]))
+ 
+ def income_trajectory(t):
+     """ A sample function for the trajectory of relative income. """
+     # Example: A sinusoidal trend with a general downward tendency
+     amplitude = 0.05
+     frequency = 0.02
+     downward_trend = -0.0005 * t
+     initial_w = 0.9
+     return initial_w + amplitude * NP.sin(frequency * t) + downward_trend
+ 
+ 
+ 
+ if '-a.mf=' in o: # run Turchin's MPF
+  n=input('population:')
+  r_=o.split('='); r_=r_[1].split(',');
+  print(f"running Multipath forecasting algorithm (https://en.wikipedia.org/wiki/Cliodynamics)\nwith a population of {r_[0]} agents, and {r_[1]} time steps")
+
+  parameters = {
+      'population': int(r_[0]),
+      'initial_relative_income': 0.9,
+      'initial_elite_share': 0.02,
+      'initial_radicalized_share': 0.01,
+      'number_of_neighbors': 2,
+      'network_randomness': 0.2,
+      'moderation_chance': 0.05,
+      'social_mobility_rate': float(r_[2]),
+      'average_age': 23,
+      'youth_bulge_weight': 0.1,
+      'income_trend': income_trajectory,
+      'steps': int(r_[1])
+  }
+  
+  # Run the MPF model
+  mpf_model = MPFModel(parameters)
+  results = mpf_model.run()
+  print(results.variables.MPFModel)
+  print('---END PROCESS---'); sys.exit();
+ 
+ 
+ if '-a.wd=' in o: #boltzman wealth distribution
+  r_=o.split('='); r_=r_[1].split(',');
+  print(f"running Boltzman wealth distribution algorithm (https://en.wikipedia.org/wiki/Boltzmann_Fair_Division)\nwith a population of {r_[0]} agents, and {r_[1]} time steps")
+
+  parameters = {'agents': int(r_[0]), 'steps': int(r_[1])}
+  model = boltzman(parameters)
+  results = model.run()
+  
+  data = results.variables.boltzman
+  print(data)
+  print('---END PROCESS---'); sys.exit();
+ 
+ if '-a.sir=' in o: #sir virus spread model
+  r_=o.split('='); r_=r_[1].split(',');
+  print(f"running SIR algorithm (https://en.wikipedia.org/wiki/Mathematical_modelling_of_infectious_diseases#The_SIR_model)\nwith a population of {r_[0]}, an infection chance of {r_[1]}")
+
+  parameters = {
+      'population': int(r_[0]),
+      'infection_chance': float(r_[1]),
+      'recovery_chance': 0.3,
+      'initial_infection_share': 0.1,
+      'number_of_neighbors': 2,
+      'network_randomness': 0.5
+  }
+  
+  model = VirusModel(parameters)
+  results = model.run()
+  print(results.variables.VirusModel)
+
+ if '-a.ss=' in o: #shelling segregation
+  r_=o.split('='); r_=r_[1].split(',');
+  print(f"running Shelling segregation algorithm (https://en.wikipedia.org/wiki/Schelling%27s_model_of_segregation)\nwith a territory of {r_[0]} km2 with a probability of {r_[1]} for {r_[2]} time steps")
+
+  grid = Schelling(n=int(r_[0]), p=float(r_[1]))  # Adjust grid size and threshold as needed
+  steps = int(r_[2])
+  # Collect data as a list of dictionaries
+  segregation_scores = []
+  for i in range(steps):
+      score = grid.step()
+      segregation_scores.append({ "Segregation Score": score})
+
+  df = PD.DataFrame(segregation_scores)
+  print(df)
+  print('---END PROCESS---'); sys.exit();
+ 
+ # You can now visualize the segregation scores:
+ #plt.plot(range(steps), segregation_scores)
+ #plt.xlabel("Step")
+ #plt.ylabel("Segregation Score")
+ #plt.title("Schelling Segregation Simulation")
+ #plt.show()
+ 
+ 
+ 
+ if '-a.s=' in o:  #epstein & axtell's sugarscape
+  r_=o.split('='); r_=r_[1].split(',');
+  print(f"running sugarscape algorithm (https://en.wikipedia.org/wiki/Sugarscape)\nwith a population of {r_[1]} agents in a {r_[0]} km2 territory for {r_[2]} time steps")
+  env = Sugarscape(int(r_[0]),
+                  num_agents=int(r_[1]),
+                  #min_lifespan=0,
+                  #max_lifespan=3,
+                  replace=True)
+  #print(dir(env))
+  #for step in range(10):  # Example: run for 10 steps
+  #    num_agents_at_step = env.step()
+  #    print(f"Step {step + 1}: Number of agents = {num_agents_at_step}")
+  #
+  #    for agent in env.agents:
+  #        print(f"  Agent at ({agent.loc}): Vision={agent.vision}, Metabolism={agent.metabolism}, Sugar={agent.sugar}, Age={agent.age}")
+  avg_scores=[]
+  timesteps=int(r_[2])
+  for step in range(timesteps):  # Run the simulation for 50 steps
+   visions = [agent.vision for agent in env.agents]
+   metabolisms = [agent.metabolism for agent in env.agents]
+   sugars = [agent.sugar for agent in env.agents]
+   ages = [agent.age for agent in env.agents]
+   avg_scores.append({"agents": env.step(), "avgVision": NP.mean(visions), "avgMetabolism": NP.mean(metabolisms), "avgSugar": NP.mean(sugars), "avgAge": NP.mean(ages)})
+ 
+  df = PD.DataFrame(avg_scores)
+  dfn = (df - df.min()) / (df.max() - df.min())
+  print(dfn)
+  print('---END PROCESS---'); sys.exit();
+
+
+
+
+#---process mining
 
 if '-m.pnam' in o: # *petri net from alpha miner algorithm*
  k=10
