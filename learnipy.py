@@ -134,11 +134,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -t.sarima   *seasonal auto regression integrated moving average*
 * -t.hwes     *Holt-Winters exponential smoothing*
 #### agent based modeling
-* -a.ss=g,p,t *shelling segregation simulation. g=grid, p=probability, t=timesteps*
-* -a.wd=n,t   *boltzman wealth distribution (gini index). n=population, t=timesteps*
-* -a.s=g,n,t  *sugarscape life simulation. g=grid, n=agents, t=timesteps*
-* -a.sir=n,p  *SIR infection spread simulation. n=population, p=probability of infection*
-* -a.mf=n,t,r *Multipath forecasting simulation. n=population, t=time steps, r=social mobility*
+* -a.ss=g,p.t *shelling segregation simulation. g=grid (int), p=probability (float), t=timesteps*
+* -a.wd=n,t   *boltzman wealth distribution simulaiton. n=population (int), t=timesteps*
+* -a.s=g,n,t  *sugarscape life simulation. g=grid (int), n=agents (int), t=timesteps*
+* -a.sir=n,p  *SIR infection spread simulation. n=population (int), p=probability of infection (float)*
+* -a.mf=n,t,r *Multipath forecasting simulation. n=population (int), t=timesteps, r=social mobility (float)*
 #### evaluation
 * -e.tts=0.2  *train-test split. 0.2=20% test split. ignored if test set is provided*
 
@@ -1516,8 +1516,10 @@ if '-a.' in o:
  
  
  if '-a.mf=' in o: # run Turchin's MPF
-  n=input('population:')
   r_=o.split('='); r_=r_[1].split(',');
+  if x_ in locals():
+   r_[1]=len(x_)
+
   print(f"running Multipath forecasting algorithm (https://en.wikipedia.org/wiki/Cliodynamics)\nwith a population of {r_[0]} agents, and {r_[1]} time steps")
 
   parameters = {
@@ -1539,23 +1541,30 @@ if '-a.' in o:
   mpf_model = MPFModel(parameters)
   results = mpf_model.run()
   print(results.variables.MPFModel)
+  results=results.variables.MPFModel
+  print('\nevaluation')
+  results=PD.concat([results, x_], axis=1); print(results.corr())
   print('---END PROCESS---'); sys.exit();
- 
  
  if '-a.wd=' in o: #boltzman wealth distribution
   r_=o.split('='); r_=r_[1].split(',');
+  if x_ in locals():
+   r_[1]=len(x_)
+
   print(f"running Boltzman wealth distribution algorithm (https://en.wikipedia.org/wiki/Boltzmann_Fair_Division)\nwith a population of {r_[0]} agents, and {r_[1]} time steps")
 
   parameters = {'agents': int(r_[0]), 'steps': int(r_[1])}
   model = boltzman(parameters)
   results = model.run()
-  
   data = results.variables.boltzman
   print(data)
+  print('\nevaluation')
+  results=PD.concat([data, x_], axis=1); print(results.corr())
   print('---END PROCESS---'); sys.exit();
  
  if '-a.sir=' in o: #sir virus spread model
   r_=o.split('='); r_=r_[1].split(',');
+
   print(f"running SIR algorithm (https://en.wikipedia.org/wiki/Mathematical_modelling_of_infectious_diseases#The_SIR_model)\nwith a population of {r_[0]}, an infection chance of {r_[1]}")
 
   parameters = {
@@ -1570,9 +1579,17 @@ if '-a.' in o:
   model = VirusModel(parameters)
   results = model.run()
   print(results.variables.VirusModel)
+  results=results.variables.MPFModel
+  print('\nevaluation')
+  results=PD.concat([results, x_], axis=1); print(results.corr())
+  print('---END PROCESS---'); sys.exit();
+
+
 
  if '-a.ss=' in o: #shelling segregation
   r_=o.split('='); r_=r_[1].split(',');
+  if x_ in locals():
+   r_[2]=len(x_)
   print(f"running Shelling segregation algorithm (https://en.wikipedia.org/wiki/Schelling%27s_model_of_segregation)\nwith a territory of {r_[0]} km2 with a probability of {r_[1]} for {r_[2]} time steps")
 
   grid = Schelling(n=int(r_[0]), p=float(r_[1]))  # Adjust grid size and threshold as needed
@@ -1585,6 +1602,8 @@ if '-a.' in o:
 
   df = PD.DataFrame(segregation_scores)
   print(df)
+  print('\nevaluation')
+  results=PD.concat([results, x_], axis=1); print(results.corr())
   print('---END PROCESS---'); sys.exit();
  
  # You can now visualize the segregation scores:
@@ -1598,6 +1617,9 @@ if '-a.' in o:
  
  if '-a.s=' in o:  #epstein & axtell's sugarscape
   r_=o.split('='); r_=r_[1].split(',');
+    if x_ in locals():
+   r_[2]=len(x_)
+
   print(f"running sugarscape algorithm (https://en.wikipedia.org/wiki/Sugarscape)\nwith a population of {r_[1]} agents in a {r_[0]} km2 territory for {r_[2]} time steps")
   env = Sugarscape(int(r_[0]),
                   num_agents=int(r_[1]),
@@ -1623,6 +1645,8 @@ if '-a.' in o:
   df = PD.DataFrame(avg_scores)
   dfn = (df - df.min()) / (df.max() - df.min())
   print(dfn)
+  print('\nevaluation')
+  results=PD.concat([results, x_], axis=1); print(results.corr())
   print('---END PROCESS---'); sys.exit();
 
 
