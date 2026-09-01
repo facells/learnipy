@@ -66,6 +66,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -d.m=1      *fill class missing values with mean/mode (otherwise are deleted by default)*
 * -d.g=c_a|s  *group rows by column c as a=average or s=sum*
 * -d.viz      *print pca-projected 2d data scatterplot and other visualizations*
+* -d.r        *reverse lines in data*
 * -d.md       *model details. prints info on algorithm parameters and data modeling*
 * -d.fdst     *print info on feature distribution*
 * -d.data     *show preview of processed data*
@@ -134,11 +135,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * -t.sarima   *seasonal auto regression integrated moving average*
 * -t.hwes     *Holt-Winters exponential smoothing*
 #### agent based modeling
-* -a.ss=g,p.t *shelling segregation simulation. g=grid (int), p=probability (float), t=timesteps*
-* -a.wd=n,t   *boltzman wealth distribution simulaiton. n=population (int), t=timesteps*
-* -a.s=g,n,t  *sugarscape life simulation. g=grid (int), n=agents (int), t=timesteps*
-* -a.sir=n,p  *SIR infection spread simulation. n=population (int), p=probability of infection (float)*
-* -a.mf=n,t,r *Multipath forecasting simulation. n=population (int), t=timesteps, r=social mobility (float)*
+* -a.ss=i,f   *shelling segregation simulation. i=grid (int), f=probability (float)*
+* -a.wd=i     *boltzman wealth distribution simulaiton. i=population (int)*
+* -a.s=i,i    *sugarscape life simulation. i=grid (int), i=agents (int)*
+* -a.sir=i,p  *SIR infection spread simulation. i=population (int), p=probability of infection (float)*
+* -a.mf=i,p   *Multipath forecasting simulation. i=population (int), p=social mobility (float)*
 #### evaluation
 * -e.tts=0.2  *train-test split. 0.2=20% test split. ignored if test set is provided*
 
@@ -156,7 +157,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 * v0.10: fixed -s.dt, added process mining, transformers. removed generate data, shuffle on -e.tts
 * v0.11: fixed -p.trs, added -p.lda, -u.dcs, -u.irr
 * v0.12: added feature importance in -s algorithms, removed -d.pred, -d.r=0, reduction by default
-* v0.14: added agent based models
+* v0.13: added agent based models, added -d.r
 
 ### 6) TO DO LIST
 * permutation feature importance
@@ -587,6 +588,13 @@ if '-d.viz' in o:
  pca=pacmap.PaCMAP(n_components=2, n_neighbors=None, MN_ratio=0.5, FP_ratio=2.0); 
  #pca=SK.decomposition.PCA(2);
  print('all scatterplots are 2D PaCMAp-reduced spaces\ntheory: https://en.wikipedia.org/wiki/Dimensionality_reduction#PaCMAp');
+
+
+if '-d.r' in o:
+ print('reverse lines in data\n actual data:')
+ x_ = x_[::-1] #reverse data
+ print(x_)
+
 
 #---unpreprocessed data ready
 
@@ -1211,7 +1219,7 @@ if '-a.' in o:
  #SIR virus spread (people, which can be in one of the following three conditions: susceptible to the disease (S), infected (I), or recovered (R). The agents are connected to each other through a small-world network of peers. At every time-step, infected agents can infect their peers or recover from the disease based on random chance.)
  
  class Person(AP.Agent):
- 
+     
      def setup(self):
          """ Initialize a new variable at agent creation. """
          self.condition = 0  # Susceptible = 0, Infected = 1, Recovered = 2
@@ -1255,12 +1263,12 @@ if '-a.' in o:
              self[c] = n_agents / self.p.population
              self.record(c)
  
-         # Stop simulation if disease is gone
-         if self.I == 0:
+         # Stop simulation if disease is gone OR if user-defined max steps reached
+         if self.I == 0 or (hasattr(self.p, 'steps') and self.t >= self.p.steps):
              self.stop()
  
      def step(self):
-         """ Define the models' events per simulation step. """
+         """ Define the model's events per simulation step. """
  
          # Call 'being_sick' for infected agents
          self.agents.select(self.agents.condition == 1).being_sick()
@@ -1272,6 +1280,7 @@ if '-a.' in o:
          self.report('Total share infected', self.I + self.R)
          self.report('Peak share infected', max(self.log['I']))
  
+
 
  #TURCHIN Multi-Path Forecasting: a contagion algorithm (variant of the SIR model with  Naive, Radicalized and Moderate individuals, where naive can be infected by radiczlized, and moderate correspond to the recovered ones); a political stress index prediction model (the growing inverse relative income, an average population age around 23 years, and the growth of the elite with respect to the population, increase the probability of radicalization contagion); and an elite dynamics module (if the elites do not differ in their relative income from commoners, the rate of relative elite on the whole populaiton is simply the net rate of social mobility, otherwise the surplus elites, those for whom elite positions are not available, tend to become radicalized, except for those who became moderates)
  
@@ -1292,7 +1301,7 @@ if '-a.' in o:
  setup():
  Initializes the population size and elite share.
  Creates an AP.AgentList of Individual agents.
- Creates a small-world network using networkx and assigns it to the agents.
+ Creates a barabasi network using networkx and assigns it to the agents.
  Randomly selects a fraction of the population to be the initial elite.
  Sets the initial relative income for all individuals.
  Initializes a small fraction of the population as initially radicalized.
@@ -1378,10 +1387,11 @@ if '-a.' in o:
          self.agents = AP.AgentList(self, self.population_size, Individual)
  
          # Create a small-world network
-         graph = NX.watts_strogatz_graph(
+         #graph = NX.watts_strogatz_graph(
+         graph = NX.barabasi_albert_graph(
              self.population_size,
              self.p.number_of_neighbors,
-             self.p.network_randomness
+             #self.p.network_randomness
          )
          self.network = self.agents.network = AP.Network(self, graph)
          self.network.add_agents(self.agents, self.network.nodes)
@@ -1496,8 +1506,8 @@ if '-a.' in o:
          self.record("Radicalized", len(self.agents.select(self.agents.condition == 1)) / self.population_size)
          self.record("Moderate", len(self.agents.select(self.agents.condition == 2)) / self.population_size)
          self.record("PSI", self.political_stress_index)
-         self.record("avg Income", NP.mean([agent.relative_income for agent in self.agents]))
-         self.record("Elite Share", sum(1 for agent in self.agents if agent.is_elite) / self.population_size)
+         #self.record("avg Income", NP.mean([agent.relative_income for agent in self.agents]))
+         #self.record("Elite Share", sum(1 for agent in self.agents if agent.is_elite) / self.population_size)
  
      def end(self):
          """ Record evaluation measures at the end of the simulation. """
@@ -1516,25 +1526,26 @@ if '-a.' in o:
  
  
  if '-a.mf=' in o: # run Turchin's MPF
-  r_=o.split('='); r_=r_[1].split(',');
-  if x_ in locals():
-   r_[1]=len(x_)
-
-  print(f"running Multipath forecasting algorithm (https://en.wikipedia.org/wiki/Cliodynamics)\nwith a population of {r_[0]} agents, and {r_[1]} time steps")
+  r_=re.findall(r'-a.mf=(.+?) ',o); r_=r_[0].split(',');
+  if 'x_' in locals():
+   steps=len(x_)
+  else: steps=10 #default steps
+  print(f"running MultiPath Forecasting algorithm (https://en.wikipedia.org/wiki/Cliodynamics)")
+  
 
   parameters = {
-      'population': int(r_[0]),
-      'initial_relative_income': 0.9,
-      'initial_elite_share': 0.02,
+      'population': int(NP.log2(int(r_[0]))*100),
+      'initial_relative_income': 0.9, 
+      'initial_elite_share': 0.02, #2% population is elite
       'initial_radicalized_share': 0.01,
       'number_of_neighbors': 2,
       'network_randomness': 0.2,
       'moderation_chance': 0.05,
-      'social_mobility_rate': float(r_[2]),
+      'social_mobility_rate': float(r_[1]),
       'average_age': 23,
-      'youth_bulge_weight': 0.1,
+      'youth_bulge_weight': 0.1, #10% pop is youth
       'income_trend': income_trajectory,
-      'steps': int(r_[1])
+      'steps': int(steps)
   }
   
   # Run the MPF model
@@ -1547,13 +1558,14 @@ if '-a.' in o:
   print('---END PROCESS---'); sys.exit();
  
  if '-a.wd=' in o: #boltzman wealth distribution
-  r_=o.split('='); r_=r_[1].split(',');
-  if x_ in locals():
-   r_[1]=len(x_)
+  r_=re.findall(r'-a.wd=(.+?) ',o); r_=r_[0].split(',');
+  if 'x_' in locals():
+   steps=len(x_)
+  else: steps=10 #default steps
 
-  print(f"running Boltzman wealth distribution algorithm (https://en.wikipedia.org/wiki/Boltzmann_Fair_Division)\nwith a population of {r_[0]} agents, and {r_[1]} time steps")
+  print(f"running Boltzman wealth distribution algorithm (https://en.wikipedia.org/wiki/Boltzmann_Fair_Division)")
 
-  parameters = {'agents': int(r_[0]), 'steps': int(r_[1])}
+  parameters = {'agents': int(NP.log2(int(r_[0]))*100), 'steps': steps}
   model = boltzman(parameters)
   results = model.run()
   data = results.variables.boltzman
@@ -1563,23 +1575,27 @@ if '-a.' in o:
   print('---END PROCESS---'); sys.exit();
  
  if '-a.sir=' in o: #sir virus spread model
-  r_=o.split('='); r_=r_[1].split(',');
+  r_=re.findall(r'-a.sir=(.+?) ',o); r_=r_[0].split(',');
+  if 'x_' in locals():
+   steps=len(x_)
+  else: steps=100 #default steps
 
-  print(f"running SIR algorithm (https://en.wikipedia.org/wiki/Mathematical_modelling_of_infectious_diseases#The_SIR_model)\nwith a population of {r_[0]}, an infection chance of {r_[1]}")
+  print(f"running SIR algorithm (https://en.wikipedia.org/wiki/Mathematical_modelling_of_infectious_diseases#The_SIR_model)")
 
   parameters = {
-      'population': int(r_[0]),
+      'population': int(NP.log2(int(r_[0]))*100),
       'infection_chance': float(r_[1]),
-      'recovery_chance': 0.3,
+      'recovery_chance': 0.03,
       'initial_infection_share': 0.1,
       'number_of_neighbors': 2,
-      'network_randomness': 0.5
+      'network_randomness': 0.5,
+      'steps': steps,
   }
   
   model = VirusModel(parameters)
   results = model.run()
   print(results.variables.VirusModel)
-  results=results.variables.MPFModel
+  results=results.variables.VirusModel
   print('\nevaluation')
   results=PD.concat([results, x_], axis=1); print(results.corr())
   print('---END PROCESS---'); sys.exit();
@@ -1587,13 +1603,13 @@ if '-a.' in o:
 
 
  if '-a.ss=' in o: #shelling segregation
-  r_=o.split('='); r_=r_[1].split(',');
-  if x_ in locals():
-   r_[2]=len(x_)
-  print(f"running Shelling segregation algorithm (https://en.wikipedia.org/wiki/Schelling%27s_model_of_segregation)\nwith a territory of {r_[0]} km2 with a probability of {r_[1]} for {r_[2]} time steps")
+  r_=re.findall(r'-a.ss=(.+?) ',o); r_=r_[0].split(',');
+  if 'x_' in locals():
+   steps=len(x_)
+  else: steps=10 #default steps
+  print(f"running Shelling segregation algorithm (https://en.wikipedia.org/wiki/Schelling%27s_model_of_segregation)")
 
   grid = Schelling(n=int(r_[0]), p=float(r_[1]))  # Adjust grid size and threshold as needed
-  steps = int(r_[2])
   # Collect data as a list of dictionaries
   segregation_scores = []
   for i in range(steps):
@@ -1603,7 +1619,7 @@ if '-a.' in o:
   df = PD.DataFrame(segregation_scores)
   print(df)
   print('\nevaluation')
-  results=PD.concat([results, x_], axis=1); print(results.corr())
+  results=PD.concat([df, x_], axis=1); print(results.corr())
   print('---END PROCESS---'); sys.exit();
  
  # You can now visualize the segregation scores:
@@ -1616,13 +1632,14 @@ if '-a.' in o:
  
  
  if '-a.s=' in o:  #epstein & axtell's sugarscape
-  r_=o.split('='); r_=r_[1].split(',');
-    if x_ in locals():
-   r_[2]=len(x_)
+  r_=re.findall(r'-a.s=(.+?) ',o); r_=r_[0].split(',');
+  if 'x_' in locals():
+   steps=len(x_)
+  else: steps=10 #default steps
 
-  print(f"running sugarscape algorithm (https://en.wikipedia.org/wiki/Sugarscape)\nwith a population of {r_[1]} agents in a {r_[0]} km2 territory for {r_[2]} time steps")
-  env = Sugarscape(int(r_[0]),
-                  num_agents=int(r_[1]),
+  print(f"running sugarscape algorithm (https://en.wikipedia.org/wiki/Sugarscape)")
+  env = Sugarscape(int(NP.log2(int(r_[0]))*100),
+                  num_agents=int(NP.log2(int(r_[1]))*100),
                   #min_lifespan=0,
                   #max_lifespan=3,
                   replace=True)
@@ -1634,7 +1651,7 @@ if '-a.' in o:
   #    for agent in env.agents:
   #        print(f"  Agent at ({agent.loc}): Vision={agent.vision}, Metabolism={agent.metabolism}, Sugar={agent.sugar}, Age={agent.age}")
   avg_scores=[]
-  timesteps=int(r_[2])
+  timesteps=steps
   for step in range(timesteps):  # Run the simulation for 50 steps
    visions = [agent.vision for agent in env.agents]
    metabolisms = [agent.metabolism for agent in env.agents]
@@ -1646,7 +1663,7 @@ if '-a.' in o:
   dfn = (df - df.min()) / (df.max() - df.min())
   print(dfn)
   print('\nevaluation')
-  results=PD.concat([results, x_], axis=1); print(results.corr())
+  results=PD.concat([dfn, x_], axis=1); print(results.corr())
   print('---END PROCESS---'); sys.exit();
 
 
